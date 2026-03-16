@@ -31,7 +31,8 @@ Given('I am on the sign-up page', async function () {
 });
 
 When('I enter valid account information and submit the form', async function () {
-    await this.page.type('#username', 'testuser');
+    const timestamp = Date.now();
+    await this.page.type('#username', `newuser${timestamp}`);
     await this.page.type('#password', 'testpass123');
     
     await Promise.all([
