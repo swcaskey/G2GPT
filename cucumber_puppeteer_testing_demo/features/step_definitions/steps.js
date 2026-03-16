@@ -3,6 +3,10 @@ const assert = require('assert');
 
 const baseUrl = 'http://localhost:3000';
 
+// Share state between scenarios
+let sharedUsername = 'testuser';
+let sharedPassword = 'testpass123';
+
 // Scenario 1: Landing Page Access
 Given('I am not logged in', async function () {
     // Simply starting fresh
@@ -32,8 +36,10 @@ Given('I am on the sign-up page', async function () {
 
 When('I enter valid account information and submit the form', async function () {
     const timestamp = Date.now();
-    await this.page.type('#username', `newuser${timestamp}`);
-    await this.page.type('#password', 'testpass123');
+    sharedUsername = `newuser${timestamp}`;
+    
+    await this.page.type('#username', sharedUsername);
+    await this.page.type('#password', sharedPassword);
     
     await Promise.all([
         this.page.waitForNavigation(),
@@ -54,8 +60,9 @@ Given('I already have an account', async function () {
 });
 
 When('I enter valid Log In credentials', async function () {
-    await this.page.type('#login-username', 'testuser');
-    await this.page.type('#login-password', 'testpass123');
+    // Uses either 'testuser' or the dynamically generated user from the previous scenario
+    await this.page.type('#login-username', sharedUsername);
+    await this.page.type('#login-password', sharedPassword);
     
     await Promise.all([
         this.page.waitForNavigation(),
