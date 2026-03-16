@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Log Out</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+        .container { border: 1px solid #ccc; padding: 20px; width: 300px; margin: 0 auto; }
+        button { padding: 10px 20px; margin: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Confirm Log Out</h2>
+        <p>Are you sure you want to log out of the application?</p>
+        <form action="/logout_action" method="POST" id="logout-form">
+            <button type="submit" name="confirm" value="yes" id="confirm-yes">Yes, Log Out</button>
+            <button type="submit" name="confirm" value="no" id="confirm-no">No, Stay Signed In</button>
+        </form>
+    </div>
+</body>
+</html>

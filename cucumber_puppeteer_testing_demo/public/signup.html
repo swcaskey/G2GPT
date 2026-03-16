@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign Up</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+        .container { border: 1px solid #ccc; padding: 20px; width: 300px; margin: 0 auto; }
+        input { display: block; margin: 10px auto; padding: 8px; width: 80%; }
+        button { padding: 10px 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Create an Account</h2>
+        <p id="error-message" style="color: red; display: none;">That username is already taken. Please choose another one.</p>
+        <form action="/register_action" method="POST" id="signup-form">
+            <input type="text" id="username" name="username" placeholder="Username" required>
+            <input type="password" id="password" name="password" placeholder="Password" required>
+            <button type="submit" id="submit-signup">Submit</button>
+        </form>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('error') === 'UsernameTaken') {
+            document.getElementById('error-message').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
