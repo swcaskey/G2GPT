@@ -1,91 +1,187 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>G2GPT - Home</title>
-  <link rel="stylesheet" href="styles.css">
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f5f5f5;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
       margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      color: #111827;
+    }
+
+    .navbar {
+      background: #cc0033;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .navbar h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .logout-btn {
+      background: white;
+      color: #cc0033;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .logout-btn:hover {
+      background: #f3f4f6;
     }
 
     .container {
-      border: 5px solid black;
-      border-radius: 15px;
-      width: 500px;
+      max-width: 900px;
+      margin: 32px auto;
+      padding: 0 20px;
+    }
+
+    .card {
       background: white;
+      border-radius: 14px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+      padding: 24px;
+      margin-bottom: 24px;
     }
 
-    .title {
-      text-align: center;
-      border-bottom: 2px solid black;
-      padding: 10px;
-      margin: 0;
-    }
-
-    .content {
-      padding: 20px;
-    }
-
-    .description-line {
-      width: 200px;
-      height: 2px;
-      background: black;
-      margin-top: 5px;
-      margin-bottom: 30px;
-    }
-
-    .buttons {
+    .welcome {
       display: flex;
-      flex-direction: column;
-      gap: 15px;
-      align-items: flex-start;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .welcome img {
+      width: 70px;
+      height: auto;
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      resize: vertical;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 15px;
+      margin-bottom: 14px;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #cc0033;
+      box-shadow: 0 0 0 2px rgba(204, 0, 51, 0.2);
     }
 
     .btn {
-      text-decoration: none;
-      padding: 8px 16px;
-      background: yellow;
-      border: 2px solid black;
-      border-radius: 6px;
-      color: black;
-      font-weight: bold;
-      transition: 0.2s;
+      background: #cc0033;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 15px;
+      cursor: pointer;
     }
 
     .btn:hover {
-      background: gold;
+      background: #a8002a;
+    }
+
+    .response-box {
+      margin-top: 18px;
+      padding: 14px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      min-height: 60px;
+      white-space: pre-wrap;
+    }
+
+    .muted {
+      color: #6b7280;
+      margin-top: 8px;
     }
   </style>
-
 </head>
-
-
-
 <body>
+  <div class="navbar">
+    <h1>Rutgers LLM Interface</h1>
+    <button id="logoutBtn" class="logout-btn">Logout</button>
+  </div>
 
   <div class="container">
-    <h1 class="title">Landing Page</h1>
-
-    <div class="content">
-      <p><strong>App Name:</strong> 626GPT</p>
-
-      <p><strong>Description:</strong></p>
-      <div class="description-line"></div>
-
-      <div class="buttons">
-        <a href="/signup" class="btn" id="signup-link">Sign Up</a>
-        <a href="/login" class="btn" id="login-link">Log In</a>
+    <div class="card">
+      <div class="welcome">
+        <img src="Images/rutgers_logo.png" alt="Rutgers Logo" />
+        <div>
+          <h2>Welcome</h2>
+          <p class="muted">You are now logged in. Submit a prompt below for LLM inference.</p>
+        </div>
       </div>
+    </div>
+
+    <div class="card">
+      <h2>LLM Inference</h2>
+      <textarea id="promptInput" placeholder="Type your prompt here..."></textarea>
+      <button id="submitPromptBtn" class="btn">Submit Prompt</button>
+
+      <div id="responseBox" class="response-box">Response will appear here.</div>
     </div>
   </div>
 
+  <script>
+    const logoutBtn = document.getElementById("logoutBtn");
+    const submitPromptBtn = document.getElementById("submitPromptBtn");
+    const promptInput = document.getElementById("promptInput");
+    const responseBox = document.getElementById("responseBox");
+
+    logoutBtn.addEventListener("click", () => {
+      window.location.href = "login.html";
+    });
+
+    submitPromptBtn.addEventListener("click", async () => {
+      const prompt = promptInput.value.trim();
+
+      if (!prompt) {
+        responseBox.textContent = "Please enter a prompt first.";
+        return;
+      }
+
+      responseBox.textContent = "Loading response...";
+
+      try {
+        const response = await fetch("/infer", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ prompt })
+        });
+
+        const data = await response.json();
+        responseBox.textContent = data.response || "No response received.";
+      } catch (error) {
+        responseBox.textContent = "Could not connect to server.";
+        console.error(error);
+      }
+    });
+  </script>
 </body>
 </html>
