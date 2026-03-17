@@ -36,10 +36,11 @@ Given('I am on the sign-up page', async function () {
 
 When('I enter valid account information and submit the form', async function () {
     const timestamp = Date.now();
-    sharedUsername = `newuser${timestamp}`;
 
-    await this.page.type('#username', sharedUsername);
-    await this.page.type('#password', sharedPassword);
+
+    await this.page.type('#signupName', sharedUsername);
+    await this.page.type('#signupUsername', sharedUsername);
+    await this.page.type('#signupPassword', sharedPassword);
 
     await Promise.all([
         this.page.waitForNavigation(),
@@ -61,8 +62,8 @@ Given('I already have an account', async function () {
 
 When('I enter valid Log In credentials', async function () {
     // Uses either 'testuser' or the dynamically generated user from the previous scenario
-    await this.page.type('#login-username', sharedUsername);
-    await this.page.type('#login-password', sharedPassword);
+    await this.page.type('#uname', sharedUsername);
+    await this.page.type('#psw', sharedPassword);
 
     await Promise.all([
         this.page.waitForNavigation(),
@@ -98,5 +99,5 @@ Then('when I click log out and confirm, I should return to a non-authenticated s
 
     // Verify we are back on landing page
     title = await this.page.title();
-    assert.strictEqual(title, 'LLM Inference - Landing Page');
+    assert.strictEqual(title, 'G2GPT - Home');
 });
