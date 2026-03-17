@@ -94,9 +94,19 @@ button:hover{
 
 <form id="loginForm">
 
-<input type="text" id="uname" placeholder="Username (NetID)" required>
+<input
+type="text"
+id="uname"
+placeholder="Username (NetID)"
+required
+>
 
-<input type="password" id="psw" placeholder="Password" required>
+<input
+type="password"
+id="psw"
+placeholder="Password"
+required
+>
 
 <div class="options">
 
@@ -109,7 +119,7 @@ Remember me
 
 </div>
 
-<button type="submit" id="submit-login">Log In</button>
+<button type="submit">Log In</button>
 
 <button type="button" class="cancel" id="cancelBtn" href="/">Cancel</button>
 
@@ -155,6 +165,12 @@ form.addEventListener("submit", async function(e){
 
         statusMessage.textContent = data.message
         statusMessage.style.color = data.success ? "green" : "red"
+
+        if (data.success) {
+            setTimeout(() => {
+                window.location.href = "/dashboard";
+            }, 1000);
+        }
 
     }
     catch(err){

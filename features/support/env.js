@@ -1,23 +1,24 @@
 const { BeforeAll, AfterAll, Before, After, setDefaultTimeout } = require('@cucumber/cucumber');
 const puppeteer = require('puppeteer');
 
-// Set timeout to 10 seconds for browser operations
-setDefaultTimeout(10000);
+// Set timeout to 60 seconds to support very slow typing for the 1-minute demo
+setDefaultTimeout(60000);
 
 let browser;
 
 BeforeAll(async function () {
-    // Launch a visible browser so the demo can be recorded
+    // Launch a visible browser
     browser = await puppeteer.launch({
         headless: false,
-        slowMo: 100 // Slow down actions by 100ms so they are easier to see on video
+        slowMo: 50 
     });
 });
 
 AfterAll(async function () {
-    if (browser) {
-        await browser.close();
-    }
+    // browser.close() disabled for manual testing
+    // if (browser) {
+    //     await browser.close();
+    // }
 });
 
 Before(async function () {
@@ -26,7 +27,8 @@ Before(async function () {
 });
 
 After(async function () {
-    if (this.page) {
-        await this.page.close();
-    }
+    // page.close() disabled for manual testing
+    // if (this.page) {
+    //     await this.page.close();
+    // }
 });
