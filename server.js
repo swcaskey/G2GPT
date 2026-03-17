@@ -13,7 +13,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "./frontend")));
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "./frontend/Development_Page_Iteration_1.html"));
+  res.sendFile(path.join(__dirname, "./frontend/home.html"));
+});
+
+app.get("/login", (req, res) => {
+  res.sendFile(path.join(__dirname, "./frontend/login.html"));
+});
+
+app.get("/signup", (req, res) => {
+  res.sendFile(path.join(__dirname, "./frontend/signup.html"));
 });
 
 app.post("/login", (req, res) => {
