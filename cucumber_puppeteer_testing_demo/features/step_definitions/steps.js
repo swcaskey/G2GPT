@@ -4,8 +4,8 @@ const assert = require('assert');
 const baseUrl = 'http://localhost:3000';
 
 // Share state between scenarios
-let sharedUsername = 'testuser';
-let sharedPassword = 'testpass123';
+let sharedUsername = 'test';
+let sharedPassword = '1234';
 
 // Scenario 1: Landing Page Access
 Given('I am not logged in', async function () {
