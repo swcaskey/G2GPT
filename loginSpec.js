@@ -1,98 +1,57 @@
-const express = require("express");
-const cors = require("cors");
-const path = require("path");
-const db = require("./database");
+const request = require("supertest");
+const app = require("../server");
+const db = require("../database");
 
-const app = express();
-const PORT = 3000;
+describe("Login Route Tests", () => {
+  beforeAll((done) => {
+  db.serialize(() => {
+    db.run("DELETE FROM users");
+    db.run("DELETE FROM login_attempts");
 
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-app.use(express.static(path.join(__dirname, "../frontend")));
-
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/Development_Page_Iteration_1.html"));
-});
-
-app.post("/login", (req, res) => {
-  const { uname, psw } = req.body;
-
-  if (!uname || !psw) {
-    return res.status(400).json({
-      success: false,
-      message: "Username and password are required."
-    });
-  }
-
-  db.get(
-    "SELECT * FROM users WHERE username = ? AND password = ?",
-    [uname, psw],
-    (err, user) => {
-      if (err) {
-        return res.status(500).json({
-          success: false,
-          message: "Database error."
-        });
+    db.run(
+      "INSERT INTO users (username, password, name) VALUES (?, ?, ?)",
+      ["admin", "1234", "Admin User"],
+      (err) => {
+        done(err);
       }
-
-      if (!user) {
-        db.run(
-          "INSERT INTO login_attempts (username, success) VALUES (?, ?)",
-          [uname, 0]
-        );
-
-        return res.status(401).json({
-          success: false,
-          message: "Invalid username or password."
-        });
-      }
-
-      db.run(
-        "INSERT INTO login_attempts (username, success) VALUES (?, ?)",
-        [uname, 1]
-      );
-
-      return res.status(200).json({
-        success: true,
-        message: `Login successful! Welcome, ${user.name}!`
-      });
-    }
-  );
-});
-
-app.get("/logins", (req, res) => {
-  db.all(
-    "SELECT * FROM login_attempts ORDER BY login_time DESC",
-    [],
-    (err, rows) => {
-      if (err) {
-        return res.status(500).json({
-          success: false,
-          message: "Could not fetch login history."
-        });
-      }
-
-      res.json({
-        success: true,
-        logins: rows
-      });
-    }
-  );
-});
-
-app.get("/api/health", (req, res) => {
-  res.json({
-    success: true,
-    message: "Server is running."
+    );
   });
 });
+  it("should return 400 if username or password is missing", async () => {
+    const res = await request(app)
+      .post("/login")
+      .send({ uname: "", psw: "" });
 
-if (process.env.NODE_ENV !== "test") {
-  app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toBe("Username and password are required.");
   });
-}
 
-module.exports = app;
+  it("should return 401 for invalid login", async () => {
+    const res = await request(app)
+      .post("/login")
+      .send({ uname: "wronguser", psw: "wrongpass" });
+
+    expect(res.status).toBe(401);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toBe("Invalid username or password.");
+  });
+
+  it("should return 200 for valid login", async () => {
+    const res = await request(app)
+      .post("/login")
+      .send({ uname: "admin", psw: "1234" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.message).toContain("Login successful!");
+  });
+
+  it("should return server health", async () => {
+    const res = await request(app).get("/api/health");
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.message).toBe("Server is running.");
+  });
+});
