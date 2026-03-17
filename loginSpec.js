@@ -4,19 +4,20 @@ const db = require("../database");
 
 describe("Login Route Tests", () => {
   beforeAll((done) => {
-  db.serialize(() => {
-    db.run("DELETE FROM users");
-    db.run("DELETE FROM login_attempts");
+    db.serialize(() => {
+      db.run("DELETE FROM users");
+      db.run("DELETE FROM login_attempts");
 
-    db.run(
-      "INSERT INTO users (username, password, name) VALUES (?, ?, ?)",
-      ["admin", "1234", "Admin User"],
-      (err) => {
-        done(err);
-      }
-    );
+      db.run(
+        "INSERT INTO users (username, password, name) VALUES (?, ?, ?)",
+        ["admin", "1234", "Admin User"],
+        (err) => {
+          done(err);
+        }
+      );
+    });
   });
-});
+
   it("should return 400 if username or password is missing", async () => {
     const res = await request(app)
       .post("/login")
@@ -25,6 +26,24 @@ describe("Login Route Tests", () => {
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
     expect(res.body.message).toBe("Username and password are required.");
+  });
+
+  it("should return 400 if only username is missing", async () => {
+    const res = await request(app)
+      .post("/login")
+      .send({ uname: "", psw: "1234" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+  });
+
+  it("should return 400 if only password is missing", async () => {
+    const res = await request(app)
+      .post("/login")
+      .send({ uname: "admin", psw: "" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
   });
 
   it("should return 401 for invalid login", async () => {
@@ -53,5 +72,11 @@ describe("Login Route Tests", () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.message).toBe("Server is running.");
+  });
+
+  afterAll((done) => {
+    db.close((err) => {
+      done(err);
+    });
   });
 });
