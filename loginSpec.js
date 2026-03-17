@@ -4,17 +4,19 @@ const db = require("../database");
 
 describe("Login Route Tests", () => {
   beforeAll((done) => {
-    db.serialize(() => {
-      db.run("DELETE FROM users");
-      db.run("DELETE FROM login_attempts");
-      db.run(
-        "INSERT INTO users (username, password, name) VALUES (?, ?, ?)",
-        ["admin", "1234", "Admin User"],
-        done
-      );
-    });
-  });
+  db.serialize(() => {
+    db.run("DELETE FROM users");
+    db.run("DELETE FROM login_attempts");
 
+    db.run(
+      "INSERT INTO users (username, password, name) VALUES (?, ?, ?)",
+      ["admin", "1234", "Admin User"],
+      (err) => {
+        done(err);
+      }
+    );
+  });
+});
   it("should return 400 if username or password is missing", async () => {
     const res = await request(app)
       .post("/login")
