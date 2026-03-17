@@ -25,18 +25,18 @@ app.get("/signup", (req, res) => {
 });
 
 app.post("/signup", (req, res) => {
-  const {uname, psw} = req.body;
+  const {name, username, password} = req.body;
 
-  if (!uname || !psw) {
+  if (!name || !username || !password) {
     return res.status(400).json({
       success: false,
-      message: "Username and password are required."
+      message: "Name, username, and password are required."
     });
   }
 
   db.get(
-    "SELECT * FROM users WHERE username = ? OR password = ?",
-    [uname, psw],
+    "SELECT * FROM users WHERE name = ? OR username = ? OR password = ?",
+    [name, username, password],
     (err, user) => {
       if (err) {
         return res.status(500).json({
@@ -47,20 +47,20 @@ app.post("/signup", (req, res) => {
 
       if (!user) {
         db.run(
-          "INSERT INTO users (username, password) VALUES (?, ?)",
-          [uname, psw]
+          "INSERT INTO users (name, username, password) VALUES (?, ?, ?)",
+          [name, username, password]
         );
 
         return res.status(200).json({
           success: true,
-          message: `Registration successful! Welcome, ${user.name}!`
+          message: `Registration successful! Welcome, ${name}!`
         });
 
       }
 
       return res.status(401).json({
         success: false,
-        message: "Username or password in use!"
+        message: "Name, username, or password in use!"
       });
 
     }
