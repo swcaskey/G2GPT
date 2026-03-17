@@ -121,7 +121,7 @@ Remember me
 
 <button type="submit">Log In</button>
 
-<button type="button" class="cancel" id="cancelBtn">Cancel</button>
+<button type="button" class="cancel" id="cancelBtn" href="/">Cancel</button>
 
 </form>
 
@@ -178,8 +178,9 @@ form.addEventListener("submit", async function(e){
 
 cancelBtn.addEventListener("click",function(){
 
-    form.reset()
-    statusMessage.textContent = ""
+    form.reset();
+    statusMessage.textContent = "";
+    window.location.href = "/";
 
 })
 
