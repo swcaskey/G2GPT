@@ -24,6 +24,50 @@ app.get("/signup", (req, res) => {
   res.sendFile(path.join(__dirname, "./frontend/signup.html"));
 });
 
+app.post("/signup", (req, res) => {
+  const {uname, psw} = req.body;
+
+  if (!uname || !psw) {
+    return res.status(400).json({
+      success: false,
+      message: "Username and password are required."
+    });
+  }
+
+  db.get(
+    "SELECT * FROM users WHERE username = ? OR password = ?",
+    [uname, psw],
+    (err, user) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: "Database error."
+        });
+      }
+
+      if (!user) {
+        db.run(
+          "INSERT INTO users (username, password) VALUES (?, ?)",
+          [uname, psw]
+        );
+
+        return res.status(200).json({
+          success: true,
+          message: `Registration successful! Welcome, ${user.name}!`
+        });
+
+      }
+
+      return res.status(401).json({
+        success: false,
+        message: "Username or password in use!"
+      });
+
+    }
+  );
+
+});
+
 app.post("/login", (req, res) => {
   const { uname, psw } = req.body;
 
