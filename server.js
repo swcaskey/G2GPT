@@ -24,19 +24,27 @@ app.get("/signup", (req, res) => {
   res.sendFile(path.join(__dirname, "./frontend/signup.html"));
 });
 
+app.get("/dashboard", (req, res) => {
+  res.sendFile(path.join(__dirname, "./frontend/dashboard.html"));
+});
+
+app.get("/logout", (req, res) => {
+  res.sendFile(path.join(__dirname, "./frontend/logout.html"));
+});
+
 app.post("/signup", (req, res) => {
-  const {name, username, password} = req.body;
+  const { name, username, password } = req.body;
 
   if (!name || !username || !password) {
     return res.status(400).json({
       success: false,
-      message: "Name, username, and password are required."
+      message: "All fields are required."
     });
   }
 
   db.get(
-    "SELECT * FROM users WHERE name = ? OR username = ? OR password = ?",
-    [name, username, password],
+    "SELECT * FROM users WHERE name = ? OR username = ?",
+    [name, username],
     (err, user) => {
       if (err) {
         return res.status(500).json({
@@ -48,24 +56,28 @@ app.post("/signup", (req, res) => {
       if (!user) {
         db.run(
           "INSERT INTO users (name, username, password) VALUES (?, ?, ?)",
-          [name, username, password]
+          [name, username, password],
+          (err) => {
+            if (err) {
+              return res.status(500).json({
+                success: false,
+                message: "Database error during registration."
+              });
+            }
+            return res.status(201).json({
+              success: true,
+              message: "Account created successfully! You can now log in."
+            });
+          }
         );
-
-        return res.status(200).json({
-          success: true,
-          message: `Registration successful! Welcome, ${name}!`
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: "Name or username in use!"
         });
-
       }
-
-      return res.status(401).json({
-        success: false,
-        message: "Name, username, or password in use!"
-      });
-
     }
   );
-
 });
 
 app.post("/login", (req, res) => {

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>G2GPT - Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f5f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 32px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 400px; }
+        h1 { color: #333; }
+        .btn { display: inline-block; padding: 12px 24px; background: #cc0033; color: white; text-decoration: none; border-radius: 8px; margin-top: 20px; font-weight: bold; }
+        .btn:hover { background: #990026; }
+        .automated-highlight { border-color: #ffc107 !important; outline: 8px solid rgba(255, 193, 7, 0.9) !important; box-shadow: 0 0 25px rgba(255, 193, 7, 1) !important; z-index: 9999; position: relative; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Welcome to G2GPT</h1>
+        <p id="auth-status">You are now securely logged in.</p>
+        <p>Main Protected Area: LLM Inference functionality would go here.</p>
+        <a href="/logout" id="logout-link" class="btn">Log Out</a>
+    </div>
+</body>
+</html>
