@@ -1,6 +1,9 @@
+// Jasmine Unit Tests for Authentication Endpoints
+// Tests POST /login, GET /logins, and GET /api/health endpoints
+
 const request = require("supertest");
-const app = require("./server");
-const db = require("./database");
+const app = require("../server");
+const db = require("../database");
 
 describe("POST /login", () => {
   beforeAll((done) => {

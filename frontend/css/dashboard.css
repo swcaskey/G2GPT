@@ -1,0 +1,39 @@
+/* Dashboard page specific styles */
+
+body {
+  background: #f5f5f5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+.card {
+  background: white;
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  width: 400px;
+}
+
+h1 {
+  color: #333;
+}
+
+.btn {
+  display: inline-block;
+  padding: 12px 24px;
+  background: #cc0033;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  margin-top: 20px;
+  font-weight: bold;
+  transition: background 0.2s ease;
+}
+
+.btn:hover {
+  background: #990026;
+}

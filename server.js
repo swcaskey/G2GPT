@@ -1,3 +1,6 @@
+// G2GPT Server - Express.js Application
+// Main server file handling authentication and routing
+
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -6,32 +9,42 @@ const db = require("./database");
 const app = express();
 const PORT = 3000;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.use(express.static(path.join(__dirname, "./frontend")));
 
+// ==================== Routes: HTML Pages ====================
+
+// Landing page (home)
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "./frontend/home.html"));
 });
 
+// Login page
 app.get("/login", (req, res) => {
   res.sendFile(path.join(__dirname, "./frontend/login.html"));
 });
 
+// Sign up page
 app.get("/signup", (req, res) => {
   res.sendFile(path.join(__dirname, "./frontend/signup.html"));
 });
 
+// Dashboard (authenticated home page)
 app.get("/dashboard", (req, res) => {
   res.sendFile(path.join(__dirname, "./frontend/dashboard.html"));
 });
 
+// Logout confirmation page
 app.get("/logout", (req, res) => {
   res.sendFile(path.join(__dirname, "./frontend/logout.html"));
 });
 
+// ==================== Routes: API Endpoints ====================
+
+// POST /signup - Create new user account
 app.post("/signup", (req, res) => {
   const { name, username, password } = req.body;
 
@@ -80,6 +93,7 @@ app.post("/signup", (req, res) => {
   );
 });
 
+// POST /login - Authenticate user
 app.post("/login", (req, res) => {
   const { uname, psw } = req.body;
 
@@ -126,6 +140,7 @@ app.post("/login", (req, res) => {
   );
 });
 
+// GET /logins - Retrieve login history
 app.get("/logins", (req, res) => {
   db.all(
     "SELECT * FROM login_attempts ORDER BY login_time DESC",
@@ -146,12 +161,15 @@ app.get("/logins", (req, res) => {
   );
 });
 
+// GET /api/health - Health check endpoint
 app.get("/api/health", (req, res) => {
   res.json({
     success: true,
     message: "Server is running."
   });
 });
+
+// ==================== Server Initialization ====================
 
 if (process.env.NODE_ENV !== "test") {
   app.listen(PORT, () => {

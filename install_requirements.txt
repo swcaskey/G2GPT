@@ -1,11 +1,17 @@
+
 Install:
-- Node.js (includes npm)
+- Node.js
 - MySQL
 - Ollama
 
-Project npm packages:
+Npm packages:
 - express
 - cors
-- jasmine
 - sqlite3
-- supertest
+
+Development Dependencies:
+- @cucumber/cucumber: (Acceptance testing)
+- jasmine (Unit testing framework)
+- puppeteer (Browser automation for E2E tests)
+- supertest: (HTTP assertion library)
+

@@ -1,0 +1,76 @@
+/* Login page specific styles */
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.login-container {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  width: 350px;
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 6px;
+  background: #cc0033;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #990026;
+}
+
+.cancel {
+  background: #777;
+}
+
+.cancel:hover {
+  background: #555;
+}
+
+.options {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.options a {
+  color: #cc0033;
+  text-decoration: none;
+}
+
+.options a:hover {
+  text-decoration: underline;
+}
+
+.status {
+  margin-top: 15px;
+  font-weight: bold;
+}

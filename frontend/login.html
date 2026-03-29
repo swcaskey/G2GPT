@@ -1,196 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rutgers Login</title>
-
-<style>
-
-body{
-    margin:0;
-    font-family:Arial, Helvetica, sans-serif;
-    background:linear-gradient(135deg,#cc0033,#8b0000);
-    height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-}
-
-.login-container{
-    background:white;
-    padding:40px;
-    border-radius:12px;
-    box-shadow:0 10px 25px rgba(0,0,0,0.2);
-    width:350px;
-    text-align:center;
-}
-
-.logo{
-    width:120px;
-    margin-bottom:20px;
-}
-
-h1{
-    margin-bottom:20px;
-    color:#333;
-}
-
-input{
-    width:100%;
-    padding:12px;
-    margin:10px 0;
-    border-radius:6px;
-    border:1px solid #ccc;
-    font-size:14px;
-}
-
-button{
-    width:100%;
-    padding:12px;
-    margin-top:10px;
-    border:none;
-    border-radius:6px;
-    background:#cc0033;
-    color:white;
-    font-size:16px;
-    cursor:pointer;
-}
-
-button:hover{
-    background:#990026;
-}
-
-.cancel{
-    background:#777;
-}
-
-.cancel:hover{
-    background:#555;
-}
-
-.options{
-    display:flex;
-    justify-content:space-between;
-    font-size:14px;
-    margin-top:10px;
-}
-
-.status{
-    margin-top:15px;
-    font-weight:bold;
-}
-
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rutgers Login</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/login.css">
 </head>
 
 <body>
-
-<div class="login-container">
-
-<img src="./Images/rutgers_logo.png" class="logo" alt="Rutgers Logo">
-
-<h1>Rutgers Login</h1>
-
-<form id="loginForm">
-
-<input
-type="text"
-id="uname"
-placeholder="Username (NetID)"
-required
->
-
-<input
-type="password"
-id="psw"
-placeholder="Password"
-required
->
-
-<div class="options">
-
-<label>
-<input type="checkbox" id="remember">
-Remember me
-</label>
-
-<a href="#">Forgot password?</a>
-
-</div>
-
-<button type="submit">Log In</button>
-
-<button type="button" class="cancel" id="cancelBtn" href="/">Cancel</button>
-
-</form>
-
-<p id="statusMessage" class="status"></p>
-
-</div>
-
-<script>
-
-const form = document.getElementById("loginForm")
-const statusMessage = document.getElementById("statusMessage")
-const cancelBtn = document.getElementById("cancelBtn")
-
-form.addEventListener("submit", async function(e){
-
-    e.preventDefault()
-
-    const uname = document.getElementById("uname").value.trim()
-    const psw = document.getElementById("psw").value.trim()
-
-    if(!uname || !psw){
-        statusMessage.textContent = "Please enter both username and password."
-        statusMessage.style.color = "red"
-        return
-    }
-
-    try{
-
-        const response = await fetch("/login",{
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json"
-            },
-            body:JSON.stringify({
-                uname:uname,
-                psw:psw
-            })
-        })
-
-        const data = await response.json()
-
-        statusMessage.textContent = data.message
-        statusMessage.style.color = data.success ? "green" : "red"
-
-        if (data.success) {
-            setTimeout(() => {
-                window.location.href = "/dashboard";
-            }, 1000);
-        }
-
-    }
-    catch(err){
-
-        statusMessage.textContent = "Server error. Please try again."
-        statusMessage.style.color = "red"
-
-    }
-
-})
-
-cancelBtn.addEventListener("click",function(){
-
-    form.reset();
-    statusMessage.textContent = "";
-    window.location.href = "/";
-
-})
-
-</script>
-
+  <div class="login-container">
+    <h1>Rutgers Login</h1>
+    
+    <form id="loginForm">
+      <input
+        type="text"
+        id="uname"
+        placeholder="Username (NetID)"
+        required
+      >
+      
+      <input
+        type="password"
+        id="psw"
+        placeholder="Password"
+        required
+      >
+      
+      <div class="options">
+        <label>
+          <input type="checkbox" id="remember">
+          Remember me
+        </label>
+        
+        <a href="#">Forgot password?</a>
+      </div>
+      
+      <button type="submit">Log In</button>
+      <button type="button" class="cancel" id="cancelBtn">Cancel</button>
+    </form>
+    
+    <p id="statusMessage" class="status"></p>
+  </div>
+  
+  <script src="js/login.js"></script>
 </body>
 </html>

@@ -1,53 +1,79 @@
-How to run the app
-
-1. Open a terminal in this project folder.
+# ====================
+# Running the Application
+# ====================
+1. Open a terminal in the project root directory
 2. Start the server:
-   node server.js
-3. Open the browser and go to:
+	node server.js
+3. Open your browser and navigate to:
    http://localhost:3000
 
-All app pages
-- Home: http://localhost:3000
-- Login: http://localhost:3000/login
-- Signup: http://localhost:3000/signup
-- Dashboard: http://localhost:3000/dashboard
-- Logout: http://localhost:3000/logout
 
-How to run tests
 
-Jasmine
-- Run all Jasmine tests:
+
+# ====================
+# Application Pages
+# ====================
+Public Area:
+- Landing Page:        http://localhost:3000/
+- Sign Up:             http://localhost:3000/signup
+- Log In:              http://localhost:3000/login
+
+Authenticated Area:
+- Dashboard:           http://localhost:3000/dashboard
+- Log Out:             http://localhost:3000/logout
+
+API Endpoints:
+- Health Check:        http://localhost:3000/api/health
+- Login History:       http://localhost:3000/logins
+
+
+
+
+# ====================
+# Running Tests
+# ====================
+Jasmine (Unit Tests):
   npm test
-- Run the current Jasmine spec file:
-  npx jasmine loginSpec.js
+  npx jasmine spec/loginSpec.js
 
-Cucumber.js
-- Run all Cucumber scenarios:
-  npx cucumber-js
-- Run the authentication feature only:
-  npx cucumber-js features\authentication.feature
-- Run one Cucumber scenario by name:
-  npx cucumber-js features\authentication.feature --name "Landing Page Access"
+Cucumber.js (Acceptance Tests):
+  npm run test:cucumber
+  npx cucumber-js features/authentication.feature
 
-Puppeteer
-- Puppeteer is used through the Cucumber setup in this project.
-- Run the browser automation scenarios:
-  npx cucumber-js
-- Run one browser scenario:
-  npx cucumber-js features\authentication.feature --name "Local Log In and Log Out"
+Puppeteer (Browser Automation integrated with Cucumber.js):
+  npm run test:cucumber
+  npm run test:all
 
-Run everything
-- Run all available Jasmine, Cucumber, and Puppeteer-driven browser tests:
-  npm test
-  npx cucumber-js
 
-Clear saved site data
-- Delete the SQLite database file to clear logins and other saved site data:
-  Remove-Item .\login.db
-- After deleting it, restart the app so the database is recreated:
-  node server.js
 
-Notes
-- This project currently has one Jasmine spec file: loginSpec.js.
-- This project currently has one Cucumber feature file: features\authentication.feature.
-- The Cucumber browser tests use Puppeteer through features\support\env.js.
+
+# ====================
+# Database Management
+# ====================
+Clear all data (delete SQLite database):
+  del /f login.db
+
+Default test accounts (automatically created):
+  - Username: tarun123 | Password: rutgers2026 | Name: Tarun
+  - Username: student1 | Password: password123 | Name: Student One
+  - Username: admin | Password: admin123 | Name: Admin User
+
+
+
+
+# ====================
+# Project Structure
+# ====================
+G2GPT/
+├── frontend/
+│   ├── css/             # Stylesheets
+│   ├── js/              # Client-side JavaScript
+│   └── *.html           # HTML pages
+├── features/            # Cucumber BDD tests
+│   ├── step_definitions/
+│   └── support/
+├── spec/                # Jasmine unit tests
+│   └── support/
+├── server.js            # Express server
+├── database.js          # Database configuration
+└── package.json         # Project dependencies
