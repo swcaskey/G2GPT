@@ -1,0 +1,645 @@
+=== Frontend (Client-Side).pptx ===
+
+--- Slide 1 ---
+TA coding session 1 – JSP Ch1
+
+Intro to JavaScript, NodeJS, & GitHub
+Zihao(Jason) Ding
+zihao.ding@rutgers.edu
+Jan 2025
+Ver 1.0
+
+--- Slide 2 ---
+Outline topics will be covered in this session
+Intro to JavaScript  [JSP Ch1]
+Intro to HTML
+Intro to NodeJS
+Jasmine 
+How to use GitHub
+Homework 1 guide
+2
+
+--- Slide 3 ---
+Chapter 1 The Development Environment
+What is JavaScript?
+High-Level Language
+Interpreted & Dynamic
+Prototype-Based & Multi-Paradigm
+Single-Threaded with Non-Blocking Event Loop
+Versatile Usage: Front-End, Back-End, Mobile, Desktop
+Performance Optimizations: JIT Compilation, Asynchronous Programming
+Continuously Evolving through ECMAScript
+Essential for Modern Web Development
+
+
+3
+Ch 1 The Development Environment
+
+--- Slide 4 ---
+3 Core Technologies for Web Development
+4
+Ch 1 The Development Environment
+
+--- Slide 5 ---
+JavaScript: Versatility Across Platforms
+Using Different Frameworks, JavaScript Can Be Used to Build:
+Server-Side Applications
+Node.js
+
+Mobile Applications
+React Native & Ionic
+
+Desktop Applications
+Electron
+
+JS Can also be used both on client(browser) and server side
+Ch 1 The Development Environment
+5
+*Image from https://youtu.be/DHjqpvDnNGE?si=uTvY0Uu3GGcGJ2bV
+
+
+--- Slide 6 ---
+1.1.1 Running JavaScript Programs
+JavaScript programs can be directly in a Web browser
+To open the Console in the Browser:
+Chrome, Edge, and Most Chromium-Based Browsers:Windows/Linux: Ctrl + Shift + J or F12Mac: Command + Option + J
+Firefox:Windows/Linux: Ctrl + Shift + K   Mac: Command + Option + K
+
+Alternatively:Navigate to "Web Console" under "Developer Tools" in the browser Menu.
+6
+1.1.1 Running JavaScript Programs
+
+--- Slide 7 ---
+Directly in the Browser Console:
+JavaScript can be executed directly in a web browser’s console.
+
+
+
+
+Embedding JavaScript in an HTML file:
+JavaScript code can be written within <script> and </script> tags in an HTML file.
+Scripts can be placed in the <head> section, the <body> section, or both.
+Using External JavaScript Files:
+For longer scripts, it’s better to separate the JavaScript code into an external file with a .js extension.
+External scripts can be linked using the src attribute of the <script> tag:
+
+1.1.1 Running JavaScript Programs
+7
+<script src="externalScriptFile.js"></script>
+
+--- Slide 8 ---
+<html>
+    <head>
+        <h2> JavaScript Program Test</h2>
+    </head>
+    <body>
+        <script>
+            let a = 5; let b = 6;
+            let res = a+b;
+            console.log("result = "+String(res));        </script>
+    
+        <script src="test.js"></script>
+    </body>
+</html>
+
+
+1.1.1 Running JavaScript Programs
+8
+Embedding JavaScript in an HTML file - Sample
+The HTML file
+let message = "Helloooo";
+console.log(message);
+The test.js
+
+--- Slide 9 ---
+What is HTML
+Hypertext Markup Language (HTML) is the standard language for creating and structuring content on the web.
+Defines the structure and layout of web pages.
+Organizes text, images, links, and other multimedia elements.
+Works alongside CSS (for styling) and JavaScript (for interactivity).
+
+Characteristics:
+ High-Level Language:   Abstracts complex hardware details.
+ Markup Language:        Uses tags to annotate text and define elements.
+ Multi-Paradigm:            Supports both object-oriented and functional programming styles.
+ 
+9
+*Image from https://youtu.be/ok-plXXHlWw?si=Da4DGA0AC0OWYylC
+
+Ch1.Ex What is HTML
+
+--- Slide 10 ---
+Elements and Tags
+ Structure:     Defined using opening and closing tags (e.g., <h1>, <p>, <a>).
+ Self-Closing Tags:     Elements like <img /> and <br /> do not require closing tags.
+Attributes
+Customization:       Provide additional information about elements (e.g., src, alt, href).
+Syntax:       Key-value pairs within opening tags (e.g., <img src="image.jpg" alt="Description">).
+Document Object Model (DOM)
+Hierarchy:     Represents the structure of HTML documents as a tree of nodes.
+Interactivity:     Allows JavaScript to dynamically interact with and manipulate web page content.
+Key Features of HTML - Structure and Semantics
+10
+*Image from https://youtu.be/ok-plXXHlWw?si=Da4DGA0AC0OWYylC
+
+Ch1.Ex What is HTML
+
+--- Slide 11 ---
+4. Media Integration:
+Multimedia Support    Embed videos (<video>), audio (<audio>), and graphics (<canvas>).
+Responsive Design     Adapt content to various screen sizes and devices.
+5. Interactivity and Linking:
+Anchor Tags    <a> tags create hyperlinks to other web pages, enabling navigation.
+Event Handling    Integrates with JavaScript to handle user interactions and dynamic content updates.
+6. Layout and Design:
+Structural Tags    <div>, <span>, and other layout elements group and organize content for styling and responsive design.
+Semantic Elements    Elements like <header>, <footer>, <article>, and <section> provide meaningful structure.
+Key Features of HTML - Media and Interactivity
+11
+Ch1.Ex What is HTML
+
+--- Slide 12 ---
+Simple Example
+12
+Ch1.Ex What is HTML
+
+--- Slide 13 ---
+More HTML Resources 
+HTML quick reference cheat https://cheatsheets.zip/html
+
+HTML tutorialhttps://www.geeksforgeeks.org/html-tutorial/
+
+YouTube
+13
+Ch1.Ex What is HTML
+
+--- Slide 14 ---
+The Global Object in JavaScript
+Every JavaScript environment has a global object:
+Browser Environment: window
+Node.js Environment: global
+Global variables automatically become properties of the global object.
+Accessing the global object
+1.1.2 JavaScript Runtime Environment
+14
+const myGlobal = this; // In the global scope
+*Image from https://www.contentful.com/blog/the-global-object-in-javascript/
+
+--- Slide 15 ---
+Strict Mode in JavaScript
+What is Strict Mode?
+A mode in JavaScript that enforces stricter syntax and error handling.
+Introduced in ES5 to eliminate "sloppy mode" and promote better coding practices.
+Why Use Strict Mode?
+Eliminates silent errors, e.g., undeclared variables.
+Improves JavaScript engine optimizations for better performance.
+Prevents usage of future ECMAScript syntax.
+How to Enable:
+For entire scripts:
+For specific functions:
+
+1.1.2 JavaScript Runtime Environment
+15
+"use strict";
+function example() {
+    "use strict";
+  }
+* Older JavaScript engines ignore "use strict";, so it doesn't break older code.
+
+--- Slide 16 ---
+JavaScript Input and Output
+Browser Input:
+Use window.prompt() to accept user input:
+Browser Output:
+window.alert() displays messages in an alert box.
+window.confirm() prompts for user confirmation:
+console.log() outputs messages to the browser console.
+Formatting Console Output:
+Use placeholders like %s (string), %d (integer), and %c (CSS styles):
+
+1.1.2 JavaScript Runtime Environment
+16
+ console.log("Styled %cText", "color: red; font-weight: bold;");
+let name = prompt("Enter your name:");
+let proceed = confirm("Do you wish to continue?");
+
+--- Slide 17 ---
+JavaScript Resources
+1.1.2 JavaScript Runtime Environment
+17
+The book on canvas (The book itself and more on page 16)
+
+mozilla.orghttps://developer.mozilla.org/en-US/docs/Web/API/console
+
+Geeks for geekshttps://www.geeksforgeeks.org/javascript-cheat-sheet-a-basic-guide-to-javascript/
+
+htmlcheatsheethttps://htmlcheatsheet.com/js/
+Or your favorite Online guides …
+
+--- Slide 18 ---
+Key Concepts in JavaScript Testing (Code Testing in general)
+Testing Basics
+Purpose:  Validate program correctness with     minimal, effective test cases.
+Challenges:
+Testing cannot cover all scenarios; focus on diverse, meaningful inputs.
+Boundary cases and code coverage are critical for identifying defects.
+Key Goals:
+Boundary Case Coverage: Test edge cases where input/output behavior is complex.
+Code Coverage: Ensure all instructions and branches are executed at least once.
+2. Key Testing Considerations
+Input/Output Mapping:
+Abstract programs as mappings from inputs ("domain") to outputs ("codomain").
+Context-Dependent Validity:
+Example: Valid dates depend on the month and year (e.g., February 29 in leap years).
+1.1.3 JavaScript Testing
+18
+
+--- Slide 19 ---
+Key Concepts in JavaScript Testing (Code Testing in general)
+1.1.3 JavaScript Testing
+19
+3. Writing Unit Tests
+Unit Tests: Test isolated functions or classes.
+Example function:
+Assertions: Test various conditions (e.g., equality, inequalities, null/undefined checks).
+4. Automating Tests
+Regression Testing:  Re-test modified code to ensure no previous functionality breaks.
+Test Frameworks:     Automate test execution and manage test suites.
+Example: Jasmine framework.
+Jasmine syntax:
+  function test(description, unitToTest, inputs, expectedResult) {
+    let res = unitToTest(...inputs);
+    if (res !== expectedResult) console.log("Failed: " + description);
+  }  
+  describe("Test Collection Name", function() {
+    it("should do something", function() {
+      expect(unitToTest()).toEqual(expectedResult);
+    });
+  });
+
+--- Slide 20 ---
+Introduction to Jasmine
+1.1.3 JavaScript Testing
+20
+What is Jasmine?
+Behavior-Driven Development (BDD) Framework
+Facilitates writing clear and descriptive tests.
+JavaScript Testing Library
+Specifically designed for testing JavaScript code.
+No Dependencies Needed
+Works out-of-the-box without requiring additional libraries.
+Rich Feature Set
+Supports spies, mocks, and stubs for comprehensive testing scenarios.
+Why Use Jasmine?
+Automates Testing:     Streamlines the testing process, making it efficient and repeatable.
+Ensures Code Reliability:     Helps in identifying and fixing bugs early in the development cycle.
+Integrates Seamlessly with Node.js:    Ideal for testing Node.js applications and modules.
+*Image from https://www.agilelonestar.com/knowledge-base/bdd
+
+
+--- Slide 21 ---
+21
+*Image from https://jasmine.github.io/
+
+--- Slide 22 ---
+Basic Components of Jasmine
+1.1.3 JavaScript Testing
+22
+describe Block
+Purpose: Groups related tests into a test suite.
+it Block
+Purpose: Defines an individual test case.
+expect Function
+Purpose: Creates an expectation for a test case.
+Matchers
+Purpose: Define the type of assertion to be made.
+Common Matchers:
+toEqual – Checks deep equality.
+toBe – Checks strict equality.
+toContain – Checks if an array contains a specific element.
+toBeTruthy / toBeFalsy – Checks boolean conditions.
+Spies
+Purpose: Monitor function calls and their arguments.
+describe('Test Suite Name', () => {
+    // Test cases go here
+  });
+it('should perform a specific behavior', () => {
+    // Assertions go here
+  });
+expect(actual).toEqual(expected);
+const spy = spyOn(object, 'method');
+
+--- Slide 23 ---
+Sample Test Case - Validating CSV File Input
+1.1.3 JavaScript Testing
+23
+Objective:    Ensure that the user provides a file with a .csv extension.
+Function to Test:
+Test Cases:
+
+Explanation:
+describe('CSV Validator', ...) -> Groups all tests related to the CSV validation functionality.
+First it Block:
+Purpose: Test that isValidCSV returns true when a valid .csv file path is provided.
+Expectation: result should be true.
+Second it Block:
+Purpose: Test that isValidCSV returns false when a non-.csv file path is provided.
+Expectation: result should be false.
+  function isValidCSV(filePath) {
+    return filePath.endsWith('.csv');
+  }
+  describe('CSV Validator', () => {
+    it('should return true for a valid CSV file', () => {
+      const filePath = 'data/sample.csv';
+      const result = isValidCSV(filePath);
+      expect(result).toBe(true);
+    });
+  
+    it('should return false for an invalid CSV file', () => {
+      const filePath = 'data/sample.txt';
+      const result = isValidCSV(filePath);
+      expect(result).toBe(false);
+    });
+  });
+
+--- Slide 24 ---
+Introduction to JavaScript Debugging (Code Debugging in general)
+1.1.4 JavaScript Debugging
+24
+Purpose of Debugging:
+Identify and fix errors uncovered during testing, particularly in edge cases.
+Example: Detect invalid inputs, log error messages, or correct inputs when possible.
+
+Debugging Methods:
+console.log() Method: 
+Display variable values in the console.
+Example:
+
+Setting Breakpoints:
+Pause execution at specific points in your code.
+Examine variable values and step through code to identify issues.
+
+--- Slide 25 ---
+Other Debugging Techniques
+1.1.4 JavaScript Debugging
+25
+debugger Keyword:
+Halts program execution at a specified line, similar to setting a breakpoint in the debugger.
+Example:
+Browser Debugging Tools:
+Browser Console (slide 6)
+Chrome, Edge, and Most Chromium-Based Browsers:Windows/Linux: Ctrl + Shift + J or F12Mac: Command + Option + J
+Firefox:Windows/Linux: Ctrl + Shift + K   Mac: Command + Option + K
+
+let c = 5;
+debugger; // Stops execution here
+c = 15;
+console.log(c);
+
+--- Slide 26 ---
+Introduction to Node.js
+1.2 NodeJS
+26
+What is Node.js?
+Platform for Standalone JavaScript Applications
+Runs JavaScript outside the browser.
+Commonly used for server-side programming and accessing files/databases.
+Getting Started:
+Download and install the LTS (Long-Term Support) version from nodejs.org.
+Verify installation with: 	           in terminal/cmd/powershell
+To Create and run a simple Node.js program:
+node -v
+mkdir myapp
+cd myapp
+echo "console.log('Hello, Node.js!');" > myApp.js
+node myApp.js
+*Image from https://www.kindsonthegenius.com/nodejs/node-js-http-module/
+
+
+--- Slide 27 ---
+Node.js - Getting Started 
+1.2 NodeJS
+27
+Node.js Download:https://nodejs.org/en/downloadhttps://nodejs.org/
+
+
+
+--- Slide 28 ---
+Key Features of Node.js
+1.2 NodeJS
+28
+Event-Driven, Non-Blocking I/O
+Single-Threaded Execution:
+Node.js runs on a single thread for program control.
+Long-running tasks like I/O or network calls are handled asynchronously.
+Asynchronous Programming:
+Code executes continuously without being blocked by tasks like file reading or API calls.
+Simplifies development compared to traditional multi-threading.
+Example: Console Input with Readline Module
+Readline Module:
+Allows reading input directly from the console, one line at a time.
+Code Example:
+const readline = require('readline');
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+rl.question('What is your name? ', (answer) => {
+  console.log(`Hello, ${answer}!`);
+  rl.close();
+});
+
+--- Slide 29 ---
+Node.js Modules
+1.2 NodeJS
+29
+Built-In Modules:
+Simplify application development.
+Common modules include:
+os, fs, events, http, url.
+Including a Module:
+Use the require() function:
+Example: A Minimal Web Server
+const http = require('http');
+function requestProcessor(req, res) {
+  res.write('This service is alive and responding...');
+  res.end();
+}
+const webServer = http.createServer(requestProcessor);
+webServer.listen(8000); // Listen on port 8000
+const fs = require('fs');
+
+--- Slide 30 ---
+Using NPM (Node Package Manager)
+1.2 NodeJS
+30
+What is NPM?
+A package manager for JavaScript modules.
+Manages project dependencies and metadata.
+Example: Installing and Using a Package
+Install a package:
+Use the events package:
+
+
+package.json:
+Central configuration for a Node.js project:
+Metadata: Name, description, version, etc.
+Dependencies: Modules required by the project.
+Auto-generated by 
+
+
+
+const events = require('events');
+const eventEmitter = new events.EventEmitter();
+const myEventHandler = () => console.log('Welcome to this service');
+eventEmitter.on('repeater', myEventHandler); // Attach handler
+eventEmitter.emit('repeater'); // Trigger event
+npm install <package_name>
+npm init
+
+--- Slide 31 ---
+Intro to GitHub
+Ex. Intro to Github
+31
+What is GitHub?
+Version Control System:
+GitHub is a platform for hosting Git repositories.
+Helps track and manage changes to code over time.
+Collaboration Tool:
+Supports teamwork with features like pull requests, code reviews, and issue tracking.
+Cloud Hosting:
+Stores your code online for easy access and backup.
+Why Use GitHub?
+Keep track of code changes.
+Collaborate with team members efficiently.
+Host open-source or private projects.
+
+*Image from https://www.sprintzeal.com/blog/how-to-use-github
+
+--- Slide 32 ---
+Git vs GitHub
+Ex. Intro to Github
+32
+*Image from https://andersenlab.org/dry-guide/2024-07-19/knowledge_base/github/
+
+
+--- Slide 33 ---
+How to Use GitHub
+Ex. Intro to Github
+33
+Basic Workflow:
+Create a Repository:
+Initialize a new project or upload an existing one.
+Add collaborators if working in a team.
+Clone the Repository:
+Copy the repository to your local machine:
+Make Changes Locally:
+Code, Edit files and test your changes.
+Push Changes to GitHub:
+Save your work locally:
+
+Send changes to the remote repository:
+git clone <repository-url>
+git add .
+git commit -m “ The Descriptive message u want "
+git push
+
+--- Slide 34 ---
+Git Commands You Need to Know
+Ex. Intro to Github
+34
+Common Git Commands and Scenarios
+
+--- Slide 35 ---
+Multi-User Workflow with Github
+35
+*Image from https://www2.cs.sfu.ca/~ashriram/Courses/CS295/tutorials/github/github_tutorial.html
+Ex. Intro to Github
+
+--- Slide 36 ---
+Setting Up Your Development Environment
+Install Your Favorite Code Editor
+Examples: Visual Studio Code (VSCode), Atom, Sublime Text
+Install Node.js
+Download from the official website
+Initialize Your Project
+Create Project Directory:
+
+Initialize npm forder the dir:
+Install Jasmine for Testing
+Run the following command in your project directory:
+Initialize Jasmine:
+
+36
+Ex. Homework 1 Guide
+mkdir spreadsheet-reader
+cd spreadsheet-reader
+npm init -y
+npm install --save-dev jasmine
+npx jasmine init
+
+--- Slide 37 ---
+Working on the Core Components
+5. Understand the CSV File Structure
+Familiarize with how CSV (Comma-Separated Values) files are formatted.
+6. Require Necessary Modules
+
+
+7. Create Functions ::
+Function to Read CSV File
+Develop a function that reads a CSV file using the fs module.
+Function to Display Table
+Develop a function that formats and displays the CSV data as a table in the console.
+Create the Main Function
+Develop a main function that:
+Accepts the CSV file path as a command-line argument or prompts the user for it.
+Calls the read and display functions to show the CSV content in the console.
+
+
+37
+Ex. Homework 1 Guide
+const fs = require('fs');
+const path = require('path');
+const readline = require('readline');
+
+--- Slide 38 ---
+Running and Testing the Program
+8. Running and test the Program Manually
+Run the program and enter the file path when prompted. Check printed result.
+
+9. Writing and test Jasmine Test Cases
+Create appSpec.js in the spec Directory:
+Testing for various scenarios, such as valid CSV files, handling empty cells, and managing erroneous file formats etc.
+Run Jasmine Tests by npm test and check the test results
+
+38
+Ex. Homework 1 Guide
+
+--- Slide 39 ---
+Capture Screenshots and Prepare Submission
+Demonstrate Program Output:
+Run your program with different CSV files to showcase various scenarios:
+Example 1: Valid CSV file with complete data. (minimum table size: ___)
+Example 2: CSV file with empty cells.
+Example 3: Invalid file format (e.g., .txt file).
+Take Screenshots:
+Capture images of the terminal showing:
+The prompt for CSV input with file path.
+The raw data in the input csv.
+The printed CSV data in the console.
+Ensure that each screenshot clearly shows the input and corresponding output for each scenario.
+For Submission:
+Compile Documents:
+Single PDF: Combine your source code, Jasmine test cases, and all relevant screenshots into a single PDF file.
+Ensure the PDF is well-organized with clear sections and labels for each part.
+Code Submission:
+If submitting code and tests, they should be submitted by compress the project folder into a .zip file.
+Verify that all necessary files are included and properly named.
+Submission Guidelines:
+Single PDF:    Include code snippets, test cases, and screenshots within the PDF. Ensure readability and clarity to avoid grade deductions.
+ZIP File:          Ensure the zip contains the complete project directory with all code files, test cases.
+39
+Ex. Homework 1 Guide
+
+--- Slide 40 ---
+40

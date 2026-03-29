@@ -1,0 +1,497 @@
+=== Cucumber.js.pdf ===
+
+--- Page 1 ---
+Intro to Behavior-Driven
+Design & User Stories
+ESaaS §7.1
+© 2023 Armando Fox, David Patterson, Michael Ball
+Licensed under Creative Commons Attribution-
+NonCommercial-4.0 Unported License
+
+--- Page 2 ---
+2
+How does Agile avoid failure?
+• Work closely, continuously with stakeholders to
+develop requirements, tests
+• Why? One reason SW projects fail is they don’t do what customer
+wants
+• Other stakeholders: end users, developers, maintenance
+programmers, operators, project managers, …
+• Maintain working prototype while deploying new
+features every iteration (~1-2 weeks, vs. months)
+• Why? Customer can quickly try new features and speak up if on
+the wrong track (validation vs. verification)
+
+--- Page 3 ---
+3
+Behavior-Driven Design (BDD)
+•
+Asks questions about desired behavior of app
+before and during development to reduce
+miscommunication
+•
+Captures answers as user stories
+•
+Concentrates on behavior of app vs.
+implementation of app
+• Test Driven Development or TDD (future segments) tests
+implementation
+•
+“steals great ideas from HCI”
+
+--- Page 4 ---
+4
+Reminder: Agile Iteration
+Talk to customer
+Lo-fi UI mockup
+User stories & scenarios
+Legacy Code
+Design patterns
+Behavior-driven
+Design / user stories
+RSpec
+Test-first dev. (unit/funct.)
+Measure Velocity
+Deploy
+
+--- Page 5 ---
+5
+User Stories (from HCI!)
+• 1-3 sentences in everyday language
+• Fits on an index card
+• Written by/with customer
+• “Connextra” format:
+• Feature name
+• As a [kind of stakeholder],
+So that [I can achieve some goal],
+I want to [do some task]
+• 3 phrases must be there, can be in any order
+• Idea is to capture “business value” of feature
+
+--- Page 6 ---
+6
+Why small cards & plain language?
+•
+Plain language is nonthreatening to
+nontechnical customers
+•
+all stakeholders help brainstorm
+•
+Easy to rearrange
+•
+all stakeholders help prioritize
+•
+Short and specific to one behavior
+•
+easier to change during development
+
+--- Page 7 ---
+7
+“Behavior” is in the eye of the stakeholder
+• Moviegoer can see which of their friends are going
+to a show
+• As a moviegoer
+• So that I can enjoy the movie with my friends
+• I want to see which of my social network friends are attending a
+given movie
+• Theater manager can see patron’s connected social
+network (“friends”)
+• As a box office manager
+• So that I can induce a patron to buy a ticket
+• I want to show them which of their friends are going to the show
+
+--- Page 8 ---
+SMART User Stories
+ESaaS §7.2
+© 2023 Armando Fox, David Patterson, Michael Ball
+Licensed under Creative Commons Attribution-
+NonCommercial-4.0 Unported License
+
+--- Page 9 ---
+9
+What makes a good user story?
+•
+Specific
+•
+Measurable
+•
+Achievable
+(ideally, implement in
+1 iteration)
+•
+Relevant (“the 5 whys”)
+•
+Timeboxed (know when to give up)
+
+--- Page 10 ---
+1
+0 Specific & Measurable
+• Idea: can you write down a step-by-step procedure
+that someone with no knowledge of the app could do
+to verify the specific behavior?
+• Anti-example: “UI should be more user-friendly”
+• Example: Given/When/Then.
+Given some very specific starting condition(s),
+When I take specific action X,
+Then one or more specific thing(s) should happen
+• In general, you could write an automated test for it
+
+--- Page 11 ---
+1
+1 Achievable
+•
+Complete in 1 iteration
+•
+Otherwise: divide into multiple stories that
+form an epic
+•
+Goal: Always have working code at end of
+iteration
+•
+<1 story per iteration 🡺 need to improve point
+estimation!
+•
+Related: Timeboxed
+
+--- Page 12 ---
+1
+2 Relevance: the 5 Whys
+“Show patron’s social-network friends”
+As a box office manager
+So that I can induce a patron to
+buy a ticket
+I want to show them which
+friends are going to a given show
+?
+?
+?
+? ?
+
+--- Page 13 ---
+SMART or not?
+•
+User can search for a movie by title
+•
+Given I have a free movie pass, I want to
+redeem it for an eligible movie before it
+expires
+•
+When adding a movie, 99% of page loads
+should appear within 3 seconds
+•
+note, we haven’t talked about business
+value here…
+
+--- Page 14 ---
+Class-Responsibility-Collaborator (CRC) Cards
+Class
+•
+What does this class
+know?
+•
+What does it do?
+•
+What other classes does it
+collaborate with and how?
+•
+Goal: make the design
+Collaborators
+concrete
+Responsibilities
+
+--- Page 15 ---
+Lo-Fi UI Sketches &
+Storyboards
+ESaaS §7.3
+© 2023 Armando Fox, David Patterson, Michael Ball
+Licensed under Creative Commons Attribution-
+NonCommercial-4.0 Unported License
+
+--- Page 16 ---
+1 Avoiding WISBNWIW*:
+6
+Customer participates in UI development
+•
+Pen & paper sketch!
+•
+Why not wireframe?
+•
+Storyboards animate
+the prototype manually
+•
+similar to “Wizard of Oz”
+testing in HCI
+(From Engineering Software as a
+* “What I said but not what I wanted” Service © by Armando Fox and David
+Patterson, used with permission)
+
+--- Page 17 ---
+1
+7 Why lo-fi?
+•
+Less intimidating to nontechnical
+stakeholders
+•
+More likely to suggest changes to UI if
+no code behind it
+•
+More likely to focus on interaction
+(behavior) rather than colors, fonts, …
+•
+CSS can make it look nice later
+
+--- Page 18 ---
+#8. Working with the customer:
+BDD & Lo-Fi Prototyping
+• “Lo-fi and storyboards really helpful in working with
+customer”
+• “Frequent customer feedback is essential”
+• “What we thought would be cool is not what
+customer cared about”
+• “We did hi-fi protoypes, and invested a lot of time only
+to realize customer didn’t like it”
+• “Never realized how challenging to get from customer
+description to technical plan”
+
+--- Page 19 ---
+From Stories to Acceptance
+Tests: Introducing Cucumber
+ESaaS §7.6
+© 2023 Armando Fox, David Patterson, Michael Ball
+Licensed under Creative Commons Attribution-
+NonCommercial-4.0 Unported License
+
+--- Page 20 ---
+2
+0 ⬄
+Key idea #1: story acceptance test
+•
+What if you could create a test from customer-
+friendly user story?
+• Acceptance: ensure satisfied customer
+• Integration: test full-stack functionality
+•
+Cucumber connects “almost plain language”
+test description to code
+• Plain language 🡺 can discuss with customer
+• You define your own “vocabulary” (a domain language) &
+terms that make sense for your app
+
+--- Page 21 ---
+2
+1 5 Step Keywords
+Given
+state of world before event: set up
+preconditions
+When
+user does something
+•
+e.g., simulate user pushing a button
+Then
+check expected postconditions
+And But
+& extend previous step
+
+--- Page 22 ---
+2
+2 Example User Story
+Feature: User can manually add movie Feature (name of
+story)
+Scenario: Add a movie ≥1 Scenarios / Feature (happy/sad paths)
+Given I am on the RottenPotatoes home page
+When I follow "Add new movie"
+Then I should be on the Create New Movie page
+When I fill in "Title" with "Men In Black"
+And I select "PG-13" from "Rating"
+And I press "Save Changes"
+Then I should be on the RottenPotatoes home page
+And I should see "Men In Black"
+3 to 8 Steps / Scenario
+
+--- Page 23 ---
+Key Idea #2: Regexes match scenario steps
+to Step Definitions (“step defs”)
+# args matches # of
+When /I follow "(.*)"/ do |name|
+capture groups
+…code that triggers app to follow link
+end
+When I follow "Add new movie"
+•
+gem
+cucumber-rails-training-wheels
+provides some very basic step defs…
+
+--- Page 24 ---
+From Stories to Acceptance
+Tests: Introducing Capybara
+ESaaS §7.6
+© 2023 Armando Fox, David Patterson, Michael Ball
+Licensed under Creative Commons Attribution-
+NonCommercial-4.0 Unported License
+
+--- Page 25 ---
+2
+5 “Fake User” to try Scenarios
+•
+Capybara library simulates
+user by automating browser
+•
+HTTP request to any route in app
+•
+Submit forms, interact with UI
+elements
+•
+Interact with app, receive pages
+•
+Execute JavaScript
+•
+Parse HTML, allow programmatic inspection
+
+--- Page 26 ---
+A (very) few Capybara methods
+visit "/movies"
+click_link "Add new movie"
+fill_in "Title", :with => "The Thing"
+fill_in "form#form1 nameField", :with => …
+select "R" from "Ratings"
+click_button "submit"
+
+--- Page 27 ---
+Rails/SaaS testing stacks
+Cucumber RSpec
+Capybara
+one capybara-webkit formerly Selenium
+rack-test Webdriver
+(adds JS support)
+process
+Rack
+browser
+Rails app
+web server
+SQLite
+Rails app
+MySQL,
+Postgres, etc.
+Heroku
+Postgres
+
+--- Page 28 ---
+Points & Velocity
+ESaaS §7.4
+© 2023 Armando Fox, David Patterson, Michael Ball
+Licensed under Creative Commons Attribution-
+NonCommercial-4.0 Unported License
+
+--- Page 29 ---
+2
+9 Some stories harder than others…
+•
+Vote: 1…3 points for story (else: Epic)
+• Usually, >3 points means “I don’t know”
+•
+Velocity: moving average of #points
+delivered per iteration
+Use within team, not across teams!
+Opinion: 1-point stories are good!
+Goal: improve estimation ability over time
+
+--- Page 30 ---
+3
+0 Real systems have 100s of stories…
+•
+Backlog: stories prioritized but not yet
+started (“in the queue”)
+• Prioritize w/customer according to business value
+•
+Icebox: stories not yet pointed/prioritized
+• may or may not get done later
+•
+Spike: short investigation of problem,
+technique, tool, library, etc.
+• bound the time
+• when done, discard code, then do it properly
+
+--- Page 31 ---
+Centralizing a Team’s Activities…
+•
+Features: SMART business value and
+have points
+•
+Bugs: aren’t worth points
+•
+Chores: necessary but don’t have
+business value or points (eg, refactor)
+•
+Design documents, GitHub
+integration…
+
+--- Page 32 ---
+Story states:
+Unstarted
+Started
+Finished
+Delivered
+Accepted
+Stories
+(“features”)
+can have
+points
+and tasks
+be part of an
+epic
+pivotaltracker.com
+or just a bug
+or a chore
+
+--- Page 33 ---
+P&D vs. Agile: requirements & effort estimation
+Tasks In P&D In Agile
+Requirements elicitation interviews, use cases user stories
+Requirements documentation Sofware Requirements Cucumber scenarios and
+Specification, such as IEEE 830- supporting documents (lo-fi
+1998 mandates sketches, etc.)
+Change management Version control for documentation and code
+Ensuring Requirements Features Traceability to link features to code, Linking Pull Requests to story IDs in
+tests, reviews, SRS… story-tracking system
+Scheduling and Monitoring Delivery date contracted based on Points, velocity
+cost estimates; use PERT charts,
+monitor milestonees
+Cost estimation Early in project, estimate cost based Evaluate to pick range of effort for
+on manager experience or time & materials contract
+estimates of task size, combined
+with productivity metrics
+Risk management (budget & Early in project, identify top risks
+schedule) (%chance x impact) and actions to
+mitigate them
+
+--- Page 34 ---
+Fallacies, Pitfalls, Concluding
+Remarks on BDD
+ESaaS §7.10–7.11
+© 2023 Armando Fox, David Patterson, Michael Ball
+Licensed under Creative Commons Attribution-
+NonCommercial-4.0 Unported License
+
+--- Page 35 ---
+Fallacies & pitfalls
+•
+Using velocity to compare teams
+•
+Assigning 3 (or more) points to stories
+whose complexity you’re unsure of
+•
+Conflating Finished, Delivered, Accepted
+•
+Dividing work by layers vs. by stories
+
+--- Page 36 ---
+7. Stories vs. Layers
+• “Dividing work by stories helps all team members
+understand app & be more confident when changing it”
+• “Tracker helped us prioritize features and estimate difficulty”
+• “We divided by layers [front-end vs. back-end vs.
+JavaScript, etc.] and it was hard to coordinate getting
+features to work”
+• “It was hard to estimate if work was divided fairly…not sure if
+our ability to estimate difficulty improved over time or not”

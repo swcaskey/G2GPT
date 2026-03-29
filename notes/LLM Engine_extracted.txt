@@ -1,0 +1,467 @@
+=== LLM Engine.pdf ===
+
+--- Page 1 ---
+L 3: Introduction to
+ECTURE
+LLMs
+Zhao Zhang
+Rutgers University
+
+--- Page 2 ---
+Overview
+1. High-level overview of the workflow of GPT2 model.
+2. Tokenization
+3. Layers in GPT-2 model
+a. Embedding layer
+b. Positional encoding layer
+c. Decoder layer
+i. Layernorm
+ii. Multi-head self-attention mechanism
+iii. MLP (or feedforward layer)
+2
+
+--- Page 3 ---
+High-level overview
+3
+
+--- Page 4 ---
+Tokenization
+4
+
+--- Page 5 ---
+Tokenizer
+● Why do we need a tokenizer?
+○ ML/DL can only handle matrices/tensors.
+○ A string of words need to be converted into numerical values by Tokenizer.
+● Tokenizer is not part of the GPT-2 model.
+○ But it is very important!
+○ It determines how the model sees the strings, which can cause significant differences on
+model’s inference performance.
+● Tokenizer is trained from the pretraining dataset.
+○ So, different LLMs have their own tokenizers.
+5
+
+--- Page 6 ---
+Tokenization
+● One tokenizer has two parts
+○ Encoder and decoder.
+○ Encoder: a string -> numbers.
+○ Decoder: numbers -> a string.
+● The simplest tokenizer
+○ Encode chars to UTF-8 values.
+○ But computationally intractable
+because attention mechanism has
+O(n^3) time complexity.
+● Try different tokenizers: link
+6
+
+--- Page 7 ---
+GPT-2 tokenizer vs GPT-3 tokenizer
+7
+
+--- Page 8 ---
+GPT-2 tokenizer vs GPT-3 tokenizer
+8
+
+--- Page 9 ---
+GPT-2’s tokenization strategy
+● Byte Pair Encoding (BPE) (source code).
+● Continues merging pairs of UTF-8 encoded bytes.
+● Here is an example:
+○ Suppose we have already converted every char in a string into its byte representation.
+■ For example, “aaabdaaabac” -> [97, 97, 97, 98, 100, 97, 97, 97, 98, 97, 99].
+○ Then we group every char with its right adjacent char.
+■ [(aa),(aa),(ab),(bd),(da),(aa),(aa),(ab),(ba),(ac)]
+■ [(97,97),(97,97),(97,98),(98,100),(100,97),(97,97),(97,97),(97,98),(98,97),(97,99)]
+○ We find the most frequent pair, which in this case, is (aa).
+○ Every (aa) pair is replaced by a new special char, say “Z”.
+■ “aaabdaaabac” -> “ZabdZabac”.
+■ We give index 256 (UTF-8 encoded value ranges from 0 to 255) to “Z” and store this info
+into a lookup table.
+○ Then we continue the steps above with the new str.
+■ Every step will create a new index, and we can choose when to stop.
+9
+
+--- Page 10 ---
+GPT-2 tokenizer details
+● GPT-2 tokenizer works at the word-level, not the string-level.
+○ I.e. OpenAI team first uses regex operations to break a string into many word-like chunks, and
+then perform encoding on these chunks.
+○ These are chunks instead of words because 1) there are usually numbers in the text, 2) if a
+word has a leading white space, that white space is grouped with the word (e.g. “hello world” -
+> “hello”, “ world”), 3) punctuations are usually separated from word, and 4) “I’ve” -> (“I”,“’ve”.
+● Ran BPE algo for 50,000 iterations on WebText creates a lookup table of
+50,256 items.
+○ One more special token as the 50,257th item, <|endoftext|>, which separates two contexts.
+● To check its lookup table: link.
+10
+
+--- Page 11 ---
+GPT-2 tokenizer encoding
+1. Use regex to break a string into chunks.
+a. “Hello World!” -> [“Hello”, “ World”, “!”]
+2. For each chunk, encode it to UTF-8 format.
+a. “Hello” -> [\x48, \x65, \x6C, \x6C, \x6F]
+b. “ World” -> [\x20, \x57, \x6F, \x72, \x6C, \x64]
+c. “!” -> [\x21]
+3. Use the lookup table to iteratively compress tokens, starting with pair that has
+the smallest value first.
+a. [“H”, “e”, “l”, “l”, “o”] -> Try pair w/ the adjacent right and find the one has smallest value in Text
+Bytes.
+4. Add the special token <|endoftext|> to the end of a text.
+5. Finally, put all together to form a tensor of tokens.
+6. Note that these all happen before the pretraining.
+a. This is what “megatron-lm/tools/preprocess_data.py” does.
+11
+
+--- Page 12 ---
+GPT-2 tokenizer decoding
+● Decoding is needed when we want to generate a sentence.
+● It is the reverse of encoding.
+● Given a list of tokens (i.e. integers), we need to convert them into a string.
+○ Also an iterative process.
+○ Decompose one token into a pair of tokens until every token cannot be decomposed anymore.
+○ Finally, use the inverse of the lookup table to convert each token to a char.
+12
+
+--- Page 13 ---
+Layers in GPT-2 model
+13
+
+--- Page 14 ---
+How to construct the pretrianing as an
+unsupervised learning problem?
+14
+
+--- Page 15 ---
+Consider pre-training as an optimization problem
+● GPT-2 was trained using unsupervised learning method.
+○ No manually curated labels needed.
+● Given an unsupervised corpus of tokens U = {u_1, …, u_n}, we use a
+standard language modeling objective to maximize the following likelihood:
+Where k is the context window, and P is modeled using a neural network w/
+parameters Θ.
+15
+
+--- Page 16 ---
+Another way to understand the loss func.
+● To get the probability of generating a target “sentence”, we multiply the
+conditional probability of generating each target “word”:
+● Take the log of the a product and make it a summation problem (w/ same
+minimization target):
+● log(p) can be calculated from cross entropy loss (torch.nn.CrossEntropyLoss).
+16
+
+--- Page 17 ---
+How to generate probability
+● Use layers of Transformer decoder.
+● This model applies a multi-headed self-attention operation over the input
+context tokens followed by position-wise feedforward layers to produce an
+output distribution over target tokens
+where W_e is the embedding layer, W_p is the positional encoding layer, and
+there are n decoders in this model.
+● Note that we need W_e both for the input and output.
+17
+
+--- Page 18 ---
+RNN in Machine Translation
+18
+
+--- Page 19 ---
+Sequence-to-sequence with Attention
+19
+
+--- Page 20 ---
+Sequence-to-sequence with Attention
+20
+
+--- Page 21 ---
+Sequence-to-sequence with Attention
+21
+
+--- Page 22 ---
+Sequence-to-sequence with Attention
+22
+
+--- Page 23 ---
+Sequence-to-sequence with Attention
+● Encoder hidden states: ℎ ,ℎ ,...,ℎ ∈ ℝℎ
+1 2 𝑁
+●
+Decoder hidden state at time t: 𝑠
+𝑡
+● Attention Scores (𝑒𝑡) for this step: 𝒆𝒕
+= [𝑺𝑻𝒉 ,...,𝒔𝑻𝒉 ] ∈ ℝ𝑵
+𝒕 𝟏 𝒕 𝑵
+● Attention weights/distribution (𝛼𝑡): 𝛼𝑡
+= 𝑠𝑜𝑓𝑡𝑚𝑎𝑥(𝑒𝑡) ∈ ℝ𝑁
+● Attention Output (𝑎𝑡):
+○Weighted sum of encoder hidden
+states using (𝛼𝑡) :
+23
+
+--- Page 24 ---
+Sequence-to-sequence with Attention
+● Attention Output (𝑎𝑡):
+○Weighted sum of encoder hidden
+states using (𝛼𝑡) :
+𝑁
+𝑎 = ∑ 𝛼 𝑡 ℎ ∈ ℝℎ
+𝑡 𝑖 𝑖
+𝑖=1
+●
+Finally we concatenate the attention output 𝑎
+𝑡
+with the decoder hidden state 𝑠 and proceed
+𝑡
+as in the non-attention seq2seq model
+○[𝑎 ;𝑠 ] ∈ ℝ2ℎ
+𝑡 𝑡
+24
+
+--- Page 25 ---
+A more concrete example
+● This is an oversimplified example.
+● Hopefully, it can convey the basic ideas of input and output shapes.
+● Assume we have a training corpus as:
+○ “Generative Pre-trained Transformer 2 (GPT-2) is a large language model by OpenAI and the
+second in their foundational series of GPT models.”
+● We first need to break a corpus into blocks/chunks:
+○ Suppose we have block size (or context size k) of 8.
+○ [“Generative Pre-trained Transformer 2 (GPT-2) is a large language”, “model by OpenAI and
+the second in their”, “foundational series of GPT models.”]
+○ If we focus on the 1st chunk:
+■ Input: [[“Generative”], [“Generative”, “ Pre-trained”], …, [“Generative”, “ Pre-trained”, “
+Transformer”, “ 2”, “ (“, “GPT”, “-”, “2”, “)”, “ is”, “ a”, “ large”, “ language”]]
+■ Output: [“Pre-trained”, “Transformer”, …, “model”].
+■ Output is simply the next word of the input words in their original corpus.
+25
+
+--- Page 26 ---
+Model architecture
+26
+
+--- Page 27 ---
+GPT-2’s block diagram
+● GPT-2 model is similar to GPT-1.
+● Except some corrections:
+○ Layer norm is moved to the place before
+attention and MLP block.
+○ An additional layer norm is added to the end
+of decoder layers.
+● We will cover embedding layer,
+positional encoding layer, multihead
+attention block, and layer norm in
+more details in the following slides.
+● Code can be found here.
+27
+Pre-layernorm residual
+
+--- Page 28 ---
+Code snippet
+● A very simple implementation of the decoder layer (link)
+28
+
+--- Page 29 ---
+Embedding layer
+29
+
+--- Page 30 ---
+After tokenization…
+● After converting strings to tokens, can we directly use these tokens for the
+attention mechanism?
+● No! We need to represent each token by a vector.
+● Why bother? If two “words” have similar semantic meaning (e.g. “good” and
+“nice”), we also want them to have similar mathematical representations
+(maybe in a higher dimensional space).
+● To know more about it, check the distributed representation of words paper.
+30
+
+--- Page 31 ---
+Example of vector representations of words
+31
+
+--- Page 32 ---
+Embedding layer
+● How to convert tokens to vectors?
+● Use embedding layer!
+○ Embedding layer is a lookup table (or a dict in Python).
+○ Tokens are the keys, and vectors are the values.
+● Embedding layer is trainable.
+● Check torch.nn.Embedding to see examples and
+implementation details.
+32
+
+--- Page 33 ---
+Padding
+● From the example in page 18, we see that the number tokens in each
+sequence is not the same.
+● This is problematic for matrix operations (we will see later in the self-attention
+section).
+● Therefore, padding is needed.
+● Pad to the right by a special “padding token”.
+● However, this brings up other problems when we talk about self-attention and
+normalization.
+33
+
+--- Page 34 ---
+Positional encoding layer
+34
+
+--- Page 35 ---
+Positional encoding layer
+● After the embedding layer, we need a positional
+encoding layer.
+● Why? Because we want to let model have the
+positional info of “words” in the string, so that we can
+perform operations on them in parallel.
+● There are many ways to construct the positional
+encoding layer, for example, in the transformer paper,
+they use cos/sin function.
+● In GPT-2 paper, they use torch.nn.Embedding as the
+positional encoder, making it trainable.
+35
+
+--- Page 36 ---
+Layer normalization
+36
+
+--- Page 37 ---
+Why normalization?
+● It provides better model performance in terms of accuracy.
+○ The gradients weights in one layer are highly dependent on the outputs of the neurons in the
+previous layer especially if these outputs change in a highly correlated way.
+○ Batchnorm alleviate this problem in the backprop process.
+● The most commonly used norm is batch normalization.
+○ We normalize across all the training examples in the current batch.
+where μ and σ keep the same dim as the number of features in a batch, and γ
+and β are trainable parameters.
+37
+
+--- Page 38 ---
+Layer normalization
+● Suppose every example has d-dim
+where μ and σ are 1-dim values.
+● For sentences, we perform layernorm on all the features in one “word”, which
+is usually the last dim in K.shape, Q.shape, and V.shape.
+● Torch document: link, and the paper.
+38
+
+--- Page 39 ---
+Visualization
+39
+
+--- Page 40 ---
+Why layer norm instead of batch norm?
+● Sentences differ in length.
+● A minibatch has sentences with different length -> μ and σ in batch norm
+changes frequently across different mini-batches.
+● μ and σ learned in training might not be suitable for unseenly long sentences
+in inference.
+40
+
+--- Page 41 ---
+Multi-head self-attention mechanism
+41
+
+--- Page 42 ---
+Multi-head Attention - cont.
+● Key (K), Value (V), and Query (Q)
+are the same.
+● But, after passing them through the
+Linear layers (feed forward layers),
+they will differ.
+● K, V, and Q are splitted along the
+d_model dim, where d_model is the
+dim of vectors stored in embedding
+layers and the output dim of each
+decoder block.
+42
+
+--- Page 43 ---
+Multi-head Attention - cont.
+● After the embedding layers, the
+input has three dim: (batch,
+sequence_len, d_model).
+● After the split, each of them has
+shape: (batch, sequence_len,
+num_head, d_model//num_head).
+● All these dims are hyper-params.
+● This multi-head split can help
+reduce the computation in each
+attention block significantly.
+43
+
+--- Page 44 ---
+Masked self-attention
+● torch.matmul(Q,K) measures
+similarities between vect. in Q and K.
+● Scaling by sqrt(d_model//num_head)
+to avoid having all prob concentrate
+on one entry in the matmul result.
+● Mask is a lower-triangular matrix,
+which masks the query from future
+key content.
+● Softmax gives the prob.
+● This whole process can be seen as
+computing the weighted average
+sum of vectors in V.
+44
+
+--- Page 45 ---
+A more concrete example
+● Let’s reuse the example in page 18 and assume batchsize = 1.
+○ Input: [[“Generative”], [“Generative”, “ Pre-trained”], …, [“Generative”, “ Pre-trained”, “
+Transformer”, “ 2”, “ (“, “GPT”, “-”, “2”, “)”, “ is”, “ a”, “ large”, “ language”]]
+● Let’s ignore the linear transformation and consider Q=K=V.
+● Let’s also ignore multihead attention for simplicity.
+● Let’s visualize Q, K, and V in matrix form:
+45
+
+--- Page 46 ---
+Matmul of Query and Key
+● For torch.matmul(Q, K^T):
+where \vec{Emb(0)} represents the embedding results of the “padding token”.
+46
+
+--- Page 47 ---
+Need an attention mask
+● Without an attention mask, we will have an attention score from the “future”:
+● We want the model to guess the next “word” given only the existing context.
+● In other words, vectors in K and Q should not see the answers in the future.
+Otherwise, it is cheating!
+● So, we need an attention mask after K^T \times Q, which should filter out all
+the attention scores computed using future information.
+47
+
+--- Page 48 ---
+Attention mask
+● An attention mask can be as simple as a lower
+triangular matrix, where the lower entries are 1s
+and the upper entries are 0s.
+● Code snippet (link)
+Yellow=1, purple=0
+48
+
+--- Page 49 ---
+Some final reminders on MLP block
+● The output from multi-head blocks are concatenated together.
+● The activation they used in GPT-2 is GeLU instead of ReLU.
+○ GeLU is continuous and differentiable everywhere.
+● Two layers in MLP block:
+○ Hidden size = 4 x d_model.
+○ Output size = d_model.
+● After the MLP layer, the output will have the same shape as the input, so that
+we can easily pass it to the next decoder layer without worrying about dims.
+49
+
+--- Page 50 ---
+References
+● Megatron-LM: https://github.com/NVIDIA/Megatron-LM
+● Huggingface GPT-2:
+https://github.com/huggingface/transformers/blob/main/src/transformers/mode
+ls/gpt2/modeling_gpt2.py
+● PyTorch version of OpenAI’s GPT-2: https://github.com/graykode/gpt-2-
+Pytorch/blob/master/GPT2/model.py
+● Illustration of GPT-2: https://jalammar.github.io/illustrated-gpt2/
+50

@@ -1,0 +1,158 @@
+=== Ollama.pdf ===
+
+--- Page 1 ---
+Ollama: Run LLMs Locally
+TA Session: Fangru Linghu
+02/09/2026
+
+--- Page 4 ---
+What is Ollama
+• Ollama = local LLM runtime + model manager
+• Lets you download (“pull”), run, and serve LLMs on your machine
+• Provides:
+• CLI for interactive use
+• Local HTTP API for programmatic calls (your backend can call it)
+• http://127.0.0.1:11434 by default
+
+--- Page 5 ---
+Why Ollama
+• There are multiple tools for running LLMs locally:
+• vLLM
+• High-performance GPU inference
+• Optimized for high concurrency and throughput
+• Commonly used when deploying LLMs as a scalable service
+• llama.cpp
+• Lightweight C/C++ inference engine
+• Efficient on CPU and low-resource machines
+
+--- Page 6 ---
+Why Ollama
+• Ollama
+• Simple installation across macOS, Windows, and Linux
+• Unified interface
+• Both CLI and Local HTTP API
+• Easy model management (pull, run, list)
+• Ollama is the best match of our course goal: Focus on system design,
+not deployment complexity or inference optimization
+
+--- Page 7 ---
+Demo
+
+--- Page 8 ---
+Installation
+• Step1: Install Ollama from the official website
+• https://docs.ollama.com/quickstart
+• Step2: Open your Terminal:
+# Start ollama
+ollama serve
+# Check intallation
+ollama ——version
+# Help
+ollama ——help
+
+--- Page 9 ---
+Model Selection
+• Smaller models
+• Faster, lower memory usage
+• Good for basic chat, simple reasoning, quick demos
+• Larger models
+• Better reasoning and generation quality
+• Slower and more memory-intensive
+
+--- Page 10 ---
+Model Selection
+Total memory ≈ Model weights + KV cache + Runtime overhead
+≤ 8 GB RAM
+→ Use small models (e.g., ~2B–4B parameters)
+16 GB RAM
+→ Mid-size models (~7B parameters) usually work well
+32 GB+ RAM or GPU available
+→ Larger models are possible, but expect higher latency
+
+--- Page 11 ---
+Model Selection
+• Find supported models
+• https://ollama.com/library
+
+--- Page 12 ---
+Model Selection
+• Frequently Used Commands:
+# List all locally available models
+ollama list
+# Inspect model details and configuration
+ollama show llama3.2
+# Run a model (first run will download it automatically)
+ollama run deepseek-r1:14b
+# Pull a model in advance
+ollama pull qwen2.5:7b
+
+--- Page 13 ---
+Customize Your Model
+• Ollama provide Modelfile, letting you define default behavior for a
+model.
+• Example:
+### Modelfile
+FROM deepseek-r1:14b
+# sets the temperature to 0.2 [higher is more creative, lower is
+more coherent]
+PARAMETER temperature 0.2
+# sets the context window size to 4096, this controls how many
+tokens the LLM can use as context to generate the next token
+PARAMETER num_ctx 4096
+
+--- Page 14 ---
+Customize Your Model
+# View the Modelfile of a givin model
+ollama show --modelfile llama3.2
+# Verify the usage
+ollama ps
+
+--- Page 15 ---
+Customize Your Model
+Trade-offs:
+• Context length
+• Longer context allows the model to take in more information
+• Comes with higher memory usage due to a larger KV cache
+• Can significantly increase latency, even for short inputs
+• Very long contexts may also lead to context rot, where earlier information becomes
+less effective
+• Model size
+• Larger models may provide better reasoning and generation quality (maybe)
+• Require more RAM / VRAM to load model weights
+• Smaller models are often fast, stable, and sufficient for many simple tasks
+
+--- Page 16 ---
+Customize Your Model
+Trade-offs:
+• Practical takeaway
+• Context length and model size are not “the bigger, the better”
+• They should be chosen based on task requirements and hardware
+constraints
+• Start from a 1~4B model with a context length of 4096, then adjust
+as needed
+
+--- Page 17 ---
+Possible Issues
+• RAM/VRAM issue
+• Model may be too large for your machine
+• Symptoms: very slow response, model fails to load, or process gets killed
+• Solution: choose a smaller model or close other memory-intensive
+applications
+• Port unavailable
+• Default port is 11434
+• Error occurs if the port is already in use
+• Solution: stop the existing Ollama service or check which process is using
+the port
+
+--- Page 18 ---
+Homework 2
+In this homework, you will set up a local LLM using Ollama.
+Requirements:
+1) Install Ollama on your local machine
+2) Select a model appropriate for your available RAM/VRAM
+3) Run the model successfully using the Ollama CLI
+4) Verify your setup by generating a response from the model
+Submission:
+1. A screenshot showing that ollama serve is running
+2. A screenshot of a successful CLI test (including query and response)
+3. A brief note indicating which model you used

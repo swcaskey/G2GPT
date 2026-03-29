@@ -1,0 +1,1161 @@
+=== MySQL.pdf ===
+
+--- Page 1 ---
+Software Engineering
+Database Integration
+SQL, NoSQL
+Zhao Zhang
+Rutgers University
+1
+
+--- Page 2 ---
+Topics
+▪
+SQL and NoSQL
+▪
+Relational Databases
+– ER Model
+▪
+Structured Query Language (SQL)
+– Basics
+▪
+Database Management Systems (DBMS)
+– MySQL
+▪
+Database Access from Programming
+Languages
+2
+
+--- Page 3 ---
+What is a Database System?
+▪
+Database:
+A large collection of related data
+• Shift from computation to information
+▪
+DBMS (database management system):
+A set of software programs that controls the
+organization, storage and retrieval of data
+from databases
+▪
+Database System:
+DBMS + data (+ applications)
+3
+
+--- Page 4 ---
+Unstructured Data Storage
+We could use simple text files ...
+▪
+Plain text File-1: ( )
+each “record” is a new line
+"John Doer rented apartment #101 on December 4, 2024"
+"Jane Deere rented apartment #103 on January 15, 2025"
+…
+▪
+Plain text File-2:
+"Tenant John Doer entered apartment #101
+on February 16, 2025 at 5:30 PM"
+"Tenant John Doer entered apartment #101
+on February 17, 2025 at 5:48 PM"
+…
+4
+
+--- Page 5 ---
+Structured Data Storage
+Tenant Activity Time Location
+February 16,
+Enter 2025 at 5:30 apartment #101
+PM
+February 17,
+John Doer
+Enter 2025 at 5:48 apartment #101
+PM
+December 4,
+Rent apartment #101
+2024
+January 15,
+Jane Deere Rent apartment #103
+2025
+5
+
+--- Page 6 ---
+JSON—
+Another Way of Data Structuring
+▪
+JSON: JavaScript Object Notation
+https://en.wikipedia.org/wiki/JSON
+– Similar to JavaScript’s way of writing objects
+– All property names must be surrounded by double quotes
+– Only simple data expressions are allowed—no function calls,
+bindings, or anything that involves computation
+▪
+Example:
+{
+"tenant": "John Doer",
+"activity": "enter",
+"time": "February 16, 2025 at 5:30 PM",
+"location": "apartment #101"
+}
+▪
+Most often format used in NoSQL databases
+6
+
+--- Page 7 ---
+Why Databases?
+(instead of plain/unstructured files)
+▪
+Abstraction
+– More compact and consistent data
+▪
+Query language
+– Data retrieval easier to program and more efficient
+• e.g., (Get time when John Doer entered apartment #101)
+▪
+Data integrity when shared between
+multiple users
+▪
+Reliability, Recovery, Security, Data-entry
+validation
+— all provided by the database system
+7
+
+--- Page 8 ---
+DBMS:
+Database Management System
+▪
+List of existing Database Systems:
+https://dbdb.io/browse
+▪
+Popular SQL-based database:
+MySQL —
+https://en.wikipedia.org/wiki/MySQL
+– [See the lectures on the REST architecture for an
+example of using MySQL from NodeJS
+▪
+Alternative: NoSQL databases (use JSON)
+— MongoDB, Firebase, …
+– Another option: NeDB … (see next page)
+8
+
+--- Page 9 ---
+NeDB — a NoQSL Database
+▪
+NeDB: a NodeJS library with an API for a
+NoSQL database (JSON data format)
+▪
+NeDB mimics a key subset of MongoDB’s API
+– NeDB is fully embedded in the server-side application
+• Does not require an additional server to set up and connect to
+• Unlike MongoDB which is a separate server that you run and make
+calls from your program
+▪
+https://github.com/louischariot/nedb
+▪ https://stackabuse.com/nedb-a-lightweight-javascript-database/
+9
+
+--- Page 10 ---
+NeDB Example
+▪
+Example in NodeJS:
+Insert a JSON “document”,
+then just retrieve the same document using a query and print it to the console
+const db = new nedb({ filename : "people.db", autoload : true });
+db.insert({ firstName : "Billy", lastName : "Joel" }, // insert
+function (inError, inDocument) {
+if (inError) {
+console.log(`Error: ${inError}`);
+} else {
+db.findOne({ firstName : "Billy" }, // query
+function (inError, inDocument) {
+if (inError) {
+console.log(`Error: ${inError}`);
+} else {
+console.log(inDocument);
+}
+}
+};
+}
+} 10
+);
+
+--- Page 11 ---
+Referencing Objects in NoSQL
+▪
+NOTE: Unlike SQL, there are no foreign keys
+in NoSQL.
+Instead, you may consider embedding or
+references.
+▪
+Check more information on the Web, e.g.,
+https://www.mongodb.com/docs/manual/data-
+modeling/#link-related-data
+11
+
+--- Page 12 ---
+Database Schema
+▪
+Schema = the structure of the database
+– e.g., the database consists of information about collections of
+people and apartments, and the “renting” relationship between
+them
+– Analogous to type information of a variable in a program
+– Physical schema: database design at the physical storage level
+– Logical schema: database design at the logical concepts level
+▪
+Similar to data types and variables in
+programming languages
+12
+
+--- Page 13 ---
+Data Organization
+▪ Data Model = a framework for organizing and interpreting data,
+describes:
+– data
+– data relationships
+– data meaning (semantics)
+– data constraints or business/domain rules
+▪ Entity-Relationship (E-R) model
+– a diagramming notation for relational tables and constraints
+– graphically represents relationships between tables (sets of entities)
+– used for conceptual design
+▪ We focus on Relational model
+– relations are represented as parameterized statements (“tuples”, or “predicates”)
+– used for logical design
+▪ Other models:
+– object-oriented model
+– semi-structured data models, NoSQL (MongoDB -- www.mongodb.org)
+– XML
+• most relational systems can export XML interfaces
+• can provide XML storage/retrieval
+13
+
+--- Page 14 ---
+Conceptual Design:
+Entity Relationship Model (1)
+▪
+E-R model of real world
+– Entities (objects)
+• E.g. persons, apartments, buildings
+– Relationships between entities
+• E.g. Apartment #101 is rented by person “John Doe”
+• Or formally: Renting (John Doe, Apartment#101)
+• Relationship set “Renting” associates persons with apartments
+– Integrity constraints or business rules that hold
+▪
+Used for database conceptual design
+– Database design in E-R model usually converted to
+design in the relational model (described later) which
+is used for storage and processing
+14
+
+--- Page 15 ---
+Conceptual Design:
+Entity Relationship Model (2)
+▪
+One-to-one: M,N = 1
+▪
+One-to-many: M = 1, N ≥ 2
+▪
+Many-to-many
+M N
+A R B
+15
+
+--- Page 16 ---
+Conceptual Design:
+Entity Relationship Model (3)
+entity set
+relationship set
+person tenant apartment
+loginID
+attribute password until
+since
+monthlyRate
+name
+creditScore number
+keycode
+age
+floor
+rooms
+16
+
+--- Page 17 ---
+Conceptual Design:
+Entity Relationship Model (4)
+rooms
+age floor
+creditScore number keycode
+name
+monthlyRate
+person date apartment
+enteredKey
+time
+attempt
+● “attempt” is an audit trail
+log;
+ternary relationship set
+● person who attempted to
+Unlock can be identified only if
+his/her “keycode” is action
+recognized;
+● otherwise, the “attempt” will
+be associated with a NULL
+response
+(for unidentified “person”); receiver
+message
+● “action” is taken only if max
+allowed number of attempts is
+17
+exceeded
+
+--- Page 18 ---
+Entity Relationship Model
+— Restaurant
+employee (name, role, salary, …)
+assigned (date, working shift)
+dining table (identifier, capacity, status, seated guests)
+food order (time, item, quantity, total price, status)
+menu item (id, price, ingredients, availability)
+payment (time, date, amount, confirmation number)
+18
+
+--- Page 19 ---
+Entity Relationship Model
+— Restaurant
+entity set relationship set
+employee assigned dining table food order menu item
+-ordered
+-prepared
+attribute
+date -ready
+-served
+date shift
+time
+status
+emp-id
+guests
+quantity
+tbl-id availability
+name salary status price
+capacity
+role mi-id ingredients
+(a)
+employee assigned dining table food order menu item
+exactly one zero or one
+(b)
+one or more zero or more
+19
+
+--- Page 20 ---
+Relational Database
+▪
+Relational database: A set of “relations”
+▪
+A relation consists of 2 parts:
+– Schema: specifies name of relation, plus name and datatype of
+each column, e.g.:
+• Tenant(loginID: string, name: string, password: string, since: date,
+until: date)
+• Apartment(number: integer, floor: integer, rooms: integer, keycode: integer,
+rate: real)
+… address? —no composite data!
+– Instance: a table, with rows and columns
+• #rows = cardinality
+• #fields = degree / arity
+▪
+Think of a relation as a set of rows or tuples
+– “set” == all rows are distinct instances (no duplicates)
+20
+
+--- Page 21 ---
+Relational Model
+▪ Entities and Relationships in the E-R Model are represented as relations (tabular
+data) in the Relational Model
+▪ Relation: Person(Identifier, Name, Age, CreditScore)
+– i.e., attributes Identifier, Name, …, are in relation Person
+▪ Table = a set of tuples (i.e., rows)
+– Like a list…
+– …but it is unordered: no methods first(), no next(), no last().
+– Rows (tuples, or records) — a tuple is an ordered set of attribute values
+– Columns (attributes)
+• Restriction: all attributes are of atomic type
+Person: attribute names (or, fields)
+table name Identifier Name Age CreditScore
+192-83-2817 John Doer 21 690
+105-04-9541 Jane Deere 21 765
+429-43-1008 Bart Simpson 18 597
+332-92-0006 Homer Simpson 50 620
+tuples / records
+691-55-2341 Marge Simpson 48 710 21
+nam e
+p e rso n
+age
+loginID
+passw
+creditS core
+te n
+ord
+a n t
+since
+until
+num ber
+a p a rtm
+floor
+e n t
+room s
+m onthlyR
+keycode
+ate
+
+--- Page 22 ---
+Relational Model — Summary
+▪
+Data Model — a way to organize information
+▪
+Schema — one particular organization,
+– i.e., a set of fields/columns, each of a given type
+▪
+Relation:
+– a name
+– a schema
+– a set of tuples/rows, each following organization
+specified in the schema
+22
+
+--- Page 23 ---
+Mapping E-R Model to Relational
+Model
+▪ Entities and Relationships to Relations:
+– Person(Identifier, Name, Age, CreditScore)
+– Apartment(Number, Rooms, KeyCode, MonthlyRate)
+– Tenant(Person.Identifier, Apartment.Number,
+LoginID, Password, Since, Until)
+▪ A Primary Key is an attribute selected so that it uniquely
+identifies each tuple of the relation
+▪ A Foreign Key is a field whose values are keys in another
+relation
+▪ Cross-reference table for many-to-many relationships
+23
+n a m e
+p e rs o n
+a g e
+lo
+cre
+g
+d
+in ID
+itS co
+p
+re
+a ssw
+te n
+o rd
+a n t
+sin ce
+u n til
+n u m b e r
+a p a
+flo o r
+rtm e n
+ro o
+t
+m s
+ke
+m o n
+yco d e
+th lyR a te
+Primary key: Identifier
+Primary key: Number
+Foreign keys: Person.Identifier, Apartment.Number
+(e.g., Tenant)
+
+--- Page 24 ---
+Structured Query Language (SQL)
+▪
+Atomic types, a.k.a. data types
+▪
+Tables built using atomic types
+– No composite types!
+▪
+Unlike XML, no nested tables, only flat tables are
+allowed!
+– We will see later how to decompose complex structures into
+multiple flat tables
+▪
+Query = Declarative data retrieval
+– describes what data, not how to retrieve it
+– Example: Give me the persons with credit-score > 600
+( select * from person where creditScore > 600 )
+vs.
+– Scan the Person file one-by-one entry;
+compare each person’s credit-score to 600;
+print out the entries with credit-score > 600;
+24
+
+--- Page 25 ---
+Data Types in SQL
+▪
+Character strings:
+– CHAR(n) -- string, fixed length 'n' ( )
+any value from 0 to 255
+– VARCHAR(n) -- string, variable length, maximum length 'n'
+▪ Numbers ( ): a value from 0 to 65,535; depends on vendor
+exact and approximate
+– BIGINT, INT, SMALLINT, TINYINT
+exact:
+– MONEY -- monetary currency values ( )
+or symbol + number: $20.8
+– REAL, FLOAT(n) -- differ in precision
+approximate: real is float(24); double precision is float(53)
+▪
+Dates and times :
+– DATE -- default format: YYYY-MM-DD
+– DATETIME -- default value: 1900-01-01 00:00:00
+– TIME -- default format: hh:mm:ss[.nnnnnnn]
+▪
+Other types... All are simple / atomic
+25
+
+--- Page 26 ---
+SQL Tables
+▪
+The schema of a table is the table name and its
+attributes:
+Person(Identifier, Name, Age, CreditScore)
+▪
+A key is an attribute whose values are unique
+( )
+ensures that table is a set, not a bag
+we underline a key for convenience:
+Person(Identifier, Name, Age, CreditScore)
+26
+
+--- Page 27 ---
+SQL Statements (or Commands)
+▪ CREATE TABLE <table-name>
+( <field-name-1> <domain>, ... );
+▪ INSERT INTO <table-name>
+(<field-name-1>, <field-name-2>, ...)
+VALUES (<field-value-1>, <field-value-2>, ...);
+▪ DELETE FROM <table-name> WHERE <condition>;
+▪ UPDATE <table-name>
+SET <field-name> = <value>
+WHERE <condition>;
+▪ SELECT (<field-name-1>, <field-name-2>, ...)
+FROM <table-name> WHERE <condition>;
+▪ Notes:
+– SQL Keywords are not case sensitive, but table names and column names may be
+– SQL statements can be spread over several lines
+– Single quotations (apostrophes) delimit string character values
+– Powerful variants of these statements are available 27
+
+--- Page 28 ---
+Creating Relations in SQL (1)
+CREATE TABLE statement
+▪
+Creates the Person relation.
+– Note: the type (domain) of each field is specified, and enforced by the
+DBMS whenever tuples are added or modified.
+▪
+CREATE TABLE Person
+(Identifier CHAR(11) NOT NULL UNIQUE,
+Name VARCHAR(50),
+Age INTEGER,
+CreditScore INTEGER,
+PRIMARY KEY (Identifier));
+▪
+It is possible to have many candidate keys specified
+using UNIQUE), one of which is chosen as the
+primary key.
+28
+
+--- Page 29 ---
+SQL Domains
+(of valid data values)
+▪ An SQL Domain is a named, user-defined set of valid data values.
+• In the sense of the domain of a function, as the set of parameter values ("inputs”) for which the function is defined
+– A Schema may contain zero or more Domains.
+– The Objects that may belong to a Domain are known as Domain Constraints.
+▪ A Domain is defined by a descriptor that contains six pieces of information:
+– name
+– data type
+– character set
+– whether reference values must be checked
+– default value (if any)
+– descriptors for domain constraints
+▪ Advantages:
+– Using domain definitions makes it easier to see which columns are related
+– Changing a domain definition in one place changes it consistently everywhere it is used
+– Default values can be defined for domains
+– Constraints can be defined for domains
+See later slides for SQL syntax ...
+29
+
+--- Page 30 ---
+Creating SQL Domains
+CREATE DOMAIN statement
+▪
+The CREATE DOMAIN statement names a new Domain
+and defines the Domain's set of valid data values
+▪
+A domain can be defined as follows:
+– CREATE DOMAIN APT_NUM CHAR(3); -- apartment number
+– CREATE DOMAIN KEY_CODE CHAR(4) -- door key-code
+CONSTRAINT constraint_1
+CHECK (VALUE IS NOT NULL) NOT DEFERRABLE
+Constraints
+CONSTRAINT constraint_2
+on valid values
+CHECK (VALUE BETWEEN 1000 AND 9999)
+DEFERRABLE INITIALLY IMMEDIATE;
+– The optional <Domain Constraint> list clause shows
+the rules that restrict the Domain's set of valid
+values
+30
+
+--- Page 31 ---
+Creating Relations in SQL (2)
+CREATE TABLE statement
+▪
+CREATE TABLE Apartment
+(Number APT_NUM NOT NULL UNIQUE,
+Rooms INTEGER,
+KeyCode KEY_CODE,
+MonthlyRate MONEY,
+PRIMARY KEY (Number));
+▪
+To add a column to a table:
+ALTER TABLE Apartment
+ADD Floor INTEGER;
+▪
+If no DEFAULT is specified, the newly added
+column will have NULL values for all tuples
+already in the database
+31
+
+--- Page 32 ---
+Creating Relations in SQL (3)
+CREATE TABLE statement
+▪ Cross-reference table (“Relationship” in the E-R model)
+CREATE TABLE Tenant
+(TenantID CHAR(11) NOT NULL,
+AptNum APT_NUM NOT NULL,
+LoginID VARCHAR(20),
+Password VARCHAR(20),
+Since DATE, Until DATE,
+CONSTRAINT fk_tenantID FOREIGN KEY (TenantID)
+REFERENCES Person(Identifier),
+CONSTRAINT fk_aptNum FOREIGN KEY (AptNum)
+REFERENCES Apartment(Number));
+▪ Last four lines specify two FOREIGN KEY constraints
+▪ A FOREIGN KEY in one table points to a PRIMARY KEY in another table
+▪ Cross-reference tables do not need and do not have primary keys
+▪ It is a good idea to encrypt the Password field (see a later slide)
+32
+n a m e
+p e rs o
+a g e
+n
+c
+lo
+re
+g
+d
+in ID
+itS c o
+p
+re
+a s s w
+te n
+o rd
+a n
+s
+t
+in c e
+u n til
+n u m b e r
+a p
+flo o
+a
+r
+rtm e
+ro
+n
+o
+t
+m s
+k e y c
+m
+o
+o n
+d e
+th ly R a te
+
+--- Page 33 ---
+Adding and Deleting Tuples
+▪
+Insert a single tuple using:
+INSERT INTO Person
+(Identifier, Name, Age, CreditScore)
+VALUES ('192-83-2817', 'John Doer', 21, 690);
+– Specifying the column names (the second line above) is optional,
+but watch the order of the values!
+– Single quotations (apostrophes) delimit strings; not numbers
+▪
+Delete all tuples satisfying some condition
+(e.g., Name = Homer Simpson):
+DELETE FROM Person P -- alias definition
+WHERE P.Name = 'Homer Simpson';
+– Aliases reduce the amount of code required for a query, and make
+queries simpler to understand
+33
+
+--- Page 34 ---
+SQL Queries
+SELECT statement
+▪
+Format:
+SELECT A1, A2, ... An
+FROM R1, R2, ... Rm
+WHERE P;
+▪
+The SELECT clause specifies the attributes A (columns)
+i
+of the result
+▪
+The FROM clause specifies the tables R to be scanned in
+j
+the query
+▪
+The WHERE clause specifies the condition P on the
+columns of the tables in the FROM clause
+– It restricts which rows will appear in the result set
+▪
+Use SELECT DISTINCT to remove duplicates from the
+result
+34
+
+--- Page 35 ---
+Simple SQL Query (1)
+Person
+Identifier Name Age CreditScore
+192-83-2817 John Doer 21 690
+105-04-9541 Jane Deere 21 765
+429-43-1008 Bart Simpson 18 597
+332-92-0006 Homer Simpson 50 620
+691-55-2341 Marge Simpson 48 710
+SELECT *
+FROM Person
+WHERE Age >= 40;
+Identifier Name Age CreditScore
+332-92-0006 Homer Simpson 50 620
+691-55-2341 Marge Simpson 48 710
+“selection”
+35
+
+--- Page 36 ---
+Simple SQL Query (2)
+Person
+Identifier Name Age CreditScore
+192-83-2817 John Doer 21 690
+105-04-9541 Jane Deere 21 765
+429-43-1008 Bart Simpson 18 597
+332-92-0006 Homer Simpson 50 620
+691-55-2341 Marge Simpson 48 710
+SELECT Name, CreditScore
+FROM Person
+WHERE CreditScore < 650;
+Name CreditScore
+Bart Simpson 597
+“selection” Homer Simpson 620
+and
+“projection”
+36
+
+--- Page 37 ---
+Selections
+What goes in the WHERE clause:
+▪
+x = y, x < y, x <= y, etc.
+– For number, they have the usual meanings
+– For CHAR and VARCHAR: lexicographic ordering
+• Expected conversion between CHAR and VARCHAR
+– For dates and times – just what you would expect...
+▪
+Pattern matching on strings... ( )
+next slide
+37
+
+--- Page 38 ---
+Pattern Matching on Strings:
+The LIKE Operator
+▪ s LIKE p: pattern matching on strings
+▪ 'p' may contain two special symbols:
+• % = any sequence of characters
+• _ = any single character
+Example #1:
+"_ _ _%" matches any string with at least three characters
+Example #2: Person(Identifier, Name, Age, CreditScore)
+Find all persons whose name mentions ‘D’, followed by any one
+character, followed by ‘e’ :
+SELECT *
+FROM Person
+Identifier Name Age CreditScore
+WHERE Name LIKE '%D_e%';
+192-83-2817 John Doer 21 690
+105-04-9541 Jane Deere 21 765
+38
+
+--- Page 39 ---
+Ordering the Results
+SELECT Name, Age, CreditScore
+FROM Person
+WHERE CreditScore > 600 AND Age < 50
+ORDER BY Age, Name;
+Name Age CreditScore
+Jane Deere 21 765
+John Doer 21 690
+Marge Simpson 48 710
+▪ Ordering is ascending (ASC), unless you specify the DESC
+keyword for descending order: ORDER BY attribute DESC.
+▪ Ties are broken by the second attribute on the ORDER BY list, or
+the third attribute, etc.
+39
+P
+11
+11
+44
+33
+66
+e r s
+II dd
+99 22
+00 55
+22 99
+33 22
+99 11
+ee
+--
+--
+--
+--
+--
+o
+nn
+88
+00
+44
+99
+55
+n
+tt
+33
+44
+33
+22
+55
+ii
+--
+--
+--
+--
+--
+ff
+22
+99
+11
+00
+22
+ii ee
+88
+55
+00
+00
+33
+rr
+11
+44
+00
+00
+44
+77
+11
+88
+66
+11
+HH
+MM
+JJ
+BB
+oo
+aa
+JJ
+aa
+aa
+mm
+rr
+oo
+rr
+gg
+NN aa mm ee
+hh nn DD oo
+nn ee DD ee
+tt SS iimm pp
+ee rr SS iimm
+ee SS iimm
+ee
+ee
+ss
+pp
+pp
+rr
+rr ee
+oo
+ss
+ss
+nn
+oo
+oo
+nn
+nn
+AA
+22
+22
+11
+55
+44
+gg
+11
+11
+88
+00
+88
+ee CC rr ee dd
+66
+77
+55
+66
+77
+ii tt
+99
+66
+99
+22
+11
+SS
+00
+55
+77
+00
+00
+cc oo rr ee
+
+--- Page 40 ---
+Built-in Functions
+▪
+Counting (COUNT), summation (SUM), average
+(AVG), minimum (MIN), maximum (MAX)
+▪
+Example: Count persons aged 21 from table
+Person
+SELECT COUNT(*)
+FROM Person
+WHERE Age = 21; -- result: 2
+▪
+Example: Find the average credit score by age
+from table Person
+SELECT Age, AVG(CreditScore)
+FROM Person
+GROUP BY Age;
+40
+
+--- Page 41 ---
+Storing Passwords in SQL
+▪ To encrypt secret password fields, use the built-in functions
+MD5() or SHA1()
+– Note: SHA is an alias for SHA1
+person tenant apartment
+INSERT INTO Tenant
+(TenantID, AptNum, LoginID, loginID
+Password, Since, Until) password until
+since
+VALUES ('192-83-2817', 101, 'j.doer',
+SHA1('secretpassword'),
+2024-12-04, 2025-11-30));
+▪ To authenticate a tenant (e.g., during login):
+SELECT * FROM Tenant
+WHERE LoginID='j.doer' AND
+Password=SHA1('secretpassword');
+▪ Note: We could have encrypted also the field KeyCode in the
+table Apartment
+▪ See also how to implement AES (Advanced Encryption
+Standard) encryption
+41
+
+--- Page 42 ---
+SQL Joins
+▪ An SQL JOIN clause is used to combine rows from two or more tables,
+INNER JOIN
+based on a common field between them
+– It creates a set of tuples that can be saved as a table or used as it is table 1 table 2
+▪ Standard SQL specifies five types of JOIN:
+– CROSS JOIN returns the Cartesian product of rows from tables in the join LEFT JOIN
+– INNER JOIN returns combined column values of two tables based on the join condition(predicate)
+• First takes the Cartesian product (or CROSS JOIN) of the two tables and then returns all rows which satisfy the join condition table 1 table 2
+– LEFT OUTER JOIN (or LEFT JOIN) returns all rows from the first/left table, and the matched rows
+from the second/right table (i.e., preserves unmatched rows from the left table; fills in nulls as needed)
+– RIGHT OUTER JOIN (or RIGHT JOIN) returns all rows from the right table, and the matched rows RIGHT JOIN
+from the left table
+– FULL OUTER JOIN (or FULL JOIN) returns all rows when there is a match in ONE of the tables table 1 table 2
+▪ Then there is also NATURAL JOIN operation
+– Specifies an inner or outer join between two tables. It has no explicit join condition. Instead, the join FULL OUTER JOIN
+condition is created implicitly using the common columns (identically named) from the two tables
+– Check whether common columns exist in both tables before doing a natural join table 1 table 2
+▪ In MySQL, JOIN, CROSS JOIN, and INNER JOIN are syntactic equivalents
+(they can replace each other).
+In standard SQL, they are not equivalent. INNER JOIN is used with an ON
+clause, CROSS JOIN is used otherwise.
+42
+
+--- Page 43 ---
+SQL Joins: CROSS JOIN (1)
+▪ CROSS JOIN produces rows which combine each row from the first table
+with each row from the second table
+– The size of the result set is the number of rows in the first table multiplied by the number of rows
+in the second table
+– If the first table has 3 rows and 2 columns, and the second table has 2 rows and 4 columns, the
+result will be a table with 32 rows and 2+4 columns
+▪ Example of an explicit cross join:
+SELECT *
+FROM Table1 CROSS JOIN Table2;
+▪ Example of an implicit cross join:
+SELECT *
+Table1 FROM Table1, Table2; Table1 fields Table2 fields
+a a
+1 2
+t1.a t1.a t2.b t2.b t2.b t2.b
+ABC 123 result: 1 2 1 2 3 4
+ABC 123 123 CAB 11 TUT
+XZ 45
+XZ 45 123 CAB 11 TUT
+A13 NULL
+A13 NULL 123 CAB 11 TUT
+CROSS JOIN
+ABC 123 45 DAB 7 ANK
+Table2
+XZ 45 45 DAB 7 ANK
+b b b b
+1 2 3 4
+A13 NULL 45 DAB 7 ANK
+123 CAB 11 TUT
+43
+45 DAB 7 ANK
+
+--- Page 44 ---
+SQL Joins: CROSS JOIN (2)
+▪ A WHERE clause may be used to supply join criteria:
+SELECT *
+FROM Table1 t1, Table2 t2
+WHERE t1.a1='XZ' AND t1.a2=t2.b1;
+▪ (Note the implicit cross join and aliasing of table names)
+Table1
+aa aa
+11 22
+tt11..aa tt11..aa tt22..bb tt22..bb tt22..bb tt22..bb
+AABBCC 112233 11 22 11 22 33 44
+AABBCC 112233 112233 CCAABB 1111 TTUUTT
+XXZZ 4455
+XXZZ 4455 112233 CCAABB 1111 TTUUTT
+AA1133 NNUULLLL
+AA1133 NNUULLLL 112233 CCAABB 1111 TTUUTT
+CROSS JOIN
+Table2 AABBCC 112233 4455 DDAABB 77 AANNKK
+XXZZ 4455 4455 DDAABB 77 AANNKK
+bb bb bb bb
+11 22 33 44
+AA1133 NNUULLLL 4455 DDAABB 77 AANNKK
+112233 CCAABB 1111 TTUUTT
+4455 DDAABB 77 AANNKK
+t1.a t1.a t2.b t2.b t2.b t2.b
+1 2 1 2 3 4
+result:
+XZ 45 45 DAB 7 ANK
+44
+
+--- Page 45 ---
+SQL Joins — Example (1)
+Apartment
+Person
+IIddeennttiiffiieerr NNaammee AAggee CCrreeddiittSSccoorree Number Rooms KeyCode MonthlyRate
+119922--8833--22881177 JJoohhnn DDooeerr 2211 669900 101 1 2021 550
+110055--0044--99554411 JJaannee DDeeeerree 2211 776655
+102 1 1010 500
+442299--4433--11000088 BBaarrtt SSiimmppssoonn 1188 559977
+103 1 4850 600
+333322--9922--00000066 HHoommeerr SSiimmppssoonn 5500 662200
+201 2 5005 800
+669911--5555--22334411 MMaarrggee SSiimmppssoonn 4488 771100
+202 2 9083 850
+Tenant
+TenantID AptNum LoginID Password Since Until
+192-83-2817 101 j.doer secretpwd 2024-12-04 2025-11-30
+Cross-reference table:
+105-04-9541 103 janedeere anypwd 2025-01-15 2026-01-31
+429-43-1008 202 bartules hasnone 2020-01-01 2025-12-31
+332-92-0006 201 homers password 2020-01-01 2025-12-31
+691-55-2341 201 margesim 123457 2020-01-01 2025-12-31
+▪ Example join query: Find monthly rates for apartments where
+tenants have credit score greater than 700
+45
+
+--- Page 46 ---
+SQL Joins — Example (2)
+Query: “Find monthly rates for apartments where tenants have credit score greater than 700”
+▪
+We need information from two tables: Person and
+Apartment
+▪
+First, perform a cross join of these tables using a SELECT
+statement that has the tables named in the FROM clause
+▪
+Second, form the WHERE clause to list these three
+conditions:
+– The CreditScore column of the Person table must be greater than 700
+– The Identifier column of the Person table must match
+the TenantID column of the Tenant table
+– The AptNum column of the table Tenant must match
+the Number column of the Apartment table
+▪
+The SQL code is shown next ...
+46
+
+--- Page 47 ---
+SQL Joins — Example (3)
+Query: “Find monthly rates for apartments where tenants have credit score greater than 700”
+▪
+We need information from two tables
+SELECT apt.Number, apt.MonthlyRate
+FROM Person p, Apartment apt
+WHERE p.CreditScore >= 700 AND
+p.Identifier = Tenant.TenantID AND
+Tenant.AptNum = apt.Number;
+▪
+Result set:
+apt.Number apt.MonthlyRate
+103 600
+201 800
+47
+
+--- Page 48 ---
+SQL Transactions
+▪
+Transaction is a single unit of work.
+– If successful, all data modifications guaranteed to be
+committed
+– If errors encountered, cancel or roll back
+Start transaction;
+### modify database ###
+Commit;
+### encounter errors ###
+Rollback;
+48

@@ -1,0 +1,852 @@
+=== Automated testing.pdf ===
+
+--- Page 1 ---
+SaaS in the news
+
+--- Page 2 ---
+The Big Picture:
+FIRST, TDD, and
+Red-Green-Refactor
+ESaaS §8.1
+© 2023 Armando Fox, David Patterson, Michael Ball
+Licensed under Creative Commons Attribution-
+NonCommercial-4.0 Unported License
+
+--- Page 3 ---
+Testing can
+never
+demonstrate
+the _ab_s_en_c_e of
+Debugging is
+errors in
+twice as hard as
+software, only
+writing the code
+their _pr_e_se_n_ce__
+in the first place.
+Therefore, if you
+write the code as
+cleverly as
+possible, you are,
+by definition, not
+smart enough to
+debug it.
+
+--- Page 4 ---
+BDD+TDD: The Big Picture
+• Behavior-driven design (BDD)
+• develop user stories (the features you wish you had) to
+describe how app will work
+• via Cucumber, user stories become acceptance tests and
+integration tests
+• Test-driven development (TDD)
+• new code (both in app & possibly in step defs)
+• TDD: write tests before the new code itself
+• in other words: write tests for code you wish you had
+• Deep insight: TDD improves modularity
+
+--- Page 5 ---
+Test-Driven development
+• Think about one thing the code should do
+• Capture that thought in a test, which fails
+• Write the simplest possible code that lets the test
+pass
+• Refactor: DRY out commonality w/other tests
+• Continue with next thing code should do
+Red – Green – Refactor
+Aim for “always have working code”
+
+--- Page 6 ---
+Cucumber.js & Jasmine
+• Cucumber describes
+behavior via features &
+Failing (red) Cucumber step
+scenarios (behavior
+driven design)
+Failing (red) Jasmine test(s)
+• Jasmine tests individual
+Passing (green) Jasmine test(s)
+modules that contribute
+to those behaviors (test
+Passing (green) Cucumber
+driven development) step
+
+--- Page 7 ---
+Testing Today:
+FIRST
+ESaaS §8.1
+© 2023 Armando Fox, David Patterson, Michael Ball
+Licensed under Creative Commons Attribution-
+NonCommercial-4.0 Unported License
+
+--- Page 8 ---
+Testing Today
+• Before: “debugging focus”
+• developers finish code, some ad-hoc testing
+• “toss over the wall to Quality Assurance [QA]”
+• QA staff manually poke at software
+• Today: “maintainability & validation focus”
+• testing is part of every Agile iteration
+• developers test their own code
+• testing tools & processes highly automated
+• QA/testing group improves testability & tools
+• Still some manual testing too…but for different reasons
+
+--- Page 9 ---
+Unit tests should be FIRST
+• Fast
+• Independent
+• Repeatable
+• Self-checking
+• Timely
+
+--- Page 10 ---
+Unit tests should be FIRST
+• Fast: run (subset of) tests quickly (since you’ll be
+running them all the time)
+• Independent: no tests depend on others, so can run
+any subset in any order
+• Repeatable: run N times, get same result (to help
+isolate bugs and enable automation)
+• Self-checking: test can automatically detect if passed
+(no human checking of output)
+• Timely: written about the same time as code under
+test (with TDD, written first!)
+
+--- Page 11 ---
+Repeatable & Independent?
+Which kinds of code can be tested
+Repeatably and Independently?
+• Code that relies on randomness (e.g.
+shuffling a deck of cards)?
+• Code that relies on time of day (e.g. run
+backups every Sunday at midnight)?
+
+--- Page 12 ---
+Anatomy of a Test Case:
+Arrange, Act, Assert
+ESaaS §8.2
+© 2023 Armando Fox, David Patterson, Michael Ball
+Licensed under Creative Commons Attribution-
+NonCommercial-4.0 Unported License
+
+--- Page 13 ---
+You’ve seen this before
+• Arrange precondition(s)
+• what about non-leaf methods?
+• what about methods that depend on time/randomness/env vars or an external
+HTTP service?
+• what about database/repository data used by the test?
+• what about “world state”(e.g. authenticated or not - session/JWT/middleware)?
+• Act on the system under test (SUT)
+• what about testing route handlers/controllers? (Express/Koa/Fastify)
+• Assert postcondition(s)
+• Pure function/service tests are “easy”…
+• …but isolating handler/service/client even though a real HTTP request touches all
+layers?
+
+--- Page 14 ---
+Great expectations (assertions)
+expect(term).toEqual("hardware")
+Matcher
+expect(results).toBeTruthy()
+expect(title).toMatch(/hard/i)
+expect(movie).toEqual
+Custom matchers (Jasmine) :
+(jasmine.objectContaining
+define your own matcher via
+({ title: jasmineja.smainney.a(ddSMtatrchienrs(g...)) }))
+expect(results.length).toBe(0)
+e.g. empty string? null/undefined? validation passes?
+expect(() => newMovie.save()).toThrowError();
+e.g. ValidationError / search term required
+
+--- Page 15 ---
+Great expectations (assertions)
+const before = await Movie.count();
+await Movie.destroy(movieId);
+const after = await Movie.count();
+expect(after - before).toBe(-1);
+
+--- Page 16 ---
+Isolating Code:
+Doubles & Seams Intro
+ESaaS §8.3
+© 2023 Armando Fox, David Patterson, Michael Ball
+Licensed under Creative Commons Attribution-
+NonCommercial-4.0 Unported License
+
+--- Page 17 ---
+Let’s do a new feature
+Feature: look up movie in TMDb
+As a lazy moviegoer
+So that I can add movies to the database
+without filling in their info manually
+I want to look up a movie by title in TMDb,
+and populate RP from that info
+Scenario: look up movie and 1 or more titles
+match
+Scenario: look up movie but no titles match
+
+--- Page 18 ---
+An aside: The code that contacts TMDb to search for a
+movie should be…?
+1. A static method on MovieService?
+2. An instance method on Movie?
+3. Code in the route handler -
+MoviesController.search?
+
+--- Page 19 ---
+What does user story look like?
+Given I am on the RottenPotatoes homepage
+When I fill in "Search Terms" with "Inception"
+And I follow "Search TMDb"
+Then I expect to be on the RottenPotatoes homepage …
+So we need…
+• A form with a search box on the main page
+• A route handler to receive the form…
+• … that reads
+req.query.search_terms
+• … calls MovieService.findInTMDB(search_terms) …
+• and renders the search results page  new view
+• And a route that maps /movies/search to the handler
+
+--- Page 20 ---
+The Code You Wish You Had
+1. Call a service method that searches
+TMDb for the given title
+2. If match found: render (new) "Search
+Results" page to display matches
+3. If no match found: redirect to home
+page with message
+
+--- Page 21 ---
+Doubles & Seams:
+Jasmine & JavaScript
+ESaaS §8.3
+© 2023 Armando Fox, David Patterson, Michael Ball
+Licensed under Creative Commons Attribution-
+NonCommercial-4.0 Unported License
+
+--- Page 22 ---
+Preview: Jasmine test helpers
+• Additional helpers layered on Jasmine to test
+framework-specific things
+• e.g. call a route handler with fake req/res, or use supertest for GET/POST/...
+• a res “spy” to observe what the handler does (render/redirect/status/json)
+• Matchers to test handler behavior, e.g.
+expect(res.render).toHaveBeenCalledWith('movies/search',
+jasmine.any(Object));
+expect(res.render).toHaveBeenCalledWith('movies/search',jasmine
+.objectContaining({ results: jasmine.any(Array) }));
+• Support for creating various doubles needed to test
+non-toy methods (later)
+
+--- Page 23 ---
+The code you wish you had
+const moviesController = require('../controllers/moviesController');
+describe(‘moviesController’, () => {
+describe(‘searching TMDb', () => {
+it('calls the service method that performs TMDb search', async () => {
+const req = { query: { search_terms: 'hardware' } };
+const res = { render: jasmine.createSpy('render') };
+const movieService = { findInTMDB: jasmine.createSpy().and.resolveTo([]) };
+await moviesController.search(req, res, movieService);
+expect(movieService.findInTMDB).toHaveBeenCalledWith('hardware');
+};
+it('renders the Search Results page', async () => {});
+it('passes TMDb results to the view', async () => {});
+});
+});
+
+--- Page 24 ---
+TDD for the Route Handler: Setup
+• Add a route in the Express router
+router.get('/movies/search', moviesController.search);
+• Create an empty view/template for results:
+touch views/movies/search.ejs
+• Create a placeholder for the new handler:
+exports.search = async (req, res) => {
+};
+
+--- Page 25 ---
+What service method?
+• Calling TMDb is responsibility of the service... but no
+model method exists to do this yet!
+No problem...we’ll fake the call to the code we wish we had:
+MovieService.findInTMDB(searchTerms)
+• Game plan:
+• Simulate submitting search form to route handler.
+• Check that the handler tries to call MovieService.findInTMDB
+with data from submitted form.
+• The test will fail (red), because the (empty) handler doesn’t call
+findInTMDB yet.
+• Fix the handler to make green.
+
+--- Page 26 ---
+Seams
+A seam is a place where
+you can modify the behavior
+of the app without changing
+its source code.
+
+--- Page 27 ---
+This is a method stub!
+const moviesController = require('../controllers/moviesController');
+describe('moviesController', () => {
+describe('searching TMDb', () => {
+it('calls the service method that performs TMDb search', async () => {
+Umm, wouldn’t the real
+const movieService = { findInTMDB: jasmine.createSpy('findInTMDB').and.resolveTo([])};
+findInTMDB method actually
+const req = { query: { search_terms: 'hardware' } };
+return something??
+const res = { render: jasmine.createSpy('render') };
+await moviesController.search(req, res, movieService);
+expect(movieService.findInTMDB).toHaveBeenCalledWith('hardware');
+});
+it('renders the Search Results page', async () => {});
+it('passes TMDb results to the view', async () => {});
+});
+});
+exports.search = async (req, res, movieService) => {
+const searchTerms = req.query.search_terms;
+await movieService.findInTMDB(searchTerms);
+};
+
+--- Page 28 ---
+The Code You Wish You Had
+1. Call a service method that searches
+TMDb for the given title
+2. If match found: render (new) "Search
+Results" page to display matches
+3. If no match found: redirect to home
+page with message
+
+--- Page 29 ---
+const moviesController = require('../controllers/moviesController');
+describe('moviesController', () => {
+describe('searching TMDb', () => {
+it('calls the service method that performs TMDb search', async () => {
+const movieService = { findInTMDB:jasmine.createSpy('findInTMDB').and.resolveTo([])};
+const req = { query: { search_terms: 'hardware' } };
+“Shows results on
+const res = { render: jasmine.createSpy('render') };
+the Search Results
+await moviesController.search(req, res, movieService);
+page”
+expect(movieService.findInTMDB).toHaveBeenCalledWith('hardware');
+is really 2 behaviors!
+});
+it('renders the Search Results page', async () => {});
+it('passes TMDb results to the view', async () => {});
+});
+});
+exports.search = async (req, res, movieService) => {
+const searchTerms = req.query.search_terms;
+await movieService.findInTMDB(searchTerms);
+};
+
+--- Page 30 ---
+const moviesController = require('../controllers/moviesController');
+describe('moviesController', () => {
+describe('searching TMDb', () => {
+it('calls the service method that performs TMDb search', async () => {
+const movieService = { findInTMDB: jasmine.createSpy('findInTMDB').and.resolveTo([]) };
+const req = { query: { search_terms: 'hardware' } };
+const res = { render: jasmine.createSpy('render') };
+In Express handler tests, we
+await moviesController.search(req, res, movieService);
+assert on res.* calls, such as:
+expect(movieService.findInTMDB).toHaveBeenCalledWith('hardware');
+res.render(...)
+});
+res.redirect(...)
+it('renders the Search Results page', async () => {
+res.status(...)
+const movieService = { findInTMDB: jasmine.createSpy('findInTMDB').and.resolveTo([]) };
+const req = { query: { search_terms: 'hardware' } };
+const res = { render: jasmine.createSpy('render') };
+await moviesController.search(req, res, movieService);
+expect(res.render.calls.mostRecent().args[0]).toBe('search');
+});
+it('passes TMDb results to the view', async () => {});
+});
+});
+
+--- Page 31 ---
+Doubles & Seams:
+Method stubs & spies
+ESaaS §8.3
+© 2023 Armando Fox, David Patterson, Michael Ball
+Licensed under Creative Commons Attribution-
+NonCommercial-4.0 Unported License
+
+--- Page 32 ---
+Where we are so far…
+exports.search = async (req, res, movieService) => {
+const searchTerms = req.query.search_terms;
+await movieService.findInTMDB(searchTerms);
+};
+The last spec says:
+it('passes the TMDb search results to the view', async () => {});
+
+--- Page 33 ---
+How to make this spec green?
+• Wouldn’t the real
+MovieService.findInTMDB
+method actually return something?
+• Well, what do we wish it would return?
+Remember!
+• the handler gets a value from findInTMDB,
+and makes it available to the correct view
+• We are not testing !
+findInTMDB
+
+--- Page 34 ---
+Making results available means passing locals to
+render
+• In Express handler tests, we check what gets passed to the
+view via res.render(...)
+• the second argument to res.render(view, locals) contains the data
+for the template
+expect(res.render).toHaveBeenCalledWith('search',
+jasmine.objectContaining({ results: jasmine.any(Array) }))
+exports.search = async (req, res, movieService) => {
+const searchTerms = req.query.search_terms;
+const results = await movieService.findInTMDB(searchTerms);
+res.render('search', { results });
+};
+
+--- Page 35 ---
+Stunt doubles!
+m = { title: 'Snowden' }
+• To make it a bit smarter, stub some methods:
+m = jasmine.createSpyObj('movie', ['title'])
+m.title.and.returnValue('Snowden')
+• Use when you need a stand-in with limited abilities
+• e.g.: you’re passing it to another function that expects the object to
+respond to specific methods
+• Enable just enough behavior for the spec(s) that use it
+
+--- Page 36 ---
+Putting this all together…
+it('passes search results to the view', async () => {
+const fakeResults = [
+{ title: 'Fake Movie 1' },
+{ title: 'Fake Movie 2' }
+];
+const movieService = {
+findInTMDB: jasmine.createSpy('findInTMDB').and.resolveTo(fakeResults)
+};
+const req = { query: { search_terms: 'hardware' } };
+const res = { render: jasmine.createSpy('render') };
+await moviesController.search(req, res, movieService);
+expect(res.render).toHaveBeenCalledWith(
+'search',
+jasmine.objectContaining({ results: fakeResults })
+);
+});
+• The view receives results as an Array, and for this test, that’s
+about all we care about!
+
+--- Page 37 ---
+Summary
+
+--- Page 38 ---
+TDD Recap
+© 2023 Armando Fox, David Patterson, Michael Ball
+Licensed under Creative Commons Attribution-
+NonCommercial-4.0 Unported License
+
+--- Page 39 ---
+Where we started
+Scenario: look up movie and 1
+or more titles match
+Failing (red) Cucumber
+step
+• Each spec tests 1 behavior
+Failing (red) Jasime test(s)
+• describe groups related specs
+together
+Passing (green) Jasmine
+test(s)
+• beforeEach() captures
+preconditions common to a describe
+Passing (green)
+Cucumber step
+group
+
+--- Page 40 ---
+Writing the specs
+• Each spec should test just one behavior
+• describe groups related specs together
+• Use seams as needed to isolate that behavior
+• Determine what type of expectation will check
+the behavior: what are you really testing?
+• Write the test and make sure it fails for the right
+reason
+• Add code to app until test passes green
+• Look for opportunities to refactor/beautify
+
+--- Page 41 ---
+Unit vs. Functional tests in SaaS apps
+• Unit tests: behavior within a method/class
+• collaborator classes are mocked
+• collaborator methods may be stubbed out (in this class or
+collaborator classes)
+• both are sometimes generically called doubles
+• Functional test: behavior across methods/classes
+(multiple classes are exercised)
+• e.g. controller flow from GET/POST all the way to template
+rendering, which express.js stubs
+• (so mostly a true full-stack test, but for one request, not one
+workflow)
+
+--- Page 42 ---
+TDD vs. Debugging
+ESaaS §8.12
+© 2023 Armando Fox, David Patterson, Michael Ball
+Licensed under Creative Commons Attribution-
+NonCommercial-4.0 Unported License
+
+--- Page 43 ---
+TDD vs. Conventional debugging
+Conventional TDD
+Write 10s of lines, run, hit bug: break out debugger Write a few lines, with test first; know immediately if
+broken
+Insert printf’s to print variables while running Test short pieces of code using expectations
+repeatedly
+Stop in debugger, tweak/set variables to control code Use mocks and stubs to control code path
+path
+Dammit, I thought for sure I fixed it, now I have to do Re-run test automatically
+this all again
+• Lesson 1: TDD uses same skills & techniques as conventional
+debugging—but more productive (FIRST)
+• Lesson 2: writing tests before code takes more time up-front, but often
+less time overall
+
+--- Page 44 ---
+4. TDD & Testing
+• “TDD is hard at first, but it gets easier”
+• “Was great for quickly noticing bugs
+[regression] and made them easy to fix”
+• “Helped me organize my thoughts as well as
+my code” [The code you wish you had]
+• “Wish we had committed to it earlier & more
+aggressively”
+• “We didn’t always test before pushing, and it
+caused a lot of pain”
+
+--- Page 45 ---
+5. Test coverage, code quality
+• “Good coverage gave us confidence we
+weren’t breaking stuff when we deployed new
+code”
+• “Felt great to get high grade from
+CodeClimate”
+• “Pull-request model for constant code reviews
+made our code quality high”
+• “Wish we had committed to TDD + coverage
+measurement earlier”
+
+--- Page 46 ---
+Fixtures & Factories
+ESaaS §8.5
+© 2023 Armando Fox, David Patterson, Michael Ball
+Licensed under Creative Commons Attribution-
+NonCommercial-4.0 Unported License
+
+--- Page 47 ---
+When you need the real thing
+describe("Movie", function () {
+Where to get a real object:
+it("returns name with rating", function () {
+const fake_movie = jasmine.createSpyObj("Movie", [
+• Fixture: statically preload
+"title",
+"rating",
+some known data into
+"name_with_rating",
+database tables ]);
+// stub return values (like allow(...).to receive(...).and_return)
+• Factory: create only what
+fake_movie.title.and.returnValue("Casablanca");
+you need per-test fake_movie.rating.and.returnValue("PG");
+// define behavior of name_with_rating
+fake_movie.name_with_rating.and.returnValue("Casablanca
+(PG)");
+expect(fake_movie.name_with_rating()).toBe("Casablanca
+(PG)");
+});
+});
+
+--- Page 48 ---
+Fixtures
+• Database wiped & reloaded with fixtures
+before each spec
+• Pros/when to use
+• truly static data, e.g. configuration info that
+never changes
+• easy to see all test data in one place
+• Cons/when not to use
+• may introduce dependency on fixture data
+
+--- Page 49 ---
+Factories
+• Dynamic test data creation
+• Build objects with defaults and overrides
+• Objects with relationships
+• Create parent/child structures (e.g., user → posts)
+• Pros/when to use
+• objects are complex and reused across tests, ariations of similar
+objects are needed, elationships between objects must be
+constructed,
+• Cons/when not to use
+• simple objects where literals are clearer. data is small, static, and
+used only once,
+
+--- Page 50 ---
+Fixtures—example
+
+--- Page 51 ---
+Example: Factory
+
+--- Page 52 ---
+Factories with associations
+
+--- Page 53 ---
+Fixtures
+• Database wiped & reloaded with fixtures
+before each spec
+• Pros/when to use
+• truly static data, e.g. configuration info that
+never changes
+• easy to see all test data in one place
+• Cons/when not to use
+• may introduce dependency on fixture data
+
+--- Page 54 ---
+Factories
+• Dynamic test data creation
+• Build objects with defaults and overrides
+• Objects with relationships
+• Create parent/child structures (e.g., user → posts)
+• Pros/when to use
+• objects are complex and reused across tests, ariations of similar
+objects are needed, elationships between objects must be
+constructed,
+• Cons/when not to use
+• simple objects where literals are clearer. data is small, static, and
+used only once,
+
+--- Page 55 ---
+Stubbing the Internet
+ESaaS §8.4
+© 2023 Armando Fox, David Patterson, Michael Ball
+Licensed under Creative Commons Attribution-
+NonCommercial-4.0 Unported License
+
+--- Page 56 ---
+Where to stub in SOA?
+expect(Movie.findInTmdb()).toEqual(movies);
+movie.js
+themoviedb
+expect(Tmdb.Movie.find).toHaveBeenCalledWith(
+/* expected arguments */);
+Net::HTTP/OpenURI
+expect(Net.HTTP.get).toHaveBeenCalledWith("correct full
+OS - TCP/IP
+URI");
+Internet
+• for unit testing, stub nearby, for maximum isolation
+of class under test (Fast, Independent)
+TMDb
+TMDb-sandbox • for integration testing, stub far away, to test as
+many interfaces as possible
+
+--- Page 57 ---
+Coverage
+ESaaS §8.7
+© 2023 Armando Fox, David Patterson, Michael Ball
+Licensed under Creative Commons Attribution-
+NonCommercial-4.0 Unported License
+
+--- Page 58 ---
+How much testing is enough?
+“ ”
+• Bad: Until time to ship
+• A bit better: (Lines of test) / (Lines of code)
+• 1.2–1.5 not unreasonable
+• often much higher for production systems
+“ ”
+• Better question: How thorough is my testing?
+• Formal methods
+• Coverage measurement
+• We focus on the latter, though the former is gaining steady
+traction
+
+--- Page 59 ---
+What does “100% coverage” mean?
+• S0: every method
+class MyClass
+• S1: every method from every call
+def foo(x,y,z)
+site
+if x
+if (y && z) then bar(0) end
+➔ C0: every line touched
+else
+• C1: every branch in both
+bar(1)
+directions
+end
+• C1+decision coverage: every end if x is true in line 3
+def bar(x) ; @w = x ; end
+subexpression in conditional but y&&z is false in
+end
+line 4, we increase
+• C2: every path (difficult, and
+disagreement on how valuable) C0 coverage but not
+C1 coverage
+
+--- Page 60 ---
+What kinds of tests?
+• Unit (one method/class)
+e.g. Runs faster
+model
+Finer resolution
+specs
+Many mocks;
+Doesn’t test interfaces
+Higher coverage
+• Functional or module (a
+e.g.
+few methods/classes)
+request
+specs
+Lower coverage
+e.g.
+Fewer mocks;
+Cuke
+• Integration/system
+tests interfaces
+scena-
+Coarser resolution
+rios
+Runs slower
+
+--- Page 61 ---
+Going to extremes
+× “I kicked the tires, it works”
+× “Don’t ship until 100% covered & green”
+ use coverage to identify untested or
+undertested parts of code
+× “Focus on unit tests, they’re more thorough”
+× “Focus on integration tests, they’re more
+realistic”
+ each finds bugs the other misses
+
+--- Page 62 ---
+Other Testing Concepts
+ESaaS §8.8
+© 2023 Armando Fox, David Patterson, Michael Ball
+Licensed under Creative Commons Attribution-
+NonCommercial-4.0 Unported License
+
+--- Page 63 ---
+Other testing terms you may hear
+• Mutation testing: if introduce deliberate error in
+code, does some test break?
+• Fuzz testing: 10,000 monkeys throw random
+input at your code
+• Find ~20% MS bugs, crash ~25% Unix utilities
+• Tests app the way it wasn’t meant to be used
+• DU-coverage: is every pair <define x/use x>
+executed?
+• Black-box vs. white-box/glass-box
+
+--- Page 64 ---
+TDD Summary
+• Red – Green – Refactor, and always have
+working code
+• Test one behavior at a time, using seams
+“ ”
+• Use it placeholders or pending to note
+’
+tests you know you ll need
+• Read & understand coverage reports
+“ ” ’
+• Defense in depth : don t rely too heavily on
+any one kind of test
+
+--- Page 65 ---
+The Plan-and-Document
+Perspective on Testing
+ESaaS §8.10
+© 2023 Armando Fox, David Patterson, Michael Ball
+Licensed under Creative Commons Attribution-
+NonCommercial-4.0 Unported License
+
+--- Page 66 ---
+72
+P&D Testing?
+• BDD/TDD writes tests before code
+• When do P&D developers write tests?
+• …starts from user stories
+• Where do P&D developers start?
+• …developers write tests & code
+• Does P&D use same or different people for testing
+and coding?
+• What does the Testing Plan and Testing
+Documentation look like?
+
+--- Page 67 ---
+73
+P&D Project Manager
+• P&D depends on Project Managers
+• Document project management plan
+• Creates Software Requirements
+Specification (SRS)
+• Can be 100s of pages
+• IEEE standard to follow
+• Must document Test Plan
+• IEEE standard to follow
+
+--- Page 68 ---
+74
+P&D Approach to Testing
+• Manager divides SRS into programming
+units
+• Developers code units, do unit testing
+• Separate Quality Assurance (QA) team
+does higher level tests
+
+--- Page 69 ---
+75
+3 QA Integration Options
+• Top-down integration
+• Starts top of dependency graph
+• High-level functions (UI) work soon
+“ ”
+• Many stubs to get app to work
+• Bottom-up integration
+• Start bottom of dependency graph
+• No stubs, integrate everything in a module
+’
+• Can t see app working until all code written &
+integrated
+
+--- Page 70 ---
+76
+3 Integration Options
+• 3. Sandwich integration
+• Best of both worlds?
+• Reduce stubs by integrating some units
+bottom up
+• Try to get UI operational by
+integrating some units top down
+
+--- Page 71 ---
+77
+Agile VS. P&D

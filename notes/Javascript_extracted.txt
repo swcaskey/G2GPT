@@ -1,0 +1,877 @@
+=== Javascript.pptx ===
+
+--- Slide 1 ---
+Welcome to ECE452
+Lecture 2: JavaScript
+Zhao Zhang
+Rutgers University
+
+--- Slide 2 ---
+Learning to LearnLanguages & Frameworks
+ESaaS §2.1
+
+--- Slide 3 ---
+Objective C  iOS
+Python  Django, Jupyter Notebooks
+JavaScript  React
+Ruby  Rails
+Languages, frameworks, stacks?
+
+--- Slide 4 ---
+Most imperative, object-oriented languages have a lot in common…
+What’s different about this language?
+What abstractions are reified by the framework?
+How do the framework’s abstractions exploit the language’s unique features?
+Languages  Frameworks
+
+--- Slide 5 ---
+Types & typing
+Primitives: naming, variables, strings…
+Methods (functions); class vs. instance
+Abstraction & encapsulation of classes
+Idioms (e.g. symbols & blocks in Ruby)
+Library/package management
+Debugging: breakpoints? REPL?
+Testing
+Antipattern: “writing Python in Ruby”
+8 steps to “X-ray” a new language
+
+--- Slide 6 ---
+Pair Programming
+ESaaS §2.2
+
+--- Slide 7 ---
+Stereotype: lone wolf working all night drinking Red Bull
+Is there a more social way to program?
+What would be benefits of multiple people programming together?
+How would you prevent one person from doing all the work while the other gets coffee and checks (anti)social media?
+Are 2 minds better than 1?
+7
+
+--- Slide 8 ---
+Goal: improve software quality, reduce time to completion by having 2 people develop the same code
+Some people (and companies) love it
+Try it to see if you do
+Some try it and never go back, some find it doesn’t help
+
+Pair programming: why do it?
+8
+
+--- Slide 9 ---
+Pair Programming at Pivotal
+9
+Driver and Observer switch roles every 10-15 minutes
+
+--- Slide 10 ---
+Simple tasks  Quicker
+Complex tasks  Yields higher quality code
+Anecdotally, sometimes more readable too
+More effort than solo programmers
+Keeps both programmers focused
+Transfers knowledge between the pair
+programming idioms, tool tricks, company processes, latest technologies,  …  
+Some teams purposely swap partners per task so eventually everyone pairs with everyone else(“promiscuous pairing”)
+Does Pair Programming help?
+10
+
+--- Slide 11 ---
+Don’t be distracted when you are observer
+Do consider pairing with someone of different experience level—you’ll both learn!
+Explaining is a great way to better understand
+Do swap frequently—roles exercise different skills
+Observer gains skill of explaining their thought process to Driver
+
+
+Do’s and Don’ts of Pairing
+11
+
+--- Slide 12 ---
+“Helped avoid silly mistakes that could take a long time to debug”
+“Changing partners frequently made team more cohesive”
+Tip #6 from previous students
+
+--- Slide 13 ---
+Basic JavaScript for Python/Java Programmers (1 of 3)
+ESaaS §2.3
+
+--- Slide 14 ---
+Types & typing
+Primitives: naming, variables, strings…
+Methods (functions); class vs. instance
+Abstraction & encapsulation of classes
+Idioms (e.g. symbols & blocks in Ruby)
+Library/package management
+Debugging: breakpoints? REPL?
+Testing
+8 steps to “X-ray” a new language
+
+--- Slide 15 ---
+Basic JavaScript for Python/Java Programmers (2 of 3)
+ESaaS §2.3
+
+--- Slide 16 ---
+Types & typing
+Primitives: naming, variables, strings…
+Methods (functions); class vs. instance
+Abstraction & encapsulation of classes
+Idioms (e.g. symbols & blocks in Ruby)
+Library/package management
+Debugging: breakpoints? REPL?
+Testing
+8 steps to “X-ray” a new language
+
+--- Slide 17 ---
+Function Declaration: (1) Explicit Declaration
+Explicit declaration by using the function keyword, followed by a unique function name, a list of parameters (that might be empty), and a block of statements surrounded by curly braces
+Example:
+1	function summation(a, b, c) {
+2	  let s = a + b + c;
+3	  return s;
+4	}		🡨 Note: no semicolon after the ending curly brace of a function
+5	let sum = summation(2,3,4);
+
+
+--- Slide 18 ---
+Function Declaration: (2) Anonymous Declaration
+Function defined without a name (nameless);may be assigned to a variable or passed in as an argument to another function
+Example:
+1	let summation = function(a, b, c) {
+2	  let s = a + b + c;
+3	  return s;
+4	};		🡨 Ends with a semicolon because it is an executable statement
+5	let sum = summation(2,3,4);
+			   🡬 Called using the variable name to which it was assigned
+
+
+--- Slide 19 ---
+Function Declaration: (3) Arrow Declaration - 1
+Arrow functions so called because they use a token => are also a kind of anonymous functions
+When using arrow functions, it is not necessary to type in the keywords function and return, or use curly braces
+Example:
+	  let summation = (a, b, c) => { return a + b + c };
+Curly braces around the function body are not required when the function has a single statement, so instead we can write:
+	  let summation = (a, b, c) => a + b + c;
+Parentheses around the parameters are not required when the function has a single parameter:
+	  let cubed = x => x*x*x;
+Parentheses are required when the function has no parameters:
+	  let greeting = () => window.alert("Hello World!");
+
+
+--- Slide 20 ---
+Function Declaration: (3) Arrow Declaration - 2
+Arrow functions simplify array manipulation. Suppose we have an array of objects:
+1	let products = [
+2	  { name: "comb", price: "32", quantity: "17" },
+3	  { name: "brush", price: "26", quantity: "12" },
+4	  { name: "bowl", price: "18", quantity: "11" },
+5	];
+To retrieve just the product quantities, we write:
+1   let quantities = products.map(items => items.quantity);
+2   console.log(quantities);		// result: [17, 12, 11]
+
+
+--- Slide 21 ---
+The arguments Object & The Rest Operator
+The arguments object is an array-like object that contains the values of the arguments passed to the function
+Includes excess arguments that were not listed when the function was declared
+	function summation(a, b, c) {
+	  // instead of simply returning a + b + c, let's try:
+	  return arguments[0] + arguments[1] + arguments[2];
+	}
+	console.log(summation(1, 2, 3));		// output: 6
+The arguments object is considered outdated and the new way is to use the rest operator:
+	function summation(...allArgs) {
+	  return allArgs.reduce((previous, current) => {
+	    return previous + current;
+	  });
+	}
+	 console.log(summation(1, 2, 3));	// output: 6
+
+
+--- Slide 22 ---
+(Typeless) Object Returned by a Function Closure
+Example function that returns an object with three methods:
+function CreateObject(initialValue) {
+   let statePart1 = initialValue;	// a “private” field
+     let statePart2 = 0;		// another “private” field
+   return {  	// returns an object with three “public” methods
+      value: function() {    // get the current state value
+         return {statePart1, statePart2};
+      },
+      changeAndReport: function(multiplier) {  // the “multiplier” parameter to change the state and report the new value
+         statePart1 *= multiplier;
+         statePart2++;
+	console.log("current value: " + statePart1 + " - after " + statePart2);
+      },
+      reset: function(initialValue) {  // reset the object state
+         statePart1 = initialValue;
+         statePart2 = 0;
+      }
+   };
+}
+This function essentially is an object constructor 
+The returned object does not have a data type(unlike class-based constructors, described in the lecture on JavaScript objects)
+But behind the returned object is the whole CreateObject with the (private!) fields statePart1 and statePart2 variables!
+
+Object Constructor
+function
+private fields
+public methods (“interface”),
+returned as a new object
+
+--- Slide 23 ---
+(Typeless) Object Returned by a Function Closure
+Example of creating and using an object:
+let obj = CreateObject(6);
+
+obj.value();
+> {statePart1: 6, statePart2: 0}
+
+obj.changeAndReport(3);
+> current value: 18 - after 1
+
+
+--- Slide 24 ---
+Functions Can Return (Anonymous) Functions
+Example: Pairing players for a game
+function MatchmakerClosure(thresh) {
+   let threshold = thresh;	// private property within this function’s scope
+   let playersList = [];	// another private property of array type
+   // private helper method, does some auxiliary computation and updates the private properties
+   function findMatchingPair( ) {
+      let firstIn = playersList.shift(); // get the first player
+      // find a matching pair in the list, remove both and return
+	https://stackoverflow.com/questions/1806189/algorithm-to-find-matching-pairs-in-a-list  
+      // if NOT found, return an empty object {}
+   }
+   return function(newPlayer) {  // the returned function is the “public method” of this “object”
+      playersList.push(newPlayer);
+      return findMatchingPair( );  // use a private method for some work 
+   };
+}
+
+
+Actual object
+private fields
+returned closure
+block of code
+
+--- Slide 25 ---
+Immediately-invoked Function Expression (IIFE)
+a.k.a. Self-executing functions
+
+
+
+Another example:
+
+const counter = function() {
+   let n = 0;
+   return function() {
+      console.log('Times run: ' + (++n));
+   }
+} ();
+
+
+
+function cubeOf(x){
+   return Math.pow(x, 3);
+}
+
+let cubeOf10 = cubeOf(10);
+let cubeOf10 = function(x){
+   return Math.pow(x, 3);
+}(10);
+Named function call replaced by anonymous function
+
+--- Slide 26 ---
+Errors and Exceptions
+An exception is any unusual event, erroneous or not, that is detectable by either hardware or software and that may require special processing
+ Exception examples:
+Number ranges are exceeded in arithmetic operations
+Division by zero is attempted
+An array subscript reached beyond the range
+A possible case is missing in a multiple selector construct (the switch statement)
+The user performed an unexpected action
+Other hardware errors or user-defined conditions …
+Exception handling is the special processing that may be required when an exception is detected
+This processing is done by a code unit or segment called an exception handler 
+Different types of exceptions require different exception handlers
+
+--- Slide 27 ---
+The “try…catch…finally” Statement
+try {
+  ... // code
+}
+no errors
+ignore the rest of
+“try” block
+error occurred
+execute “catch” block
+execute “finally” block
+ignore “catch” block
+1	try {
+2	  // this code might raise an exception
+3	} catch (exception parameter) {
+4	  // exception handler code to process exceptions
+5	} finally {
+6	  // this code always gets executed
+7	}
+  1	function arcOfCircle(radius, angle) {
+  2	  if (radius <= 0) {
+  3	    throw new Error(
+  4	      name: RangeError, message: 'invalid circle radius'
+  5	    );}
+  6	  if ((angle <= 0) || (angle > 360)) {
+  7	  throw new Error(
+  8	    name: RangeError, message: 'invalid arc angle'
+  9	  );
+10	  return (Math.PI * radius * angle)/180;	// length of arc
+11	}
+Example:
+
+--- Slide 28 ---
+JavaScript Predefined Exception Types
+Error 
+This type is used to represent generic exceptionsand is also used for implementing custom-defined exceptions
+RangeError  
+thrown when a numeric value has exceeded the allowable range
+ReferenceError  
+thrown when an invalid reference value has been detected
+SyntaxError  
+thrown when the interpreter detects incorrect use of the grammar rules
+TypeError  
+thrown when the actual type of an operand is different than the expected type; e.g., a primitive type is used as an object, or an object’s internal property is used but the object does not implement this property
+URIError  
+thrown when a URI is incorrectly specified
+A URI (Uniform Resource Identifier) is a String that identifies a path to reach a resource (a web page or a file) and the network protocol by which to access the resource (e.g., HTTP or FTP) on the Internet
+
+
+--- Slide 29 ---
+Subroutine Calls with Exception Handling
+A function call is NOT just an invocation statement followed by another statement
+Because of possible “side effects,” (*) it may bea complex construct try-catch-finally 
+
+But, even what appears as a “normal return”, needs to be checked for invalid values:
+if (y == NULL) { … }
+else if (y == 'undefined')  { … }
+else if …
+
+statement 1
+function call
+statement 3
+subroutine
+statement_1;
+
+try {
+   y = function(x);
+
+} catch (Exception ex)
+   handle exception types;
+
+} finally {
+   cleanup;
+}
+
+statement_3 here
+
+normal
+return
+Exception
+thrown
+If not
+re-thrown
+return
+address
+return
+address
+Pure function:
+Function with “side effects”:
+(*) A “side effect” represents a digression from the main purpose of a function.
+Exception
+re-thrown
+
+--- Slide 30 ---
+Uncaught Exceptions
+Consider a scenario where an HTML webpage contains a JavaScript script with a mistyped method name
+For example, instead of document.getElementById, we typed:
+1	const myDoc = document.getElementByID("tagID");
+2	//=>OUTPUT:  Uncaught TypeError: undefined is not a function
+In the function name, instead of using an uppercase I and a lowercase d, we have used an uppercase I and D 
+Because the property getElementByID does not exist for the document object, its value by default is undefined. 
+When trying to use undefined as a method/function, the browser will output an uncaught TypeError as shown on line 2 above
+The message literally says that the code attempted to use undefined like it was a function
+To fix this error, we need to ensure the function name is correct
+
+--- Slide 31 ---
+Types & typing
+Primitives: naming, variables, strings…
+Methods (functions); class vs. instance
+Abstraction & encapsulation of classes
+Idioms (e.g. symbols & blocks in Ruby)
+Library/package management
+Debugging: breakpoints? REPL?
+Testing
+8 steps to “X-ray” a new language
+
+--- Slide 32 ---
+Topics
+Structure of Objects in JavaScript
+Properties
+Methods
+Object Creation
+this 
+prototype 
+Classes and Instance Objects
+Classes
+Constructor and New
+Fields and Private vs. Public Properties
+Prototypes and Prototypal Inheritance
+JavaScript Built-In Objects
+
+
+--- Slide 33 ---
+Structure of Objects in JavaScript
+
+JavaScript objects are collections of properties 
+Each property has a “key” by which an associated “value” is accessed
+In this sense, objects are associative arrays of key-value elements
+When a property value is a JavaScript function, this property is called method 
+There are no other differences between ordinary properties and methods
+let person = {
+   lastName: "Johnson",
+   yearBorn: 2000,
+   isStudent: false,
+   getAge: function() {
+      return new Date().getFullYear() - person.yearBorn;	🡸!
+   }
+};
+In the case of the getAge property, its value just happens to be a function
+
+
+--- Slide 34 ---
+Object Creation – Literal Notation
+Objects can be created simply by listing their componentsusing the literal notation 
+let anObject = {lastName: 'Johnson', yearBorn: 2000, isStudent: false};
+
+let anArray = ['Johnson', 2000, false];
+
+let anObject = {	// multi-line form is equivalent to a single line form
+  lastName: 'Johnson',
+  yearBorn: 2000,
+  isStudent: false
+};
+
+
+
+--- Slide 35 ---
+JavaScript Object and Its prototype Property
+The Object class is a built-in data type in JavaScript
+Every time a new object is created, it inherits all properties and methods from the Object class
+A key property of the Object class is prototype 
+Object.prototype is like a template or blueprint used to clone arbitrary JS objects
+console.log(Object.getPrototypeOf({}) === Object.prototype);
+//=>OUTPUT: true
+Example methods of the Object class -- static methods:
+Object.create()	Creates a new object with the specified prototype object and properties
+Object.entries()	Returns an array containing all of the [key, value] pairs of a given object's own enumerable string properties
+Object.getPrototypeOf()	Returns the prototype (internal [[Prototype]] property) of the specified object
+
+Example methods of the Object class -- instance methods:
+Object.prototype.constructor	Specifies the function that creates an object's prototype
+Object.prototype.hasOwnProperty()	Returns a Boolean indicating whether an object contains the specified property as a direct property of that object and not inherited through the prototype chain
+Object.prototype.toString()	Returns a string representation of the object
+
+
+--- Slide 36 ---
+Derived Prototypes
+Some objects have their own prototype object that itself has Object.prototype as its prototype
+Example:
+console.log(Object.getPrototypeOf([]) === Array.prototype);
+//=>OUTPUT: true
+console.log(Object.getPrototypeOf(Array.prototype) === Object.prototype);
+//=>OUTPUT: true
+We can use Object.create() to create an objectwith a specific prototype:
+let talkingPrototype = {
+   saySomething(text) {
+      console.log(`Object says: '${text}'`);
+   }
+}
+let talkingObject = Object.create(talkingPrototype);
+talkingObject.saySomething("Hello World!")
+//=>OUTPUT: Object says: 'Hello World!'
+
+
+--- Slide 37 ---
+this reference	(1)
+Every scope in JavaScript has a this object
+Within an object, this refers to the current object instance
+In the global scope (outside of any function), it depends if in strict mode—see later
+So, instead of directly referencing an object inside a method, we reference this:
+const person = {
+   lastName: 'Johnson',
+   yearBorn: 2000,
+   student: false,
+   getAge: function () {
+      return new Date().getFullYear() - this.yearBorn;
+   }
+};
+console.log(student.getAge()); //=>OUTPUT:  23 (assuming year 2023)
+The value of this is set when the function is called 
+
+--- Slide 38 ---
+this reference	(2)
+In the global scope (outside of any function), this refers to the global object (window in browsers or global in NodeJS), undefined in strict mode:
+function func( ) {
+   return this;
+}
+If NOT in a strict mode:
+// In a browser:
+func() === window;	// true
+// In Node:
+func() === globalThis;	// true
+In strict mode:
+function func() {
+   'use strict';	// request strict mode
+   return this;
+}
+func() === undefined;	// true
+Note that function func() is called directly, and not as a method or property of an object
+When a method of an object is called, its this is set to its host object
+
+
+--- Slide 39 ---
+this reference	(3)
+The value of this is set when the function is called
+Example (not the strict mode):
+let context = 'outside';
+console.log("Context: " + this.context);	//-> Context: undefined
+
+function func() {
+ console.log(`"this" is ${this}, context ${this.context}`);
+}
+func();	//-> "this" is [object global], Context: undefined
+
+let obj_1 = { method: func, context: 'Object 1' };
+obj_1.method(); //-> "this" is [object Object], Context: Object 1
+
+let obj_2 = { method: func, context: 'Object 2' };
+obj_2.method(); //-> "this" is [object Object], Context: Object 2
+
+
+--- Slide 40 ---
+Classes and Constructors
+As in most other languages, define a class using the keyword class:
+	class SiteMember {};	
+JavaScript classes are special functions but cannot be invoked like regular functions:
+	console.log(SiteMember);
+	//=>OUTPUT:  [Function: SiteMember]
+	SiteMember();
+    🡪 TypeError: Class constructor SiteMember cannot be invoked without 'new‘
+	const member0 = new SiteMember();	🡸 correct use
+ We may override the default constructor method and use to create object instances
+class SiteMember {
+  constructor(name) {	// constructor method definition
+    this.name = name;
+    this.score = 0;
+  }
+  setScore(increment) {	// another method definition
+    this.score += increment;
+  }
+}
+const member1 = new SiteMember("John Doe");
+The constructor can take an arbitrary number of parameters, including none
+Also supports default parameter values and “rest” parameters
+
+--- Slide 41 ---
+Functions Can Return (Typeless) Objects  [from previous lecture]
+Example function that returns an object with three methods:
+function CreateObject(initialValue) {
+   let statePart1 = initialValue;	// a “private” field
+     let statePart2 = 0;		// another “private” field
+   return {  	// returns an object with three “public” methods
+      value: function() {    // get the current state value
+         return {statePart1, statePart2};
+      },
+      changeAndReport: function(multiplier) {  // the “multiplier” parameter to change the state and report the new value
+         statePart1 *= multiplier;
+         statePart2++;
+	console.log("current value: " + statePart1 + " - after " + statePart2);
+      },
+      reset: function(initialValue) {  // reset the object state
+         statePart1 = initialValue;
+         statePart2 = 0;
+      }
+   };
+}
+This function essentially is an object constructor 
+The returned object does not have a data type(unlike class-based constructors, described in the lecture on JavaScript objects)
+But behind the returned object is the whole StateObject with the (private!) fields currentState and observers array!
+
+Constructor function
+private fields
+public methods (“interface”),
+returned as a new object
+
+--- Slide 42 ---
+… defined Using class Notation & hash # prefix for private
+Example (Publisher or Subject object of the Publish-Subscribe / Observer Pattern):https://en.wikipedia.org/wiki/Observer_pattern 
+class StateObject {		// The Subject object in the Observer Pattern
+   #statePart1;		// private class members created by using a hash # prefix
+   #statePart2;		// observers of this state object
+   constructor(initialValue) {  	// creates an object with three public methods (plus the constructor)
+      this.#statePart1 = initialValue;
+      this.#statePart2 = 0;
+   }
+   getCurrentState () {   	 // get the current state value
+        return {this.#statePart1, this.#statePart2};
+   }
+   changeAndNotify(multiplier) {  // the “multiplier” parameter to change the state and report the new value
+         this.#statePart1 *= multiplier;
+         this.#statePart2++;
+	console.log("current value: " + this.#statePart1 + " - after " + this.#statePart2);
+      });
+   }
+   reset(initialValue) {  // reset the object state
+         statePart1 = initialValue;
+         statePart2 = 0;
+   }
+}
+Objects created by this constructor do NOT have a type; the “class” StateObject is just a function
+
+JavaScript class
+private fields
+public methods (“interface”),
+of the class StateObject
+
+--- Slide 43 ---
+Class Notation vs. Literal Notation for Creating Objects
+Regardless of whether we used class notation or literal notation,the product is the same:  a JavaScript Object
+A collection of key-value pairs
+Values that are JavaScript functions are called methods
+An object does not “remember” how it was createdand in both cases behaves exactly the same way
+
+Class notation is useful because it offers some grammatical checksto help avoid programmer errors
+
+
+--- Slide 44 ---
+Instance Objects
+Constructor function
+Special member function
+Called when object instantiated
+Ensures that each instance has all the properties of its class
+Initializes the properties
+For example:
+const member1 = new SiteMember("John Doe");
+const member2 = new SiteMember("Jane Doe");
+member2.setScore(3);
+When we called the method setScore() above in the last line of code, this is bound to member2 and member1’s score will remain unaffected
+We can add new properties to object instances:
+member2.employee = true;
+Now only member2 has the employee property and member1 does not
+const member2 means the variable member2 will always refer to the same object, but the contents (properties) of the object can be modified. 
+
+--- Slide 45 ---
+Property Accessors
+A named data property associates a key with a value and you use the key to manipulate the value directly
+As a convenience, we can define accessors (getter and setter functions) to store or retrieve a value that is associated with a property.
+ Example:
+class SiteMember {
+   constructor(name) {
+      this.name = name;
+      this._score = 0;
+   }
+   get mScore() { return this._score; }	 // getter method
+   set mScore(increment) {			 // setter method
+      this._score += increment;
+   }
+}
+Now we can increment the score by saying:
+	member2.mScore = 3;
+
+
+get and set are special keywords in JS. While they look like functions, they do not follow the typical function syntax because they allow you to bind the property access and assignment behavior to custom logic, without calling them as regular functions.
+
+--- Slide 46 ---
+Extending a Class
+We may extend an existing class with new properties or methods
+class StarMember extends SiteMember {
+  constructor(name, awardPoints) {
+    super(name);
+    this._awardPoints = awardPoints;
+  }
+  get awardPoints() { return this._awardPoints; }
+  set awardPoints(increment) {
+    this._awardPoints += increment;
+  }
+}
+const member3 = new StarMember("Jo Doe", 6);
+The call super() to the base class constructor is needed and must appear before accessing this. Otherwise, a runtime error will occur.
+
+--- Slide 47 ---
+base
+extended
+base
+extended
+Class Inheritance vs. Prototypal Inheritance
+In class inheritance approach, the base class is inseparable part of an extended class (in C++, Java, C#, Python, …)
+In prototypal inheritance, the base prototype supports an extended class, but it is replaceable by another prototype (JavaScript)
+Class-based inheritance
+Prototypal inheritance
+The derived/extended class is anchored to the base class, which makes it immovable
+The derived/extended class can be detached from the base class and moved to a different base
+
+--- Slide 48 ---
+Prototype Chain
+member1
+…
+instances of SiteMember
+prototype
+SiteMember
+member2
+...
+employee
+prototype
+“static” properties
+shared by all instances
+prototype
+Object.prototype
+properties shared
+by all JS objects
+prototype
+null
+Root ancestor 
+member1 and member2 are instances of SiteMember;
+SiteMember： This is the constructor function or class for creating instances like member1 and member2.
+Prototype Chain: Prototype in JavaScript is the mechanism by which objects inherit properties and methods. Every object has an internal link to another object, known as its prototype.
+Object.prototype is the root of all JavaScript objects, and it provides methods like toString(), hasOwnProperty(), and others that are available to all objects.
+
+--- Slide 49 ---
+Constructor Function vs. Constructed Objects
+«function»
+Constructor
+«object»
+Object Instance
+constructor function
+«object»
+Function.prototype
+constructor’s prototype
+constructed object
+«object»
+Object.prototype
+object’s prototype
+creates
+A constructor function (labeled as Constructor in the diagram) is a special type of function in JavaScript used to create instances of objects.
+Constructed Object: This represents the object instance created when the constructor function is called with new.
+Constructor’s prototype: The dotted line from the constructor to Function.prototype indicates that the constructor itself is an object with its own prototype (Function.prototype), because in JavaScript, functions are also objects.
+Object's Prototype is the base prototype of all objects in JavaScript.
+
+
+
+--- Slide 50 ---
+Prototype relationships for the class SiteMember
+           «object»
+          member1
+
+name
+__proto__
+
+Jane Doe
+          «function»
+        SiteMember
+
+prototype
+
+           «object»
+ SiteMember.prototype
+
+
+
+mScore
+constructor
+rankUp
+prototype of
+the constructor function
+           «object»
+          member1
+
+name
+__proto__
+
+constructor
+prototype
+instances
+          «object»
+  Function.prototype
+
+
+constructor’s prototype
+prototype of the class
+for which the constructor
+creates instances
+John Doe
+Each object created by the constructor has a hidden property (__proto__ or [[Prototype]]) that points to the prototype of the constructor function.
+
+--- Slide 51 ---
+Types & typing
+Primitives: naming, variables, strings…
+Methods (functions); class vs. instance
+Abstraction & encapsulation of classes
+Idioms 
+Library/package management
+Debugging: breakpoints? REPL?
+Testing
+8 steps to “X-ray” a new language
+
+--- Slide 52 ---
+Computation represented in terms of computable functions
+Identifiers:   x ϵ Id 
+An expression of the form λx.e represents a nameless function
+Usually we name the functions, such as:	f(x) = 3x + 2 where f is the name of the function
+When we plug in a value for x, we can calculate the result: f(5) = 3∙5 + 2 = 17 
+Recall the arrow functions in JavaScript:	x => { 3x + 2 } 
+
+The rewrite rules of the lambda calculus (substitutions of symbols):[e1 / x] e2 read as:    e2 replaces x in e1  
+Example:(λx.x×x×x)(2) = 2×2×2 = 8        e1         e2  
+
+Lambda Calculus (1)
+
+--- Slide 53 ---
+Computation represented in terms of computable functions
+Identifiers:   x ϵ Id 
+Expressions of the form λx.e are called abstractionsand of the form (e1 e2) are called applications 
+The former captures the notion a function; the latter captures the notion application of a function
+The rewrite rules of the lambda calculus:[e1 / x] e2 read as:    e2 replaces x in e1  
+Replaced x with an expression e1, which could be anything, including a λ function
+Example:	(λx.e1) (λy.e2) —we pass in a function and have returned another function (λx.x×x×x)(2y) = 2y×2y×2y = 8y3        e1         e2  
+
+Lambda Calculus (2)
+
+--- Slide 54 ---
+Types & typing
+Primitives: naming, variables, strings…
+Methods (functions); class vs. instance
+Abstraction & encapsulation of classes
+Idioms (e.g. symbols & blocks in Ruby)
+Library/package management
+Debugging: breakpoints? REPL?
+Testing
+8 steps to “X-ray” a new language
+
+--- Slide 55 ---
+Fallacies, Pitfalls, and How Not to Learn a Language By Googling
+ESaaS §2.7–2.8
+
+--- Slide 56 ---
+Copy code without understanding it (e.g. from StackOverflow)
+Follow “cookbook” tutorials without understanding them
+Ask an LLM to write your code
+Writing Python in Ruby (see book…)
+norvig.com/21-days.html
+How to “learn” a language in the least effective way possible
+
+--- Slide 57 ---
+
+Ugly programs are like ugly suspension bridges: they’re much more liable to collapse than pretty ones, because the way humans (especially engineer-humans) perceive beauty is intimately related to our ability to process and understand complexity. A language that makes it hard to write elegant code makes it hard to write good code.
+
+Eric S. Raymond, author of The Cathedral and the Bazaar
+A parting thought
