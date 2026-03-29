@@ -1,0 +1,11 @@
+Install:
+- Node.js (includes npm)
+- MySQL
+- Ollama
+
+Project npm packages:
+- express
+- cors
+- jasmine
+- sqlite3
+- supertest
