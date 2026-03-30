@@ -36,15 +36,6 @@ db.serialize(() => {
       login_time DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
-
-  // Insert default test users
-  db.run(`
-    INSERT OR IGNORE INTO users (email, password)
-    VALUES
-      ('test@example.com', 'password123'),
-      ('admin@g2gpt.com', 'admin123'),
-      ('user@rutgers.edu', 'rutgers2026')
-  `);
 });
 
 module.exports = db;

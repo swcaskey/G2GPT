@@ -53,11 +53,6 @@ Puppeteer (Browser Automation integrated with Cucumber.js):
 Clear all data (delete SQLite database):
   del /f login.db
 
-Default test accounts (automatically created):
-  - Username: tarun123 | Password: rutgers2026 | Name: Tarun
-  - Username: student1 | Password: password123 | Name: Student One
-  - Username: admin | Password: admin123 | Name: Admin User
-
 
 
 
