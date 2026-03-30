@@ -1,23 +1,610 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>G2GPT - Dashboard</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f5f5f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .card { background: white; padding: 32px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 400px; }
-        h1 { color: #333; }
-        .btn { display: inline-block; padding: 12px 24px; background: #cc0033; color: white; text-decoration: none; border-radius: 8px; margin-top: 20px; font-weight: bold; }
-        .btn:hover { background: #990026; }
-        .automated-highlight { border-color: #ffc107 !important; outline: 8px solid rgba(255, 193, 7, 0.9) !important; box-shadow: 0 0 25px rgba(255, 193, 7, 1) !important; z-index: 9999; position: relative; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>G2GPT - Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Top navbar ── */
+    #navbar {
+      background: #cc0033;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 54px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
+
+    #navbar .brand {
+      font-size: 1.25rem;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+
+    #navbar a {
+      color: white;
+      text-decoration: none;
+      font-size: 14px;
+      padding: 7px 16px;
+      border: 1px solid rgba(255,255,255,0.5);
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+    #navbar a:hover { background: rgba(255,255,255,0.15); }
+
+    /* ── App body (sidebar + chat) ── */
+    #app {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: 260px;
+      background: white;
+      border-right: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    #sidebar-top {
+      padding: 14px 12px 10px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    #new-chat-btn {
+      width: 100%;
+      padding: 9px;
+      background: #cc0033;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #new-chat-btn:hover { background: #a8002a; }
+
+    #search-input {
+      width: 100%;
+      margin-top: 10px;
+      padding: 8px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    #search-input:focus {
+      border-color: #cc0033;
+      box-shadow: 0 0 0 2px rgba(204,0,51,0.15);
+    }
+
+    #history-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 0;
+    }
+    #history-list::-webkit-scrollbar { width: 4px; }
+    #history-list::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: bold;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 10px 14px 4px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 10px 9px 14px;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: background 0.12s, border-color 0.12s;
+      gap: 6px;
+    }
+    .history-item:hover { background: #f5f5f5; }
+    .history-item.active {
+      background: #fff0f3;
+      border-left-color: #cc0033;
+    }
+    .history-item.active .hi-title { color: #cc0033; font-weight: bold; }
+
+    .hi-title {
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+      color: #111827;
+    }
+
+    .hi-delete {
+      background: none;
+      border: none;
+      color: #9ca3af;
+      font-size: 13px;
+      cursor: pointer;
+      padding: 2px 5px;
+      border-radius: 4px;
+      opacity: 0;
+      transition: opacity 0.12s, color 0.12s;
+      flex-shrink: 0;
+    }
+    .history-item:hover .hi-delete { opacity: 1; }
+    .hi-delete:hover { color: #cc0033; }
+
+    #sidebar-footer {
+      padding: 10px 14px;
+      border-top: 1px solid #e0e0e0;
+      font-size: 12px;
+      color: #9ca3af;
+      text-align: center;
+    }
+
+    /* ── Chat area ── */
+    #chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      background: #f5f5f5;
+    }
+
+    #chat-header {
+      background: white;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    #chat-title {
+      font-size: 15px;
+      font-weight: bold;
+      color: #111827;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── Messages ── */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    #messages::-webkit-scrollbar { width: 5px; }
+    #messages::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+
+    #empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: #9ca3af;
+      padding-bottom: 60px;
+    }
+    #empty-state .empty-icon { font-size: 2.5rem; }
+    #empty-state .empty-title { font-size: 1.1rem; font-weight: bold; color: #6b7280; }
+    #empty-state .empty-sub { font-size: 13px; }
+
+    .msg-row {
+      display: flex;
+      gap: 10px;
+      max-width: 800px;
+      animation: fadeUp 0.18s ease both;
+    }
+    .msg-row.user { flex-direction: row-reverse; align-self: flex-end; }
+    .msg-row.bot  { align-self: flex-start; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(5px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .avatar.bot  { background: #fde8ec; color: #cc0033; border: 1px solid #f9c0cc; }
+    .avatar.user { background: #e8e8e8; color: #374151; border: 1px solid #d1d5db; }
+
+    .bubble {
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.6;
+      word-wrap: break-word;
+      max-width: 100%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    }
+    .msg-row.bot  .bubble {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-top-left-radius: 3px;
+      color: #111827;
+    }
+    .msg-row.user .bubble {
+      background: #cc0033;
+      color: white;
+      border-top-right-radius: 3px;
+    }
+
+    #typing-indicator { display: none; padding: 0 20px 8px; }
+    #typing-indicator.show { display: flex; }
+    .typing-bubble {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      border-top-left-radius: 3px;
+      padding: 10px 14px;
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: #9ca3af; animation: blink 1.2s infinite; }
+    .dot:nth-child(2) { animation-delay: .2s; }
+    .dot:nth-child(3) { animation-delay: .4s; }
+    @keyframes blink { 0%,80%,100% { opacity:.25; } 40% { opacity:1; } }
+
+    /* ── Input area ── */
+    #input-area {
+      background: white;
+      border-top: 1px solid #e0e0e0;
+      padding: 14px 20px 16px;
+    }
+
+    #input-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      background: #f9f9f9;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      padding: 8px 10px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    #input-row:focus-within {
+      border-color: #cc0033;
+      box-shadow: 0 0 0 2px rgba(204,0,51,0.15);
+    }
+
+    #user-input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      color: #111827;
+      resize: none;
+      max-height: 120px;
+      min-height: 22px;
+      line-height: 1.5;
+    }
+    #user-input::placeholder { color: #9ca3af; }
+
+    #send-btn {
+      background: #cc0033;
+      color: white;
+      border: none;
+      border-radius: 7px;
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.2s, transform 0.1s;
+    }
+    #send-btn:hover { background: #a8002a; }
+    #send-btn:active { transform: scale(0.93); }
+    #send-btn svg { width: 16px; height: 16px; }
+
+    #input-hint {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 6px;
+      text-align: center;
+    }
+
+    .automated-highlight {
+      border-color: #ffc107 !important;
+      outline: 8px solid rgba(255, 193, 7, 0.9) !important;
+      box-shadow: 0 0 25px rgba(255, 193, 7, 1) !important;
+      z-index: 9999;
+      position: relative;
+    }
+  </style>
 </head>
 <body>
-    <div class="card">
-        <h1>Welcome to G2GPT</h1>
-        <p id="auth-status">You are now securely logged in.</p>
-        <p>Main Protected Area: LLM Inference functionality would go here.</p>
-        <a href="/logout" id="logout-link" class="btn">Log Out</a>
-    </div>
+
+  <div id="navbar">
+    <span class="brand">G2GPT</span>
+    <a href="/logout" id="logout-link">Log Out</a>
+  </div>
+
+  <div id="app">
+
+    <aside id="sidebar">
+      <div id="sidebar-top">
+        <button id="new-chat-btn" onclick="newChat()">+ New Conversation</button>
+        <input type="text" id="search-input" placeholder="Search conversations…" oninput="renderHistory()" />
+      </div>
+      <div id="history-list"></div>
+      <div id="sidebar-footer">G2GPT · Conversation History</div>
+    </aside>
+
+    <section id="chat-area">
+      <div id="chat-header">
+        <div id="chat-title">New Conversation</div>
+      </div>
+
+      <div id="messages">
+        <div id="empty-state">
+          <div class="empty-icon">💬</div>
+          <div class="empty-title">Welcome to G2GPT</div>
+          <div class="empty-sub">Start a new conversation or select one from the sidebar.</div>
+        </div>
+      </div>
+
+      <div id="typing-indicator">
+        <div style="display:flex;gap:10px;align-items:flex-end;">
+          <div class="avatar bot">AI</div>
+          <div class="typing-bubble">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="input-area">
+        <div id="input-row">
+          <textarea id="user-input" rows="1" placeholder="Type your message…"></textarea>
+          <button id="send-btn" onclick="sendMessage()" title="Send">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+        <div id="input-hint">Press Enter to send &nbsp;·&nbsp; Shift+Enter for a new line</div>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    let conversations = JSON.parse(localStorage.getItem('g2gpt_conversations') || '[]');
+    let activeId = null;
+
+    function save() {
+      localStorage.setItem('g2gpt_conversations', JSON.stringify(conversations));
+    }
+    function getConv(id) { return conversations.find(c => c.id === id); }
+    function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+    function autoTitle(text) { return text.trim().slice(0, 42) + (text.trim().length > 42 ? '…' : ''); }
+
+    function groupConvs(list) {
+      const now   = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const yest  = today - 86400000;
+      const groups = { Today: [], Yesterday: [], Older: [] };
+      list.forEach(c => {
+        if      (c.updatedAt >= today) groups.Today.push(c);
+        else if (c.updatedAt >= yest)  groups.Yesterday.push(c);
+        else                           groups.Older.push(c);
+      });
+      return groups;
+    }
+
+    function renderHistory() {
+      const query = document.getElementById('search-input').value.toLowerCase();
+      const el    = document.getElementById('history-list');
+      el.innerHTML = '';
+
+      const filtered = conversations
+        .filter(c => !query || c.title.toLowerCase().includes(query))
+        .sort((a, b) => b.updatedAt - a.updatedAt);
+
+      if (filtered.length === 0) {
+        el.innerHTML = '<div style="padding:18px 14px;font-size:13px;color:#9ca3af;">No conversations yet.</div>';
+        return;
+      }
+
+      const groups = groupConvs(filtered);
+      ['Today', 'Yesterday', 'Older'].forEach(label => {
+        if (!groups[label].length) return;
+        const lbl = document.createElement('div');
+        lbl.className = 'section-label';
+        lbl.textContent = label;
+        el.appendChild(lbl);
+
+        groups[label].forEach(c => {
+          const item = document.createElement('div');
+          item.className = 'history-item' + (c.id === activeId ? ' active' : '');
+          item.innerHTML = `
+            <span class="hi-title">${esc(c.title)}</span>
+            <button class="hi-delete" title="Delete" onclick="deleteConv(event,'${c.id}')">✕</button>
+          `;
+          item.addEventListener('click', () => loadConv(c.id));
+          el.appendChild(item);
+        });
+      });
+    }
+
+    function loadConv(id) {
+      activeId = id;
+      const conv = getConv(id);
+      document.getElementById('chat-title').textContent = conv.title;
+      renderMessages(conv.messages);
+      renderHistory();
+    }
+
+    function renderMessages(msgs) {
+      const container = document.getElementById('messages');
+      container.innerHTML = '';
+      if (!msgs || msgs.length === 0) {
+        container.innerHTML = `
+          <div id="empty-state">
+            <div class="empty-icon">💬</div>
+            <div class="empty-title">Welcome to G2GPT</div>
+            <div class="empty-sub">Start a new conversation or select one from the sidebar.</div>
+          </div>`;
+        return;
+      }
+      msgs.forEach(m => appendBubble(m.role, m.content, false));
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function appendBubble(role, content, animate = true) {
+      const container = document.getElementById('messages');
+      const es = document.getElementById('empty-state');
+      if (es) es.remove();
+
+      const row = document.createElement('div');
+      row.className = `msg-row ${role}`;
+      if (!animate) row.style.animation = 'none';
+
+      row.innerHTML = `
+        <div class="avatar ${role}">${role === 'user' ? 'You' : 'AI'}</div>
+        <div class="bubble">${esc(content)}</div>
+      `;
+      container.appendChild(row);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function newChat() {
+      const conv = {
+        id: genId(), title: 'New Conversation',
+        messages: [], createdAt: Date.now(), updatedAt: Date.now(),
+      };
+      conversations.unshift(conv);
+      save();
+      loadConv(conv.id);
+    }
+
+    function deleteConv(e, id) {
+      e.stopPropagation();
+      conversations = conversations.filter(c => c.id !== id);
+      save();
+      if (activeId === id) {
+        if (conversations.length > 0) loadConv(conversations[0].id);
+        else {
+          activeId = null;
+          document.getElementById('chat-title').textContent = 'New Conversation';
+          renderMessages([]);
+        }
+      }
+      renderHistory();
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('user-input');
+      const text  = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      input.style.height = 'auto';
+
+      if (!activeId) newChat();
+      const conv = getConv(activeId);
+
+      if (conv.messages.length === 0) {
+        conv.title = autoTitle(text);
+        document.getElementById('chat-title').textContent = conv.title;
+      }
+
+      conv.messages.push({ role: 'user', content: text });
+      conv.updatedAt = Date.now();
+      save();
+      appendBubble('user', text);
+      renderHistory();
+
+      const typing = document.getElementById('typing-indicator');
+      typing.classList.add('show');
+      document.getElementById('messages').scrollTop = 99999;
+
+      let reply = '';
+      try {
+        reply = await callLLM(conv.messages);
+      } catch (err) {
+        reply = '⚠️ Could not reach the AI. Please check the API configuration.';
+      }
+
+      typing.classList.remove('show');
+      conv.messages.push({ role: 'bot', content: reply });
+      conv.updatedAt = Date.now();
+      save();
+      appendBubble('bot', reply);
+      renderHistory();
+    }
+
+    // ── REPLACE THIS with your teammate's actual API call ──
+    async function callLLM(messages) {
+      // const res = await fetch('/api/chat', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ messages })
+      // });
+      // const data = await res.json();
+      // return data.reply;
+
+      await new Promise(r => setTimeout(r, 900));
+      return `[Placeholder] You said: "${messages[messages.length - 1].content}"\n\nReplace callLLM() with your real API call.`;
+    }
+
+    const textarea = document.getElementById('user-input');
+    textarea.addEventListener('input', function () {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+    textarea.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+
+    function esc(str) {
+      return str
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+    }
+
+    if (conversations.length > 0) loadConv(conversations[0].id);
+    else renderHistory();
+  </script>
+
 </body>
 </html>
