@@ -1,48 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rutgers Login</title>
-  <link rel="stylesheet" href="css/common.css">
-  <link rel="stylesheet" href="css/login.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>G2GPT - Log In</title>
+  <link rel="stylesheet" href="css/common.css" />
+  <link rel="stylesheet" href="css/login.css" />
 </head>
-
 <body>
-  <div class="login-container">
-    <h1>Rutgers Login</h1>
-    
-    <form id="loginForm">
-      <input
-        type="text"
-        id="uname"
-        placeholder="Username (NetID)"
-        required
-      >
-      
-      <input
-        type="password"
-        id="psw"
-        placeholder="Password"
-        required
-      >
-      
-      <div class="options">
-        <label>
-          <input type="checkbox" id="remember">
-          Remember me
-        </label>
-        
-        <a href="#">Forgot password?</a>
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="brand-block">
+        <span class="brand-name">G2GPT</span>
       </div>
-      
-      <button type="submit">Log In</button>
-      <button type="button" class="cancel" id="cancelBtn">Cancel</button>
-    </form>
-    
-    <p id="statusMessage" class="status"></p>
+    </header>
+
+    <main class="login-main">
+      <section class="login-card" aria-labelledby="login-title">
+        <div class="login-content">
+          <h1 id="login-title">Log In</h1>
+          <p class="login-description">
+            Enter your account credentials to continue to G2GPT.
+          </p>
+
+          <form id="loginForm" class="login-form" novalidate>
+            <div class="form-group">
+              <label for="loginEmail">Email</label>
+              <input
+                type="email"
+                id="loginEmail"
+                name="email"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="loginPassword">Password</label>
+              <input
+                type="password"
+                id="loginPassword"
+                name="password"
+                placeholder="Enter your password"
+                required
+              />
+            </div>
+
+            <p id="loginMessage" class="message" aria-live="polite"></p>
+
+            <button type="submit" class="btn" id="login-btn">
+              Log In
+            </button>
+          </form>
+
+          <p class="form-footer">
+            Don&apos;t have an account?
+            <a href="/signup" id="signup-link">Sign Up</a>
+          </p>
+        </div>
+      </section>
+    </main>
   </div>
-  
+
   <script src="js/login.js"></script>
 </body>
 </html>

@@ -1,20 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Log Out</title>
-  <link rel="stylesheet" href="css/common.css">
-  <link rel="stylesheet" href="css/logout.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>G2GPT - Log Out</title>
+  <link rel="stylesheet" href="css/common.css" />
+  <link rel="stylesheet" href="css/logout.css" />
 </head>
 <body>
-    <div class="card">
-        <h2>Confirm Log Out</h2>
-        <p>Are you sure you want to log out?</p>
-        <form action="/" method="GET">
-            <button type="submit" id="confirm-yes">Yes, Log Out</button>
-            <button type="button" onclick="window.location.href='/dashboard'">No, Stay</button>
-        </form>
-    </div>
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="brand-block">
+        <span class="brand-name">G2GPT</span>
+      </div>
+    </header>
+
+    <main class="logout-main">
+      <section class="logout-card" aria-labelledby="logout-title">
+        <div class="logout-content">
+          <h1 id="logout-title">Log Out</h1>
+          <p class="logout-description">
+            Are you sure you want to log out?
+          </p>
+
+          <p id="logoutMessage" class="message" aria-live="polite"></p>
+
+          <div class="button-row">
+            <button type="button" class="btn" id="confirm-logout-btn">Yes</button>
+            <button type="button" class="btn btn-secondary" id="cancel-logout-btn">No</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/logout.js"></script>
 </body>
 </html>

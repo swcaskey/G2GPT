@@ -1,18 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>G2GPT - Dashboard</title>
-  <link rel="stylesheet" href="css/common.css">
-  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/common.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
 </head>
 <body>
-    <div class="card">
-        <h1>Welcome to G2GPT</h1>
-        <p id="auth-status">You are now securely logged in.</p>
-        <p>Main Protected Area: LLM Inference functionality would go here.</p>
-        <a href="/logout" id="logout-link" class="btn">Log Out</a>
-    </div>
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="brand-block">
+        <span class="brand-name">G2GPT</span>
+      </div>
+    </header>
+
+    <main class="dashboard-main">
+      <section class="dashboard-card" aria-labelledby="dashboard-title">
+        <div class="dashboard-content">
+          <div class="dashboard-top">
+            <h1 id="dashboard-title">Authenticated Home Page</h1>
+            <a href="/logout" class="btn logout-link" id="logout-link">Log Out</a>
+          </div>
+
+          <section class="placeholder-panel" aria-labelledby="placeholder-title">
+            <h2 id="placeholder-title">Protected Area</h2>
+            <p class="placeholder-text">
+              This authenticated page is reserved for the main application functionality.
+            </p>
+            <div class="placeholder-box" aria-hidden="true">
+              <div class="placeholder-line"></div>
+              <div class="placeholder-line medium"></div>
+              <div class="placeholder-line short"></div>
+              <div class="placeholder-space"></div>
+              <div class="placeholder-line"></div>
+              <div class="placeholder-line medium"></div>
+              <div class="placeholder-line short"></div>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/dashboard.js"></script>
 </body>
 </html>

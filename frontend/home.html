@@ -1,32 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>G2GPT - Home</title>
-  <link rel="stylesheet" href="css/common.css">
-  <link rel="stylesheet" href="css/home.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>G2GPT - Landing Page</title>
+  <link rel="stylesheet" href="css/common.css" />
+  <link rel="stylesheet" href="css/home.css" />
 </head>
-
-
-
 <body>
-
-  <div class="container">
-    <h1 class="title">Landing Page</h1>
-
-    <div class="content">
-      <p><strong>App Name:</strong> 626GPT</p>
-
-      <p><strong>Description:</strong></p>
-      <div class="description-line"></div>
-
-      <div class="buttons">
-        <a href="/signup" class="btn" id="signup-link">Sign Up</a>
-        <a href="/login" class="btn" id="login-link">Log In</a>
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="brand-block">
+        <span class="brand-name">G2GPT</span>
       </div>
-    </div>
+    </header>
+
+    <main class="hero" aria-labelledby="landing-title">
+      <section class="hero-card">
+        <div class="hero-content">
+          <h1 id="landing-title">G2GPT</h1>
+          <p class="hero-description">A simple agentic system interface</p>
+
+          <div class="action-group">
+            <a href="/signup" class="btn" id="signup-link">Sign Up</a>
+            <a href="/login" class="btn" id="login-link">Log In</a>
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
 
+  <script src="js/home.js"></script>
 </body>
 </html>
