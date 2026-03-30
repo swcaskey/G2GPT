@@ -7,8 +7,8 @@ const assert = require('assert');
 const baseUrl = 'http://localhost:3000';
 
 // Shared state between scenarios
-let sharedUsername = 'tarun123';
-let sharedPassword = 'rutgers2026';
+let sharedEmail = 'test@example.com';
+let sharedPassword = 'password123';
 
 // ==================== Scenario: Landing Page Access ====================
 
@@ -22,16 +22,16 @@ When('I visit the application home page', async function () {
 
 Then('I should see the landing page with options to create an account or log in', async function () {
   const title = await this.page.title();
-  assert.strictEqual(title, 'G2GPT - Home');
+  assert.strictEqual(title, 'G2GPT - Landing Page');
   
   // Highlight buttons for visual demonstration
   await this.page.evaluate(() => {
-    const signupBtn = document.querySelector('.btn[href="/signup"]');
-    if (signupBtn) signupBtn.classList.add('automated-highlight');
+    const signupBtn = document.querySelector('a[href="/signup"]#signup-link');
+    if (signupBtn) signupBtn.style.outline = '3px solid #ffc107';
   });
   
-  const signupLink = await this.page.$('.btn[href="/signup"]');
-  const loginLink = await this.page.$('.btn[href="/login"]');
+  const signupLink = await this.page.$('a[href="/signup"]#signup-link');
+  const loginLink = await this.page.$('a[href="/login"]#login-link');
   
   assert.ok(signupLink !== null, 'Sign Up link is missing');
   assert.ok(loginLink !== null, 'Log In link is missing');
@@ -47,34 +47,38 @@ Given('I am on the sign-up page', async function () {
 
 When('I enter valid account information and submit the form', async function () {
   const timestamp = Date.now();
-  sharedUsername = `newuser${timestamp}`;
+  sharedEmail = `testuser${timestamp}@example.com`;
   
-  await this.page.type('#signupName', `Test User ${timestamp}`, { delay: 5 });
-  await this.page.type('#signupUsername', sharedUsername, { delay: 5 });
+  await this.page.waitForSelector('#signupEmail');
+  await this.page.type('#signupEmail', sharedEmail, { delay: 5 });
   await this.page.type('#signupPassword', sharedPassword, { delay: 5 });
+  await this.page.type('#signupConfirmPassword', sharedPassword, { delay: 5 });
   
   // Highlight submit button before clicking
   await this.page.evaluate(() => {
-    const btn = document.querySelector('#signupForm button');
-    if (btn) btn.classList.add('automated-highlight');
+    const btn = document.querySelector('#create-account-btn');
+    if (btn) btn.style.outline = '3px solid #ffc107';
   });
   await new Promise(r => setTimeout(r, 2000));
 
-  await Promise.all([
-    this.page.click('#signupForm button')
-  ]);
-
-  // Wait for the login page to appear (redirect happens after 1s)
-  await this.page.waitForSelector('h1', { visible: true });
+  await this.page.click('#create-account-btn');
   
-  // Verify we are on the login page
-  const loginTitle = await this.page.$eval('h1', el => el.textContent);
-  assert.ok(loginTitle.includes('Login'), 'Did not redirect to Login page');
+  // Wait for success message or redirect
+  await this.page.waitForFunction(
+    () => {
+      const message = document.getElementById('signupMessage');
+      return message && (message.textContent.includes('success') || message.classList.contains('success'));
+    },
+    { timeout: 5000 }
+  );
+
+  // Wait for redirect to login page
+  await this.page.waitForNavigation({ timeout: 10000 });
 });
 
 Then('my account should be created and I should be able to log in', async function () {
   const title = await this.page.title();
-  assert.strictEqual(title, 'Rutgers Login');
+  assert.strictEqual(title, 'G2GPT - Log In');
 });
 
 // ==================== Scenario: Local Log In and Log Out ====================
@@ -84,61 +88,71 @@ Given('I already have an account', async function () {
 });
 
 When('I enter valid Log In credentials', async function () {
-  await this.page.type('#uname', sharedUsername, { delay: 5 });
-  await this.page.type('#psw', sharedPassword, { delay: 5 });
+  await this.page.waitForSelector('#loginEmail');
+  await this.page.type('#loginEmail', sharedEmail, { delay: 5 });
+  await this.page.type('#loginPassword', sharedPassword, { delay: 5 });
   
   // Highlight login button
   await this.page.evaluate(() => {
-    const btn = document.querySelector('#loginForm button[type="submit"]');
-    if (btn) btn.classList.add('automated-highlight');
+    const btn = document.querySelector('#login-btn');
+    if (btn) btn.style.outline = '3px solid #ffc107';
   });
   await new Promise(r => setTimeout(r, 2000));
 
-  await Promise.all([
-    this.page.click('#loginForm button[type="submit"]')
-  ]);
+  await this.page.click('#login-btn');
 
-  // Wait for the Dashboard to appear
-  await this.page.waitForSelector('.card h1', { visible: true });
+  // Wait for success message or redirect
+  await this.page.waitForFunction(
+    () => {
+      const message = document.getElementById('loginMessage');
+      return message && (message.textContent.includes('success') || message.classList.contains('success'));
+    },
+    { timeout: 5000 }
+  );
+
+  // Wait for redirect to dashboard
+  await this.page.waitForNavigation({ timeout: 10000 });
 });
 
 Then('I should be signed in to the application', async function () {
   const title = await this.page.title();
   assert.strictEqual(title, 'G2GPT - Dashboard');
   
-  const authStatus = await this.page.$eval('#auth-status', el => el.textContent);
-  assert.strictEqual(authStatus, 'You are now securely logged in.');
+  const heading = await this.page.$eval('h1#dashboard-title', el => el.textContent);
+  assert.strictEqual(heading, 'Authenticated Home Page');
 });
 
 Then('when I click log out and confirm, I should return to a non-authenticated state', async function () {
   // Highlight and click log out
   await this.page.evaluate(() => {
-    document.getElementById('logout-link').classList.add('automated-highlight');
+    const link = document.getElementById('logout-link');
+    if (link) link.style.outline = '3px solid #ffc107';
   });
   await new Promise(r => setTimeout(r, 2000));
 
   await Promise.all([
-    this.page.waitForNavigation(),
+    this.page.waitForNavigation({ timeout: 10000 }),
     this.page.click('#logout-link')
   ]);
   
   // Verify we are on log out confirmation page
   let title = await this.page.title();
-  assert.strictEqual(title, 'Log Out');
+  assert.strictEqual(title, 'G2GPT - Log Out');
   
   // Highlight and confirm log out
   await this.page.evaluate(() => {
-    document.getElementById('confirm-yes').classList.add('automated-highlight');
+    const btn = document.getElementById('confirm-logout-btn');
+    if (btn) btn.style.outline = '3px solid #ffc107';
   });
   await new Promise(r => setTimeout(r, 2000));
 
   await Promise.all([
-    this.page.waitForNavigation(),
-    this.page.click('#confirm-yes')
+    this.page.waitForNavigation({ timeout: 10000 }),
+    this.page.click('#confirm-logout-btn')
   ]);
   
   // Verify we are back on landing page
   title = await this.page.title();
-  assert.strictEqual(title, 'G2GPT - Home');
+  assert.strictEqual(title, 'G2GPT - Landing Page');
 });
 

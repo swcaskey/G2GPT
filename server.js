@@ -46,18 +46,27 @@ app.get("/logout", (req, res) => {
 
 // POST /signup - Create new user account
 app.post("/signup", (req, res) => {
-  const { name, username, password } = req.body;
+  const { email, password } = req.body;
 
-  if (!name || !username || !password) {
+  if (!email || !password) {
     return res.status(400).json({
       success: false,
-      message: "All fields are required."
+      message: "Email and password are required."
+    });
+  }
+
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({
+      success: false,
+      message: "Please enter a valid email address."
     });
   }
 
   db.get(
-    "SELECT * FROM users WHERE name = ? OR username = ?",
-    [name, username],
+    "SELECT * FROM users WHERE email = ?",
+    [email],
     (err, user) => {
       if (err) {
         return res.status(500).json({
@@ -66,47 +75,47 @@ app.post("/signup", (req, res) => {
         });
       }
 
-      if (!user) {
-        db.run(
-          "INSERT INTO users (name, username, password) VALUES (?, ?, ?)",
-          [name, username, password],
-          (err) => {
-            if (err) {
-              return res.status(500).json({
-                success: false,
-                message: "Database error during registration."
-              });
-            }
-            return res.status(201).json({
-              success: true,
-              message: "Account created successfully! You can now log in."
-            });
-          }
-        );
-      } else {
+      if (user) {
         return res.status(400).json({
           success: false,
-          message: "Name or username in use!"
+          message: "Email already in use."
         });
       }
+
+      db.run(
+        "INSERT INTO users (email, password) VALUES (?, ?)",
+        [email, password],
+        (err) => {
+          if (err) {
+            return res.status(500).json({
+              success: false,
+              message: "Database error during registration."
+            });
+          }
+          return res.status(201).json({
+            success: true,
+            message: "Account created successfully!"
+          });
+        }
+      );
     }
   );
 });
 
 // POST /login - Authenticate user
 app.post("/login", (req, res) => {
-  const { uname, psw } = req.body;
+  const { email, password } = req.body;
 
-  if (!uname || !psw) {
+  if (!email || !password) {
     return res.status(400).json({
       success: false,
-      message: "Username and password are required."
+      message: "Email and password are required."
     });
   }
 
   db.get(
-    "SELECT * FROM users WHERE username = ? AND password = ?",
-    [uname, psw],
+    "SELECT * FROM users WHERE email = ? AND password = ?",
+    [email, password],
     (err, user) => {
       if (err) {
         return res.status(500).json({
@@ -117,27 +126,36 @@ app.post("/login", (req, res) => {
 
       if (!user) {
         db.run(
-          "INSERT INTO login_attempts (username, success) VALUES (?, ?)",
-          [uname, 0]
+          "INSERT INTO login_attempts (email, success) VALUES (?, ?)",
+          [email, 0]
         );
 
         return res.status(401).json({
           success: false,
-          message: "Invalid username or password."
+          message: "Invalid email or password."
         });
       }
 
       db.run(
-        "INSERT INTO login_attempts (username, success) VALUES (?, ?)",
-        [uname, 1]
+        "INSERT INTO login_attempts (email, success) VALUES (?, ?)",
+        [email, 1]
       );
 
       return res.status(200).json({
         success: true,
-        message: `Login successful! Welcome, ${user.name}!`
+        message: "Login successful!"
       });
     }
   );
+});
+
+// POST /logout - End user session
+app.post("/logout", (req, res) => {
+  // In a real application, this would clear session/token
+  return res.status(200).json({
+    success: true,
+    message: "Logged out successfully."
+  });
 });
 
 // GET /logins - Retrieve login history

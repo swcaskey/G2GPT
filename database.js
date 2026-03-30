@@ -21,9 +21,9 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE NOT NULL,
+      email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
-      name TEXT NOT NULL
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
 
@@ -31,7 +31,7 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS login_attempts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT NOT NULL,
+      email TEXT NOT NULL,
       success INTEGER NOT NULL,
       login_time DATETIME DEFAULT CURRENT_TIMESTAMP
     )
@@ -39,11 +39,11 @@ db.serialize(() => {
 
   // Insert default test users
   db.run(`
-    INSERT OR IGNORE INTO users (username, password, name)
+    INSERT OR IGNORE INTO users (email, password)
     VALUES
-      ('tarun123', 'rutgers2026', 'Tarun'),
-      ('student1', 'password123', 'Student One'),
-      ('admin', 'admin123', 'Admin User')
+      ('test@example.com', 'password123'),
+      ('admin@g2gpt.com', 'admin123'),
+      ('user@rutgers.edu', 'rutgers2026')
   `);
 });
 
