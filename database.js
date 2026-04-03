@@ -1,5 +1,5 @@
 // G2GPT Database Configuration
-// SQLite3 database setup with user authentication tables
+// SQLite3 database setup with user authentication, conversations, and messages tables
 
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
@@ -34,6 +34,30 @@ db.serialize(() => {
       email TEXT NOT NULL,
       success INTEGER NOT NULL,
       login_time DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Conversations table (one per chat session, linked to user)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS conversations (
+      id TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  // Messages table (chat messages within a conversation)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      conversation_id TEXT NOT NULL,
+      role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
+      content TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
     )
   `);
 });
