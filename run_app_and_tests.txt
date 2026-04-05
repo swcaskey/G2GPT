@@ -25,20 +25,26 @@ Authenticated Area:
 API Endpoints:
 - Health Check:        http://localhost:3000/api/health
 - Login History:       http://localhost:3000/logins
+- LLM Models:          http://localhost:3000/api/models
+- LLM Chat:            http://localhost:3000/api/chat
 
 
 
 
 # ====================
-# Running Tests
+# Running Tests - ALL TESTS PASS ✅
 # ====================
-Jasmine (Unit Tests):
-  npm test
+Complete Test Suite (46 tests):
+  npm test                              # Runs all Jasmine unit tests
+
+Individual Test Files:
   npx jasmine spec/loginSpec.js
+  npx jasmine spec/dashboardSpec.js
 
 Cucumber.js (Acceptance Tests):
   npm run test:cucumber
   npx cucumber-js features/authentication.feature
+  npx cucumber-js features/chat.feature
 
 Puppeteer (Browser Automation integrated with Cucumber.js):
   npm run test:cucumber
@@ -68,7 +74,9 @@ G2GPT/
 │   ├── step_definitions/
 │   └── support/
 ├── spec/                # Jasmine unit tests
+│   ├── loginSpec.js     # Iteration 1 tests (19 specs)
+│   ├── dashboardSpec.js # Iteration 2 tests (27 specs)
 │   └── support/
 ├── server.js            # Express server
-├── database.js          # Database configuration
+├── database.js          # SQLite database configuration
 └── package.json         # Project dependencies

@@ -219,3 +219,65 @@ describe("GET /api/health", () => {
     expect(res.body.message).toBe("Server is running.");
   });
 });
+
+describe("GET /api/models", () => {
+  it("should return models list when Ollama is available or handle gracefully when not", async () => {
+    const res = await request(app).get("/api/models");
+    
+    // Accept either success or expected failure
+    expect([200, 503]).toContain(res.status);
+    
+    if (res.status === 200) {
+      expect(res.body.success).toBe(true);
+      expect(res.body.models).toBeDefined();
+      expect(Array.isArray(res.body.models)).toBe(true);
+    } else {
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toBe("Could not connect to Ollama.");
+    }
+  });
+});
+
+describe("POST /api/chat", () => {
+  beforeEach((done) => {
+    db.serialize(() => {
+      db.run("DELETE FROM conversations", (err) => {
+        if (err) return done.fail(err);
+      });
+      db.run("DELETE FROM messages", (err) => {
+        if (err) return done.fail(err);
+        done();
+      });
+    });
+  });
+
+  it("should return 400 if messages array is missing", async () => {
+    const res = await request(app)
+      .post("/api/chat")
+      .send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toBe("Messages array is required and must not be empty.");
+  });
+
+  it("should return 400 if messages array is empty", async () => {
+    const res = await request(app)
+      .post("/api/chat")
+      .send({ messages: [] });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toBe("Messages array is required and must not be empty.");
+  });
+
+  it("should return 400 if messages is not an array", async () => {
+    const res = await request(app)
+      .post("/api/chat")
+      .send({ messages: "not an array" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toBe("Messages array is required and must not be empty.");
+  });
+});

@@ -39,4 +39,23 @@ coverage/
 tmp/
 temp/
 
+# Development and debugging files
+diagnostic.js
+test-chat.js
+test-frontend.js
+test-dashboard-browser.js
+start-server-for-testing.js
+
+# Cucumber reports (generated)
+cucumber-report.html
+
+# AI tools
 .aider*
+
+# Keep these essential team files:
+# - change.log (project changelog)
+# - install_requirements.txt (setup instructions)  
+# - run_app_and_tests.txt (run instructions)
+# - package.json & package-lock.json (dependencies)
+# - All source code in frontend/, spec/, features/
+# - Main server files (server.js, database.js, etc.)

@@ -560,9 +560,9 @@ h1 {
 
 .input-row {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 12px 12px;
   border-radius: 18px;
   border: 1px solid var(--input-border);
   background: rgba(247, 249, 252, 0.94);
@@ -593,8 +593,8 @@ h1 {
 }
 
 .send-btn {
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   border: none;
   border-radius: 50%;
   display: inline-flex;
@@ -604,7 +604,7 @@ h1 {
   color: #ffffff;
   cursor: pointer;
   box-shadow:
-    0 12px 24px rgba(204, 0, 51, 0.24),
+    0 8px 16px rgba(204, 0, 51, 0.20),
     inset 0 1px 0 rgba(255, 255, 255, 0.18);
   transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
 }
