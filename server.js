@@ -194,6 +194,41 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+// GET /api/models - Get available models from Ollama
+app.get("/api/models", async (req, res) => {
+  try {
+    const ollamaResponse = await fetch("http://127.0.0.1:11434/api/tags");
+    
+    if (!ollamaResponse.ok) {
+      return res.status(503).json({
+        success: false,
+        message: "Unable to connect to Ollama. Is it running?"
+      });
+    }
+    
+    const ollamaData = await ollamaResponse.json();
+    const models = ollamaData.models || [];
+    
+    if (models.length === 0) {
+      return res.status(503).json({
+        success: false,
+        message: "No models found in Ollama."
+      });
+    }
+    
+    res.json({
+      success: true,
+      models: models
+    });
+  } catch (error) {
+    console.error("Models API error:", error.message);
+    return res.status(503).json({
+      success: false,
+      message: "Could not connect to Ollama."
+    });
+  }
+});
+
 // ==================== LLM Chat Endpoint ====================
 
 // POST /api/chat - Send prompt to Ollama and save conversation
@@ -208,14 +243,37 @@ app.post("/api/chat", async (req, res) => {
   }
 
   try {
-    // Call Ollama chat endpoint
-    const ollamaResponse = await fetch("http://127.0.0.1:11434/api/chat", {
+    // First, get available models to ensure we have at least one
+    const modelsResponse = await fetch("http://127.0.0.1:11434/api/tags");
+    
+    if (!modelsResponse.ok) {
+      return res.status(503).json({
+        success: false,
+        message: "Unable to connect to Ollama. Is it running?"
+      });
+    }
+    
+    const modelsData = await modelsResponse.json();
+    const models = modelsData.models || [];
+    
+    if (models.length === 0) {
+      return res.status(503).json({
+        success: false,
+        message: "No models found in Ollama."
+      });
+    }
+    
+    // Randomly select a model from available models
+    const randomModel = models[Math.floor(Math.random() * models.length)].name;
+    
+    // Call Ollama chat endpoint with selected model
+    const ollamaResponse = await fetch(`http://127.0.0.1:11434/api/chat`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "llama3", // default model — adjust if needed
+        model: randomModel,
         messages: messages,
         stream: false
       })
@@ -226,7 +284,7 @@ app.post("/api/chat", async (req, res) => {
       console.error("Ollama error:", errorData);
       return res.status(502).json({
         success: false,
-        message: "Unable to reach the AI service. Is Ollama running?"
+        message: errorData.error || "Unable to reach the AI service."
       });
     }
 
