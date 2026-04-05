@@ -7,15 +7,14 @@ const db = require("../database");
 
 describe("POST /signup", () => {
   beforeAll((done) => {
-    db.serialize(() => {
-      db.run("DELETE FROM login_attempts", (err) => {
-        if (err) return done.fail(err);
-      });
-      db.run("DELETE FROM users", (err) => {
-        if (err) return done.fail(err);
-        done();
-      });
-    });
+    try {
+      // Clear test data using better-sqlite3 syntax
+      db.prepare("DELETE FROM login_attempts").run();
+      db.prepare("DELETE FROM users").run();
+      done();
+    } catch (err) {
+      done.fail(err);
+    }
   });
 
   it("should return 400 if email is missing", async () => {
@@ -75,22 +74,17 @@ describe("POST /signup", () => {
 
 describe("POST /login", () => {
   beforeAll((done) => {
-    db.serialize(() => {
-      db.run("DELETE FROM login_attempts", (err) => {
-        if (err) return done.fail(err);
-      });
-      db.run("DELETE FROM users", (err) => {
-        if (err) return done.fail(err);
-      });
-      db.run(
-        "INSERT INTO users (email, password) VALUES (?, ?)",
-        ["admin@example.com", "admin123"],
-        (err) => {
-          if (err) return done.fail(err);
-          done();
-        }
-      );
-    });
+    try {
+      // Clear test data using better-sqlite3 syntax
+      db.prepare("DELETE FROM login_attempts").run();
+      db.prepare("DELETE FROM users").run();
+      
+      // Insert test user
+      db.prepare("INSERT INTO users (email, password) VALUES (?, ?)").run("admin@example.com", "admin123");
+      done();
+    } catch (err) {
+      done.fail(err);
+    }
   });
 
   it("should return 400 if both email and password are missing", async () => {
@@ -148,16 +142,8 @@ describe("POST /login", () => {
       .post("/login")
       .send({ email: "baduser@example.com", password: "badpass" });
 
-    const rows = await new Promise((resolve, reject) => {
-      db.all(
-        "SELECT * FROM login_attempts WHERE email = ?",
-        ["baduser@example.com"],
-        (err, result) => {
-          if (err) reject(err);
-          else resolve(result);
-        }
-      );
-    });
+    const stmt = db.prepare("SELECT * FROM login_attempts WHERE email = ?");
+    const rows = stmt.all("baduser@example.com");
 
     expect(rows.length).toBeGreaterThan(0);
     expect(rows[0].success).toBe(0);
@@ -168,16 +154,8 @@ describe("POST /login", () => {
       .post("/login")
       .send({ email: "admin@example.com", password: "admin123" });
 
-    const rows = await new Promise((resolve, reject) => {
-      db.all(
-        "SELECT * FROM login_attempts WHERE email = ?",
-        ["admin@example.com"],
-        (err, result) => {
-          if (err) reject(err);
-          else resolve(result);
-        }
-      );
-    });
+    const stmt = db.prepare("SELECT * FROM login_attempts WHERE email = ?");
+    const rows = stmt.all("admin@example.com");
 
     expect(rows.length).toBeGreaterThan(0);
     const successfulAttempt = rows.find(row => row.success === 1);
@@ -240,15 +218,14 @@ describe("GET /api/models", () => {
 
 describe("POST /api/chat", () => {
   beforeEach((done) => {
-    db.serialize(() => {
-      db.run("DELETE FROM conversations", (err) => {
-        if (err) return done.fail(err);
-      });
-      db.run("DELETE FROM messages", (err) => {
-        if (err) return done.fail(err);
-        done();
-      });
-    });
+    try {
+      // Clear test data using better-sqlite3 syntax
+      db.prepare("DELETE FROM conversations").run();
+      db.prepare("DELETE FROM messages").run();
+      done();
+    } catch (err) {
+      done.fail(err);
+    }
   });
 
   it("should return 400 if messages array is missing", async () => {

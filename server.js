@@ -186,23 +186,21 @@ app.post("/logout", (req, res) => {
 
 // GET /logins - Retrieve login history
 app.get("/logins", (req, res) => {
-  db.all(
-    "SELECT * FROM login_attempts ORDER BY login_time DESC",
-    [],
-    (err, rows) => {
-      if (err) {
-        return res.status(500).json({
-          success: false,
-          message: "Could not fetch login history."
-        });
-      }
+  try {
+    const stmt = db.prepare("SELECT * FROM login_attempts ORDER BY login_time DESC");
+    const rows = stmt.all();
 
-      res.json({
-        success: true,
-        logins: rows
-      });
-    }
-  );
+    res.json({
+      success: true,
+      logins: rows
+    });
+  } catch (error) {
+    console.error("Error fetching login history:", error);
+    res.status(500).json({
+      success: false,
+      message: "Could not fetch login history."
+    });
+  }
 });
 
 // GET /api/health - Health check endpoint
