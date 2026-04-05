@@ -27,6 +27,8 @@ API Endpoints:
 - Login History:       http://localhost:3000/logins
 - LLM Models:          http://localhost:3000/api/models
 - LLM Chat:            http://localhost:3000/api/chat
+- User Conversations:  http://localhost:3000/api/conversations
+- Conversation Messages: http://localhost:3000/api/conversations/:id/messages
 
 
 

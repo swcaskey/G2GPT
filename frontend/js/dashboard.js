@@ -175,23 +175,6 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
   });
 }
 
-  function deleteConv(event, id) {
-    event.stopPropagation();
-    conversations = conversations.filter((conversation) => conversation.id !== id);
-
-    if (activeId === id) {
-      if (conversations.length > 0) {
-        loadConv(conversations[0].id);
-      } else {
-        activeId = null;
-        chatTitle.textContent = 'New Conversation';
-        renderMessages([], messages);
-      }
-    }
-
-    renderHistory(conversations, historyList, searchInput, activeId);
-  }
-
 async function callLLM(messageList) {
   console.log('Dashboard: callLLM called with messages:', messageList);
   
@@ -245,6 +228,130 @@ let conversations = [];
 let activeId = null;
 let historyList, searchInput, newChatButton, chatTitle, messages, typingIndicator, textarea, sendButton;
 
+// Load conversations from server
+async function loadConversationsFromServer() {
+  try {
+    console.log('Dashboard: Loading conversations from server');
+    const response = await fetch('/api/conversations');
+    
+    console.log('Dashboard: Load conversations response status:', response.status);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Dashboard: Load conversations response:', data);
+      conversations = data.conversations.map(conv => ({
+        id: conv.id,
+        title: conv.title,
+        messages: [], // Will be loaded separately
+        createdAt: new Date(conv.created_at).getTime(),
+        updatedAt: new Date(conv.updated_at).getTime(),
+        messageCount: conv.message_count
+      }));
+      console.log('Dashboard: Loaded conversations:', conversations);
+    } else {
+      const errorData = await response.json();
+      console.log('Dashboard: Failed to load conversations:', response.status, errorData);
+      conversations = [];
+    }
+  } catch (error) {
+    console.error('Dashboard: Error loading conversations:', error);
+    conversations = [];
+  }
+}
+
+// Load messages for a specific conversation
+async function loadMessagesFromServer(conversationId) {
+  try {
+    console.log('Dashboard: Loading messages for conversation:', conversationId);
+    const response = await fetch(`/api/conversations/${conversationId}/messages`);
+    
+    if (response.ok) {
+      const data = await response.json();
+      const conversation = getConv(conversations, conversationId);
+      if (conversation) {
+        conversation.messages = data.messages.map(msg => ({
+          role: msg.role,
+          content: msg.content,
+          timestamp: new Date(msg.created_at).getTime()
+        }));
+        console.log('Dashboard: Loaded messages:', conversation.messages.length);
+      }
+    } else {
+      console.error('Dashboard: Failed to load messages:', response.status);
+    }
+  } catch (error) {
+    console.error('Dashboard: Error loading messages:', error);
+  }
+}
+
+// Save conversation to server
+async function saveConversationToServer(conversation) {
+  try {
+    console.log('Dashboard: Saving conversation to server:', conversation.id, conversation.title);
+    const response = await fetch('/api/conversations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        id: conversation.id,
+        title: conversation.title
+      })
+    });
+    
+    console.log('Dashboard: Save conversation response status:', response.status);
+    const responseData = await response.json();
+    console.log('Dashboard: Save conversation response:', responseData);
+    
+    if (!response.ok) {
+      console.error('Dashboard: Failed to save conversation:', responseData);
+    } else {
+      console.log('Dashboard: Conversation saved successfully');
+    }
+  } catch (error) {
+    console.error('Dashboard: Error saving conversation:', error);
+  }
+}
+
+// Save message to server
+async function saveMessageToServer(conversationId, role, content) {
+  try {
+    console.log('Dashboard: Saving message to server:', conversationId, role);
+    const response = await fetch(`/api/conversations/${conversationId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        role: role,
+        content: content
+      })
+    });
+    
+    if (!response.ok) {
+      console.error('Dashboard: Failed to save message:', response.status);
+    }
+  } catch (error) {
+    console.error('Dashboard: Error saving message:', error);
+  }
+}
+
+// Delete conversation from server
+async function deleteConversationFromServer(conversationId) {
+  try {
+    console.log('Dashboard: Deleting conversation from server:', conversationId);
+    const response = await fetch(`/api/conversations/${conversationId}`, {
+      method: 'DELETE'
+    });
+    
+    if (!response.ok) {
+      console.error('Dashboard: Failed to delete conversation:', response.status);
+    }
+  } catch (error) {
+    console.error('Dashboard: Error deleting conversation:', error);
+  }
+}
+
 // Global function to send message
 async function sendMessage() {
   console.log('Dashboard: sendMessage called');
@@ -277,15 +384,20 @@ async function sendMessage() {
 
   console.log('Dashboard: Found conversation', conversation);
 
+  // If this is a new conversation, save it to server first
   if (conversation.messages.length === 0) {
     conversation.title = autoTitle(text);
     chatTitle.textContent = conversation.title;
+    await saveConversationToServer(conversation);
   }
 
   conversation.messages.push({ role: 'user', content: text });
   conversation.updatedAt = Date.now();
   appendBubble('user', text, true, messages);
   renderHistory(conversations, historyList, searchInput, activeId);
+
+  // Save user message to server
+  await saveMessageToServer(activeId, 'user', text);
 
   console.log('Dashboard: Showing typing indicator');
   typingIndicator.classList.add('show');
@@ -311,6 +423,10 @@ async function sendMessage() {
   conversation.updatedAt = Date.now();
   appendBubble('assistant', reply, true, messages);
   renderHistory(conversations, historyList, searchInput, activeId);
+  
+  // Save assistant message to server
+  await saveMessageToServer(activeId, 'assistant', reply);
+  
   console.log('Dashboard: Message exchange complete');
 }
 
@@ -330,7 +446,7 @@ function newChat() {
 }
 
 // Global function to load conversation
-function loadConv(id) {
+async function loadConv(id) {
   console.log('Dashboard: Loading conversation', id);
   activeId = id;
   const conversation = getConv(conversations, id);
@@ -343,7 +459,36 @@ function loadConv(id) {
   }
 
   chatTitle.textContent = conversation.title;
+  
+  // Load messages from server if not already loaded
+  if (conversation.messages.length === 0 && conversation.messageCount > 0) {
+    await loadMessagesFromServer(id);
+  }
+  
   renderMessages(conversation.messages, messages);
+  renderHistory(conversations, historyList, searchInput, activeId);
+}
+
+// Global function to delete conversation
+async function deleteConv(event, id) {
+  event.stopPropagation();
+  
+  // Delete from server first
+  await deleteConversationFromServer(id);
+  
+  // Remove from client-side array
+  conversations = conversations.filter((conversation) => conversation.id !== id);
+
+  if (activeId === id) {
+    if (conversations.length > 0) {
+      await loadConv(conversations[0].id);
+    } else {
+      activeId = null;
+      chatTitle.textContent = 'New Conversation';
+      renderMessages([], messages);
+    }
+  }
+
   renderHistory(conversations, historyList, searchInput, activeId);
 }
 
@@ -394,7 +539,13 @@ if (typeof document !== 'undefined') {
   searchInput.addEventListener('input', () => renderHistory(conversations, historyList, searchInput, activeId));
 
   console.log('Dashboard: Event listeners attached');
-  renderHistory(conversations, historyList, searchInput, activeId);
-  setEmptyState(messages);
+  
+  // Load conversations from server on page load
+  loadConversationsFromServer().then(() => {
+    renderHistory(conversations, historyList, searchInput, activeId);
+    if (conversations.length === 0) {
+      setEmptyState(messages);
+    }
+  });
 });
 }

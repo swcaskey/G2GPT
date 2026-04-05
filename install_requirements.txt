@@ -4,14 +4,17 @@ Install:
 - MySQL
 - Ollama
 
-Npm packages:
-- express
-- cors
-- sqlite3
+Required packages:
+- express: Web framework
+- express-session: Session management for user authentication
+- cors: Cross-Origin Resource Sharing
+- sqlite3: Database driver (legacy)
+- better-sqlite3: Modern synchronous database driver
 
 Development Dependencies:
 - @cucumber/cucumber: (Acceptance testing)
-- jasmine (Unit testing framework)
-- puppeteer (Browser automation for E2E tests)
+- jasmine: (Unit testing framework)
+- puppeteer: (Browser automation for E2E tests)
 - supertest: (HTTP assertion library)
+- cross-env: (Cross-platform environment variables)
 
