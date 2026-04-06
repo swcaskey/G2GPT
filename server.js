@@ -320,43 +320,29 @@ app.post("/api/chat", async (req, res) => {
     const conversationId = generateUUID();
     const now = new Date().toISOString();
 
-    db.serialize(() => {
-      // Create new conversation
-      db.run(
-        `INSERT INTO conversations (id, user_id, title, created_at, updated_at)
-         VALUES (?, 1, ?, ?, ?)`,
-        [conversationId, "New Chat", now, now],
-        (err) => {
-          if (err) {
-            console.warn("Failed to create conversation:", err.message);
-          }
+    try {
+      // Get the first available user ID or use NULL for anonymous conversations
+      const firstUser = db.prepare("SELECT id FROM users ORDER BY id LIMIT 1").get();
+      const userId = firstUser ? firstUser.id : null;
+      
+      if (userId) {
+        // Create new conversation (better-sqlite3 is synchronous)
+        const insertConversation = db.prepare(`INSERT INTO conversations (id, user_id, title, created_at, updated_at)
+                                               VALUES (?, ?, ?, ?, ?)`);
+        insertConversation.run(conversationId, userId, "New Chat", now, now);
 
-          // Save user message
-          db.run(
-            `INSERT INTO messages (conversation_id, role, content, created_at)
-             VALUES (?, 'user', ?, ?)`,
-            [conversationId, messages[messages.length - 1].content, now],
-            (err) => {
-              if (err) {
-                console.warn("Failed to save user message:", err.message);
-              }
-            }
-          );
+        // Save user message
+        const insertMessage = db.prepare(`INSERT INTO messages (conversation_id, role, content, created_at)
+                                          VALUES (?, ?, ?, ?)`);
+        insertMessage.run(conversationId, 'user', messages[messages.length - 1].content, now);
 
-          // Save assistant message
-          db.run(
-            `INSERT INTO messages (conversation_id, role, content, created_at)
-             VALUES (?, 'assistant', ?, ?)`,
-            [conversationId, reply, now],
-            (err) => {
-              if (err) {
-                console.warn("Failed to save assistant message:", err.message);
-              }
-            }
-          );
-        }
-      );
-    });
+        // Save assistant message
+        insertMessage.run(conversationId, 'assistant', reply, now);
+      }
+    } catch (dbError) {
+      console.warn("Database error while saving conversation:", dbError.message);
+      // Continue anyway - don't fail the API call just because we couldn't save to DB
+    }
 
     return res.status(200).json({
       success: true,
