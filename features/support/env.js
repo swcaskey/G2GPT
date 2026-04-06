@@ -30,11 +30,24 @@ BeforeAll(async function () {
 
 // Close browser and server after all scenarios
 AfterAll(async function () {
-  // Browser.close() disabled for manual testing/review
-  // Uncomment to enable automatic browser closure:
-  // if (browser) {
-  //   await browser.close();
-  // }
+  // Close all pages first
+  if (browser) {
+    const pages = await browser.pages();
+    for (const page of pages) {
+      try {
+        await page.close();
+      } catch (err) {
+        console.log('Error closing page:', err.message);
+      }
+    }
+    
+    // Close browser
+    try {
+      await browser.close();
+    } catch (err) {
+      console.log('Error closing browser:', err.message);
+    }
+  }
 
   // Stop the server
   if (serverProcess) {
@@ -46,14 +59,20 @@ AfterAll(async function () {
 Before(async function () {
   this.browser = browser;
   this.page = await browser.newPage();
+  
+  // Set viewport for consistent testing
+  await this.page.setViewport({ width: 1280, height: 800 });
 });
 
 // Close page after each scenario
 After(async function () {
-  // Page.close() disabled for manual testing/review
-  // Uncomment to enable automatic page closure:
-  // if (this.page) {
-  //   await this.page.close();
-  // }
+  // Close the page to prevent tab accumulation
+  if (this.page) {
+    try {
+      await this.page.close();
+    } catch (err) {
+      console.log('Error closing page:', err.message);
+    }
+  }
 });
 

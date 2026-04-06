@@ -34,23 +34,41 @@ API Endpoints:
 
 
 # ====================
-# Running Tests - ALL TESTS PASS ✅
+# Running Tests
 # ====================
 Complete Test Suite (46 tests):
-  npm test                              # Runs all Jasmine unit tests - ALL PASS ✅
+  npm test                              # Runs all Jasmine unit tests
 
 Individual Test Files:
-  npx jasmine spec/loginSpec.js         # Iteration 1 unit tests (19 specs) - ALL PASS ✅
-  npx jasmine spec/dashboardSpec.js     # Iteration 2 unit tests (27 specs) - ALL PASS ✅
+  npx jasmine spec/loginSpec.js         # Iteration 1 unit tests (19 specs)
+  npx jasmine spec/dashboardSpec.js     # Iteration 2 unit tests (27 specs)
 
 Cucumber.js (Acceptance Tests):
-  npm run test:cucumber                 # All features
-  npx cucumber-js features/authentication.feature  # Iteration 1 (3 scenarios) - ALL PASS ✅
-  npx cucumber-js features/chat.feature            # Iteration 2 (4 scenarios) - READY FOR TEST TEAM
+  npm run test:cucumber                 # All features (7 scenarios total)
+  npx cucumber-js features/authentication.feature  # Iteration 1 (3 scenarios)
+  npx cucumber-js features/chat.feature            # Iteration 2 (4 scenarios)
 
-Puppeteer (Browser Automation integrated with Cucumber.js):
-  npm run test:cucumber                 # Puppeteer + Cucumber integration working
-  npm run test:all                     # Complete test suite
+Puppeteer (Browser Automation):
+  # Puppeteer is integrated with Cucumber.js
+  # Tests run automatically with visual demonstrations
+  npm run test:cucumber                 # Runs Puppeteer + Cucumber
+  npm run test:all                      # Complete test suite (Jasmine + Cucumber/Puppeteer)
+
+Test Breakdown by Iteration:
+  Iteration 1 (Authentication):
+    - Jasmine: 19 specs in spec/loginSpec.js
+    - Cucumber: 3 scenarios in features/authentication.feature
+      1. Landing Page Access
+      2. Account Registration  
+      3. Local Log In and Log Out
+  
+  Iteration 2 (LLM Chat):
+    - Jasmine: 27 specs in spec/dashboardSpec.js
+    - Cucumber: 4 scenarios in features/chat.feature
+      1. Send a prompt and receive a response
+      2. Conversation history is saved
+      3. Search conversation history
+      4. Resume a conversation from history
 
 
 
