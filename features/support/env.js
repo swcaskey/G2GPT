@@ -36,9 +36,11 @@ AfterAll(async function () {
     const pages = await browser.pages();
     for (const page of pages) {
       try {
-        await page.close();
+        if (!page.isClosed()) {
+          await page.close();
+        }
       } catch (err) {
-        console.log('Error closing page:', err.message);
+        // Silently ignore errors during cleanup
       }
     }
     
@@ -46,7 +48,7 @@ AfterAll(async function () {
     try {
       await browser.close();
     } catch (err) {
-      console.log('Error closing browser:', err.message);
+      // Silently ignore errors during cleanup
     }
   }
 
@@ -68,11 +70,11 @@ Before(async function () {
 // Close page after each scenario
 After(async function () {
   // Close the page to prevent tab accumulation
-  if (this.page) {
+  if (this.page && !this.page.isClosed()) {
     try {
       await this.page.close();
     } catch (err) {
-      console.log('Error closing page:', err.message);
+      // Silently ignore errors during cleanup (page may already be closed)
     }
   }
 });
