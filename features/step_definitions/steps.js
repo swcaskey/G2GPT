@@ -222,9 +222,10 @@ Then('I should see my prompt and the LLM\'s response in the chat window', async 
   });
   
   // Wait for typing indicator to disappear (response received)
+  // Increased timeout to 110s to accommodate slower machines and network latency
   await this.page.waitForFunction(
     () => !document.getElementById('typing-indicator').classList.contains('show'),
-    { timeout: 60000 }
+    { timeout: 110000 }
   );
   
   // Wait a bit for message to render
@@ -276,9 +277,10 @@ Given('I have completed a chat session', async function () {
   await this.page.click('#send-btn');
   
   // Wait for response using waitForFunction
+  // Increased timeout to 110s to accommodate slower machines and network latency
   await this.page.waitForFunction(
     () => !document.getElementById('typing-indicator').classList.contains('show'),
-    { timeout: 60000 }
+    { timeout: 110000 }
   );
   await new Promise(r => setTimeout(r, 2000));
 });
@@ -342,9 +344,10 @@ Given('I have multiple saved chats', async function () {
   await this.page.click('#send-btn');
   
   // Wait for response
+  // Increased timeout to 110s to accommodate slower machines and network latency
   await this.page.waitForFunction(
     () => !document.getElementById('typing-indicator').classList.contains('show'),
-    { timeout: 60000 }
+    { timeout: 110000 }
   );
   await new Promise(r => setTimeout(r, 500));
   
@@ -433,9 +436,10 @@ Given('I have saved conversations in my history', async function () {
   await this.page.click('#send-btn');
   
   // Wait for response
+  // Increased timeout to 110s to accommodate slower machines and network latency
   await this.page.waitForFunction(
     () => !document.getElementById('typing-indicator').classList.contains('show'),
-    { timeout: 60000 }
+    { timeout: 110000 }
   );
   await new Promise(r => setTimeout(r, 2000));
   
