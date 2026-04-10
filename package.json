@@ -7,7 +7,9 @@
     "start": "node server.js",
     "test": "cross-env NODE_ENV=test jasmine",
     "test:cucumber": "cucumber-js",
-    "test:all": "npm test && npm run test:cucumber"
+    "test:all": "npm test && npm run test:cucumber",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "keywords": [
     "llm",
@@ -28,6 +30,8 @@
   "devDependencies": {
     "@cucumber/cucumber": "^11.1.0",
     "cross-env": "^10.1.0",
+    "eslint": "^10.2.0",
+    "globals": "^17.4.0",
     "jasmine": "^6.1.0",
     "puppeteer": "^23.11.1",
     "supertest": "^7.2.2"
