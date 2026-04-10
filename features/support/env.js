@@ -6,12 +6,14 @@ const puppeteer = require('puppeteer');
 const { spawn } = require('child_process');
 
 // Set timeout to 120 seconds for Iteration 2 tests
-// Account for slow LLM responses on various machines/networks
-// Individual steps may wait up to 110 seconds for LLM response
+// With pre-seeded users + LLM mocking, tests typically complete in 40-60 seconds
 setDefaultTimeout(120000);
 
 let browser;
 let serverProcess;
+
+// Enable LLM mocking for faster tests (set to 'false' for real integration tests)
+const MOCK_LLM = process.env.MOCK_LLM !== 'false';
 
 // Launch server and browser once before all scenarios
 BeforeAll(async function () {
@@ -66,6 +68,32 @@ Before(async function () {
   
   // Set viewport for consistent testing
   await this.page.setViewport({ width: 1280, height: 800 });
+  
+  // Setup LLM mocking if enabled
+  if (MOCK_LLM) {
+    // Override fetch to intercept /api/chat calls with instant mocks
+    await this.page.evaluateOnNewDocument(() => {
+      const originalFetch = window.fetch;
+      window.fetch = function(...args) {
+        const [resource] = args;
+        
+        // Mock the /api/chat endpoint for faster tests
+        if (typeof resource === 'string' && resource.includes('/api/chat')) {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                response: 'Mocked AI response for testing. Real LLM would respond here.'
+              }),
+              { status: 200, headers: { 'Content-Type': 'application/json' } }
+            )
+          );
+        }
+        
+        // Use real fetch for all other endpoints
+        return originalFetch.apply(this, args);
+      };
+    });
+  }
 });
 
 // Close page after each scenario
@@ -79,4 +107,3 @@ After(async function () {
     }
   }
 });
-

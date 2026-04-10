@@ -160,23 +160,23 @@ Then('when I click log out and confirm, I should return to a non-authenticated s
 
 // Scenario: Send a prompt and receive a response
 Given('I am logged in and on the dashboard', async function () {
-  // First create an account if needed
+  // Create a unique test account for this scenario
   const timestamp = Date.now();
-  sharedEmail = `testchat${timestamp}@example.com`;
+  const testEmail = `testchat${timestamp}@example.com`;
   
   // Signup
   await this.page.goto(`${baseUrl}/signup`);
   await this.page.waitForSelector('#signupEmail');
-  await this.page.type('#signupEmail', sharedEmail, { delay: 3 });
-  await this.page.type('#signupPassword', sharedPassword, { delay: 3 });
-  await this.page.type('#signupConfirmPassword', sharedPassword, { delay: 3 });
+  await this.page.type('#signupEmail', testEmail, { delay: 3 });
+  await this.page.type('#signupPassword', 'password123', { delay: 3 });
+  await this.page.type('#signupConfirmPassword', 'password123', { delay: 3 });
   await this.page.click('#create-account-btn');
   await this.page.waitForNavigation({ timeout: 10000 });
   
   // Login
   await this.page.waitForSelector('#loginEmail');
-  await this.page.type('#loginEmail', sharedEmail, { delay: 3 });
-  await this.page.type('#loginPassword', sharedPassword, { delay: 3 });
+  await this.page.type('#loginEmail', testEmail, { delay: 3 });
+  await this.page.type('#loginPassword', 'password123', { delay: 3 });
   await this.page.click('#login-btn');
   await this.page.waitForNavigation({ timeout: 10000 });
   
@@ -249,26 +249,26 @@ Then('I should see my prompt and the LLM\'s response in the chat window', async 
 
 // Scenario: Conversation history is saved
 Given('I have completed a chat session', async function () {
-  // First login if not already logged in
+  // Create a unique test account
   const timestamp = Date.now();
-  const email = `testhistory${timestamp}@example.com`;
+  const testEmail = `testhistory${timestamp}@example.com`;
   
   // Signup
   await this.page.goto(`${baseUrl}/signup`);
   await this.page.waitForSelector('#signupEmail');
-  await this.page.type('#signupEmail', email, { delay: 3 });
-  await this.page.type('#signupPassword', sharedPassword, { delay: 3 });
-  await this.page.type('#signupConfirmPassword', sharedPassword, { delay: 3 });
+  await this.page.type('#signupEmail', testEmail, { delay: 3 });
+  await this.page.type('#signupPassword', 'password123', { delay: 3 });
+  await this.page.type('#signupConfirmPassword', 'password123', { delay: 3 });
   await this.page.click('#create-account-btn');
   await this.page.waitForNavigation({ timeout: 10000 });
   
   // Login
   await this.page.waitForSelector('#loginEmail');
-  await this.page.type('#loginEmail', email, { delay: 3 });
-  await this.page.type('#loginPassword', sharedPassword, { delay: 3 });
+  await this.page.type('#loginEmail', testEmail, { delay: 3 });
+  await this.page.type('#loginPassword', 'password123', { delay: 3 });
   await this.page.click('#login-btn');
   await this.page.waitForNavigation({ timeout: 10000 });
-  
+
   // Now on dashboard - send a message to create history
   await this.page.waitForSelector('#user-input', { timeout: 10000 });
   await new Promise(r => setTimeout(r, 1000));
@@ -312,23 +312,23 @@ Then('I should see my previous session listed in the history sidebar', async fun
 
 // Scenario: Search conversation history
 Given('I have multiple saved chats', async function () {
-  // First login
+  // First login - create unique test account
   const timestamp = Date.now();
-  const email = `testsearch${timestamp}@example.com`;
+  const testEmail = `testsearch${timestamp}@example.com`;
   
   // Signup
   await this.page.goto(`${baseUrl}/signup`);
   await this.page.waitForSelector('#signupEmail');
-  await this.page.type('#signupEmail', email, { delay: 3 });
-  await this.page.type('#signupPassword', sharedPassword, { delay: 3 });
-  await this.page.type('#signupConfirmPassword', sharedPassword, { delay: 3 });
+  await this.page.type('#signupEmail', testEmail, { delay: 3 });
+  await this.page.type('#signupPassword', 'password123', { delay: 3 });
+  await this.page.type('#signupConfirmPassword', 'password123', { delay: 3 });
   await this.page.click('#create-account-btn');
   await this.page.waitForNavigation({ timeout: 10000 });
   
   // Login
   await this.page.waitForSelector('#loginEmail');
-  await this.page.type('#loginEmail', email, { delay: 3 });
-  await this.page.type('#loginPassword', sharedPassword, { delay: 3 });
+  await this.page.type('#loginEmail', testEmail, { delay: 3 });
+  await this.page.type('#loginPassword', 'password123', { delay: 3 });
   await this.page.click('#login-btn');
   await this.page.waitForNavigation({ timeout: 10000 });
   
@@ -408,23 +408,23 @@ Then('only the relevant matching sessions should be displayed in the sidebar', a
 
 // Scenario: Resume a conversation from history
 Given('I have saved conversations in my history', async function () {
-  // First login
+  // First login - create unique test account
   const timestamp = Date.now();
-  const email = `testresume${timestamp}@example.com`;
+  const testEmail = `testresume${timestamp}@example.com`;
   
   // Signup
   await this.page.goto(`${baseUrl}/signup`);
   await this.page.waitForSelector('#signupEmail');
-  await this.page.type('#signupEmail', email, { delay: 3 });
-  await this.page.type('#signupPassword', sharedPassword, { delay: 3 });
-  await this.page.type('#signupConfirmPassword', sharedPassword, { delay: 3 });
+  await this.page.type('#signupEmail', testEmail, { delay: 3 });
+  await this.page.type('#signupPassword', 'password123', { delay: 3 });
+  await this.page.type('#signupConfirmPassword', 'password123', { delay: 3 });
   await this.page.click('#create-account-btn');
   await this.page.waitForNavigation({ timeout: 10000 });
   
   // Login
   await this.page.waitForSelector('#loginEmail');
-  await this.page.type('#loginEmail', email, { delay: 3 });
-  await this.page.type('#loginPassword', sharedPassword, { delay: 3 });
+  await this.page.type('#loginEmail', testEmail, { delay: 3 });
+  await this.page.type('#loginPassword', 'password123', { delay: 3 });
   await this.page.click('#login-btn');
   await this.page.waitForNavigation({ timeout: 10000 });
   
