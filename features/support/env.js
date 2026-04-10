@@ -5,8 +5,9 @@ const { BeforeAll, AfterAll, Before, After, setDefaultTimeout } = require('@cucu
 const puppeteer = require('puppeteer');
 const { spawn } = require('child_process');
 
-// Set timeout to 60 seconds for slow typing demonstrations
-setDefaultTimeout(60000);
+// Set timeout to 90 seconds for Iteration 2 tests (need time for LLM responses)
+// Individual steps may wait up to 60 seconds for LLM, but overall 90s timeout for the step itself
+setDefaultTimeout(90000);
 
 let browser;
 let serverProcess;
@@ -24,7 +25,7 @@ BeforeAll(async function () {
 
   browser = await puppeteer.launch({
     headless: false,
-    slowMo: 50 
+    slowMo: 25  // Reduced from 50ms for faster test execution
   });
 });
 

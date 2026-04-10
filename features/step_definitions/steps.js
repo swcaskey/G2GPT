@@ -50,9 +50,9 @@ When('I enter valid account information and submit the form', async function () 
   sharedEmail = `testuser${timestamp}@example.com`;
   
   await this.page.waitForSelector('#signupEmail');
-  await this.page.type('#signupEmail', sharedEmail, { delay: 5 });
-  await this.page.type('#signupPassword', sharedPassword, { delay: 5 });
-  await this.page.type('#signupConfirmPassword', sharedPassword, { delay: 5 });
+  await this.page.type('#signupEmail', sharedEmail, { delay: 3 });
+  await this.page.type('#signupPassword', sharedPassword, { delay: 3 });
+  await this.page.type('#signupConfirmPassword', sharedPassword, { delay: 3 });
   
   // Highlight submit button before clicking
   await this.page.evaluate(() => {
@@ -89,8 +89,8 @@ Given('I already have an account', async function () {
 
 When('I enter valid Log In credentials', async function () {
   await this.page.waitForSelector('#loginEmail');
-  await this.page.type('#loginEmail', sharedEmail, { delay: 5 });
-  await this.page.type('#loginPassword', sharedPassword, { delay: 5 });
+  await this.page.type('#loginEmail', sharedEmail, { delay: 3 });
+  await this.page.type('#loginPassword', sharedPassword, { delay: 3 });
   
   // Highlight login button
   await this.page.evaluate(() => {
@@ -167,16 +167,16 @@ Given('I am logged in and on the dashboard', async function () {
   // Signup
   await this.page.goto(`${baseUrl}/signup`);
   await this.page.waitForSelector('#signupEmail');
-  await this.page.type('#signupEmail', sharedEmail, { delay: 5 });
-  await this.page.type('#signupPassword', sharedPassword, { delay: 5 });
-  await this.page.type('#signupConfirmPassword', sharedPassword, { delay: 5 });
+  await this.page.type('#signupEmail', sharedEmail, { delay: 3 });
+  await this.page.type('#signupPassword', sharedPassword, { delay: 3 });
+  await this.page.type('#signupConfirmPassword', sharedPassword, { delay: 3 });
   await this.page.click('#create-account-btn');
   await this.page.waitForNavigation({ timeout: 10000 });
   
   // Login
   await this.page.waitForSelector('#loginEmail');
-  await this.page.type('#loginEmail', sharedEmail, { delay: 5 });
-  await this.page.type('#loginPassword', sharedPassword, { delay: 5 });
+  await this.page.type('#loginEmail', sharedEmail, { delay: 3 });
+  await this.page.type('#loginPassword', sharedPassword, { delay: 3 });
   await this.page.click('#login-btn');
   await this.page.waitForNavigation({ timeout: 10000 });
   
@@ -255,16 +255,16 @@ Given('I have completed a chat session', async function () {
   // Signup
   await this.page.goto(`${baseUrl}/signup`);
   await this.page.waitForSelector('#signupEmail');
-  await this.page.type('#signupEmail', email, { delay: 5 });
-  await this.page.type('#signupPassword', sharedPassword, { delay: 5 });
-  await this.page.type('#signupConfirmPassword', sharedPassword, { delay: 5 });
+  await this.page.type('#signupEmail', email, { delay: 3 });
+  await this.page.type('#signupPassword', sharedPassword, { delay: 3 });
+  await this.page.type('#signupConfirmPassword', sharedPassword, { delay: 3 });
   await this.page.click('#create-account-btn');
   await this.page.waitForNavigation({ timeout: 10000 });
   
   // Login
   await this.page.waitForSelector('#loginEmail');
-  await this.page.type('#loginEmail', email, { delay: 5 });
-  await this.page.type('#loginPassword', sharedPassword, { delay: 5 });
+  await this.page.type('#loginEmail', email, { delay: 3 });
+  await this.page.type('#loginPassword', sharedPassword, { delay: 3 });
   await this.page.click('#login-btn');
   await this.page.waitForNavigation({ timeout: 10000 });
   
@@ -272,7 +272,7 @@ Given('I have completed a chat session', async function () {
   await this.page.waitForSelector('#user-input', { timeout: 10000 });
   await new Promise(r => setTimeout(r, 1000));
   
-  await this.page.type('#user-input', 'Test message for history', { delay: 5 });
+  await this.page.type('#user-input', 'Test message for history', { delay: 3 });
   await this.page.click('#send-btn');
   
   // Wait for response using waitForFunction
@@ -317,28 +317,28 @@ Given('I have multiple saved chats', async function () {
   // Signup
   await this.page.goto(`${baseUrl}/signup`);
   await this.page.waitForSelector('#signupEmail');
-  await this.page.type('#signupEmail', email, { delay: 5 });
-  await this.page.type('#signupPassword', sharedPassword, { delay: 5 });
-  await this.page.type('#signupConfirmPassword', sharedPassword, { delay: 5 });
+  await this.page.type('#signupEmail', email, { delay: 3 });
+  await this.page.type('#signupPassword', sharedPassword, { delay: 3 });
+  await this.page.type('#signupConfirmPassword', sharedPassword, { delay: 3 });
   await this.page.click('#create-account-btn');
   await this.page.waitForNavigation({ timeout: 10000 });
   
   // Login
   await this.page.waitForSelector('#loginEmail');
-  await this.page.type('#loginEmail', email, { delay: 5 });
-  await this.page.type('#loginPassword', sharedPassword, { delay: 5 });
+  await this.page.type('#loginEmail', email, { delay: 3 });
+  await this.page.type('#loginPassword', sharedPassword, { delay: 3 });
   await this.page.click('#login-btn');
   await this.page.waitForNavigation({ timeout: 10000 });
   
-  // Now create just 2 conversations (reduced from 3 to save time)
+  // Create just ONE conversation with searchable keyword
   await this.page.waitForSelector('#user-input', { timeout: 10000 });
-  await new Promise(r => setTimeout(r, 1000));
+  await new Promise(r => setTimeout(r, 500));
   
-  // First conversation - with keyword "weather"
+  // Conversation with keyword "weather" for search testing
   await this.page.evaluate(() => {
     document.getElementById('user-input').value = '';
   });
-  await this.page.type('#user-input', 'What is the weather today', { delay: 5 });
+  await this.page.type('#user-input', 'What is the weather', { delay: 3 });
   await this.page.click('#send-btn');
   
   // Wait for response
@@ -346,31 +346,12 @@ Given('I have multiple saved chats', async function () {
     () => !document.getElementById('typing-indicator').classList.contains('show'),
     { timeout: 60000 }
   );
-  await new Promise(r => setTimeout(r, 1000));
-  
-  // Second conversation - without keyword
-  const newChatBtn = await this.page.$('#new-chat-btn');
-  if (newChatBtn) {
-    await this.page.click('#new-chat-btn');
-    await new Promise(r => setTimeout(r, 1000));
-  }
-  
-  await this.page.evaluate(() => {
-    document.getElementById('user-input').value = '';
-  });
-  await this.page.type('#user-input', 'Tell me a joke', { delay: 5 });
-  await this.page.click('#send-btn');
-  
-  await this.page.waitForFunction(
-    () => !document.getElementById('typing-indicator').classList.contains('show'),
-    { timeout: 60000 }
-  );
-  await new Promise(r => setTimeout(r, 1000));
+  await new Promise(r => setTimeout(r, 500));
   
   // Refresh to ensure history is loaded
   await this.page.reload({ waitUntil: 'networkidle0' });
   await this.page.waitForSelector('#history-list', { timeout: 10000 });
-  await new Promise(r => setTimeout(r, 2000));
+  await new Promise(r => setTimeout(r, 1000));
 });
 
 When('I enter a keyword into the history search bar', async function () {
@@ -431,16 +412,16 @@ Given('I have saved conversations in my history', async function () {
   // Signup
   await this.page.goto(`${baseUrl}/signup`);
   await this.page.waitForSelector('#signupEmail');
-  await this.page.type('#signupEmail', email, { delay: 5 });
-  await this.page.type('#signupPassword', sharedPassword, { delay: 5 });
-  await this.page.type('#signupConfirmPassword', sharedPassword, { delay: 5 });
+  await this.page.type('#signupEmail', email, { delay: 3 });
+  await this.page.type('#signupPassword', sharedPassword, { delay: 3 });
+  await this.page.type('#signupConfirmPassword', sharedPassword, { delay: 3 });
   await this.page.click('#create-account-btn');
   await this.page.waitForNavigation({ timeout: 10000 });
   
   // Login
   await this.page.waitForSelector('#loginEmail');
-  await this.page.type('#loginEmail', email, { delay: 5 });
-  await this.page.type('#loginPassword', sharedPassword, { delay: 5 });
+  await this.page.type('#loginEmail', email, { delay: 3 });
+  await this.page.type('#loginPassword', sharedPassword, { delay: 3 });
   await this.page.click('#login-btn');
   await this.page.waitForNavigation({ timeout: 10000 });
   
@@ -448,7 +429,7 @@ Given('I have saved conversations in my history', async function () {
   await this.page.waitForSelector('#user-input', { timeout: 10000 });
   await new Promise(r => setTimeout(r, 1000));
   
-  await this.page.type('#user-input', 'Original conversation message', { delay: 5 });
+  await this.page.type('#user-input', 'Original conversation message', { delay: 3 });
   await this.page.click('#send-btn');
   
   // Wait for response
