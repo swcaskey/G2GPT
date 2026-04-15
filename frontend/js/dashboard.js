@@ -87,6 +87,42 @@ function appendBubble(role, content, animate = true, messagesContainer) {
   return row;
 }
 
+function appendMultiModelBubble(content, modelName, animate = true, messagesContainer) {
+  const container = messagesContainer || messages;
+  const emptyState = container.querySelector ? container.querySelector('#empty-state') : 
+                     (container.getElementById ? container.getElementById('empty-state') : null);
+  
+  if (emptyState && emptyState.remove) {
+    emptyState.remove();
+  }
+
+  const row = document.createElement ? document.createElement('div') : { 
+    className: '',
+    style: {},
+    innerHTML: '',
+  };
+  
+  row.className = 'msg-row assistant multi-model';
+
+  if (!animate) {
+    row.style.animation = 'none';
+  }
+
+  row.innerHTML = `
+    <div class="avatar bot">AI</div>
+    <div class="multi-bubble">
+      <div class="model-label">${escapeHtml(modelName)}</div>
+      <div class="bubble">${formatMessage(content)}</div>
+    </div>
+  `;
+
+  if (container.appendChild) {
+    container.appendChild(row);
+    container.scrollTop = container.scrollHeight;
+  }
+  return row;
+}
+
 function renderMessages(messageList, messagesContainer) {
   const container = messagesContainer || messages;
   container.innerHTML = '';
@@ -96,7 +132,16 @@ function renderMessages(messageList, messagesContainer) {
     return;
   }
 
-  messageList.forEach((message) => appendBubble(message.role, message.content, false, container));
+  messageList.forEach((message) => {
+    // If message has model attribution (from multi-model conversation), render as multi-bubble
+    if (message.model && message.role === 'assistant') {
+      appendMultiModelBubble(message.content, message.model, false, container);
+    } else {
+      // Legacy messages or user messages use regular bubble
+      appendBubble(message.role, message.content, false, container);
+    }
+  });
+  
   if (container.scrollTop !== undefined) {
     container.scrollTop = container.scrollHeight;
   }
@@ -175,17 +220,26 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
   });
 }
 
-async function callLLM(messageList) {
-  console.log('Dashboard: callLLM called with messages:', messageList);
+async function callLLM(messageList, selectedModels = []) {
+  console.log('Dashboard: callLLM called with messages:', messageList, 'models:', selectedModels);
   
   try {
     console.log('Dashboard: Making fetch request to /api/chat');
+    
+    // If no models provided, this is an error case - should not happen
+    if (!selectedModels || selectedModels.length === 0) {
+      throw new Error('No models selected');
+    }
+
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ messages: messageList })
+      body: JSON.stringify({ 
+        messages: messageList,
+        models: selectedModels
+      })
     });
 
     console.log('Dashboard: Fetch response status:', response.status, response.ok);
@@ -197,13 +251,134 @@ async function callLLM(messageList) {
       throw new Error(data.message || 'Unable to reach the AI service.');
     }
 
+    // Handle new multi-model response format
+    if (data.responses && Array.isArray(data.responses)) {
+      console.log('Dashboard: Returning multi-model responses:', data.responses);
+      return data.responses;
+    }
+
+    // Fallback for backward compatibility
     const reply = data.reply || data.response || 'No response was returned.';
-    console.log('Dashboard: Returning reply:', reply);
+    console.log('Dashboard: Returning legacy reply:', reply);
     return reply;
   } catch (error) {
     console.error('Dashboard: callLLM error:', error);
     throw error;
   }
+}
+
+async function loadAvailableModels() {
+  console.log('Dashboard: Loading available models');
+  try {
+    const response = await fetch('/api/models');
+    if (response.ok) {
+      const data = await response.json();
+      const models = Array.isArray(data) ? data : (data.models || []);
+      console.log('Dashboard: Available models:', models);
+      
+      const modelList = document.getElementById('model-list');
+      if (modelList) {
+        modelList.innerHTML = '';
+        
+        models.forEach(model => {
+          // Extract model name - handle both string and object formats
+          const modelName = typeof model === 'string' ? model : (model.name || model);
+          
+          const modelItem = document.createElement('div');
+          modelItem.className = 'model-item';
+          modelItem.id = `model-item-${modelName}`;
+          
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.id = `model-checkbox-${modelName}`;
+          checkbox.value = modelName;
+          checkbox.addEventListener('change', handleCheckboxChange);
+          
+          const label = document.createElement('label');
+          label.htmlFor = `model-checkbox-${modelName}`;
+          label.textContent = modelName;
+          // Ensure label click toggles checkbox
+          label.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            checkbox.checked = !checkbox.checked;
+            handleCheckboxChange({ target: checkbox });
+          });
+          
+          modelItem.appendChild(checkbox);
+          modelItem.appendChild(label);
+          
+          // Make entire item clickable to toggle checkbox
+          modelItem.addEventListener('click', (event) => {
+            event.stopPropagation();
+            if (event.target !== checkbox && event.target !== label) {
+              checkbox.checked = !checkbox.checked;
+              handleCheckboxChange({ target: checkbox });
+            }
+          });
+          
+          modelList.appendChild(modelItem);
+        });
+        renderModelListUI();
+      }
+    } else {
+      console.error('Dashboard: Failed to load models');
+    }
+  } catch (error) {
+    console.error('Dashboard: Error loading models:', error);
+  }
+}
+
+function handleModelSelection(modelName, isChecked) {
+  console.log(`Dashboard: Model ${modelName} selection changed to ${isChecked}`);
+  
+  if (isChecked) {
+    // Enforce max 2 models
+    if (selectedModels.length >= 2) {
+      console.log('Dashboard: Max 2 models reached, rejecting selection of third model');
+      // Reject the third model by unchecking it
+      const newCheckbox = document.getElementById(`model-checkbox-${modelName}`);
+      if (newCheckbox) {
+        newCheckbox.removeEventListener('change', handleCheckboxChange);
+        newCheckbox.checked = false;
+        newCheckbox.addEventListener('change', handleCheckboxChange);
+      }
+      return; // Don't add to selectedModels
+    } else {
+      selectedModels.push(modelName);
+    }
+  } else {
+    selectedModels = selectedModels.filter(m => m !== modelName);
+  }
+  
+  console.log('Dashboard: Updated selectedModels:', selectedModels);
+  renderModelListUI();
+}
+
+function handleCheckboxChange(event) {
+  const checkbox = event.target;
+  const modelName = checkbox.value;
+  handleModelSelection(modelName, checkbox.checked);
+}
+
+function renderModelListUI() {
+  console.log('Dashboard: Rendering model list UI, selectedModels:', selectedModels);
+  
+  // Update model items to show selection state
+  const modelItems = document.querySelectorAll('.model-item');
+  console.log('Dashboard: Found', modelItems.length, 'model items');
+  modelItems.forEach((item, idx) => {
+    const checkbox = item.querySelector('input[type="checkbox"]');
+    if (checkbox) {
+      const isSelected = selectedModels.includes(checkbox.value);
+      console.log(`Dashboard: Model item ${idx} (${checkbox.value}): isSelected=${isSelected}`);
+      if (isSelected) {
+        item.classList.add('selected');
+      } else {
+        item.classList.remove('selected');
+      }
+    }
+  });
 }
 
 // Export functions for testing (Node.js environment)
@@ -217,8 +392,11 @@ if (typeof module !== 'undefined' && module.exports) {
     formatMessage,
     setEmptyState,
     appendBubble,
+    appendMultiModelBubble,
     renderMessages,
     renderHistory,
+    updateSelectedModels,
+    loadAvailableModels,
     callLLM
   };
 }
@@ -226,7 +404,8 @@ if (typeof module !== 'undefined' && module.exports) {
 // Global variables for the dashboard
 let conversations = [];
 let activeId = null;
-let historyList, searchInput, newChatButton, chatTitle, messages, typingIndicator, textarea, sendButton;
+let selectedModels = [];
+let historyList, searchInput, newChatButton, chatTitle, messages, typingIndicator, textarea, sendButton, modelDropdownBtn, modelDropdownContent;
 
 // Load conversations from server
 async function loadConversationsFromServer() {
@@ -314,18 +493,25 @@ async function saveConversationToServer(conversation) {
 }
 
 // Save message to server
-async function saveMessageToServer(conversationId, role, content) {
+async function saveMessageToServer(conversationId, role, content, model = null) {
   try {
-    console.log('Dashboard: Saving message to server:', conversationId, role);
+    console.log('Dashboard: Saving message to server:', conversationId, role, 'model:', model);
+    const body = {
+      role: role,
+      content: content
+    };
+    
+    // Include model if provided (for multi-model responses)
+    if (model) {
+      body.model_name = model;
+    }
+    
     const response = await fetch(`/api/conversations/${conversationId}/messages`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        role: role,
-        content: content
-      })
+      body: JSON.stringify(body)
     });
     
     if (!response.ok) {
@@ -407,8 +593,8 @@ async function sendMessage() {
   let reply = '';
 
   try {
-    console.log('Dashboard: Calling LLM with messages', conversation.messages);
-    reply = await callLLM(conversation.messages);
+    console.log('Dashboard: Calling LLM with messages', conversation.messages, 'selectedModels:', selectedModels);
+    reply = await callLLM(conversation.messages, selectedModels);
     console.log('Dashboard: LLM reply received', reply);
   } catch (error) {
     console.error('Dashboard: LLM call failed', error);
@@ -419,13 +605,25 @@ async function sendMessage() {
   typingIndicator.classList.remove('show');
   typingIndicator.setAttribute('aria-hidden', 'true');
 
-  conversation.messages.push({ role: 'assistant', content: reply });
+  // Handle both single response and multi-model responses
+  if (Array.isArray(reply)) {
+    // Multi-model responses
+    console.log('Dashboard: Handling multi-model responses');
+    reply.forEach((response) => {
+      conversation.messages.push({ role: 'assistant', content: response.content, model: response.model });
+      appendMultiModelBubble(response.content, response.model, true, messages);
+      saveMessageToServer(activeId, 'assistant', response.content, response.model);
+    });
+  } else {
+    // Single response (legacy)
+    console.log('Dashboard: Handling single response');
+    conversation.messages.push({ role: 'assistant', content: reply });
+    appendBubble('assistant', reply, true, messages);
+    saveMessageToServer(activeId, 'assistant', reply);
+  }
+
   conversation.updatedAt = Date.now();
-  appendBubble('assistant', reply, true, messages);
   renderHistory(conversations, historyList, searchInput, activeId);
-  
-  // Save assistant message to server
-  await saveMessageToServer(activeId, 'assistant', reply);
   
   console.log('Dashboard: Message exchange complete');
 }
@@ -506,6 +704,8 @@ if (typeof document !== 'undefined') {
     typingIndicator = document.getElementById('typing-indicator');
     textarea = document.getElementById('user-input');
     sendButton = document.getElementById('send-btn');
+    modelDropdownBtn = document.getElementById('model-dropdown-btn');
+    modelDropdownContent = document.getElementById('model-dropdown-content');
 
     console.log('Dashboard: Elements found -', {
       historyList: !!historyList,
@@ -515,7 +715,9 @@ if (typeof document !== 'undefined') {
       messages: !!messages,
       typingIndicator: !!typingIndicator,
       textarea: !!textarea,
-      sendButton: !!sendButton
+      sendButton: !!sendButton,
+      modelDropdownBtn: !!modelDropdownBtn,
+      modelDropdownContent: !!modelDropdownContent
     });
 
   textarea.addEventListener('input', function handleInput() {
@@ -535,10 +737,37 @@ if (typeof document !== 'undefined') {
     console.log('Dashboard: Send button clicked');
     sendMessage();
   });
+
+  // Setup model selector dropdown
+  modelDropdownBtn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    const isHidden = modelDropdownContent.hasAttribute('hidden');
+    if (isHidden) {
+      modelDropdownContent.removeAttribute('hidden');
+      modelDropdownBtn.setAttribute('aria-expanded', 'true');
+      console.log('Dashboard: Model dropdown opened');
+    } else {
+      modelDropdownContent.setAttribute('hidden', '');
+      modelDropdownBtn.setAttribute('aria-expanded', 'false');
+      console.log('Dashboard: Model dropdown closed');
+    }
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', () => {
+    if (!modelDropdownContent.hasAttribute('hidden')) {
+      modelDropdownContent.setAttribute('hidden', '');
+      modelDropdownBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
   newChatButton.addEventListener('click', newChat);
   searchInput.addEventListener('input', () => renderHistory(conversations, historyList, searchInput, activeId));
 
   console.log('Dashboard: Event listeners attached');
+  
+  // Load available models
+  loadAvailableModels();
   
   // Load conversations from server on page load
   loadConversationsFromServer().then(() => {

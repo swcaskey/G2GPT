@@ -76,6 +76,17 @@
               </div>
 
               <div class="input-area">
+                <!-- Model Selector Dropdown -->
+                <div class="model-selector-section" id="model-selector-section">
+                  <button class="model-dropdown-btn" id="model-dropdown-btn" aria-label="Select models" aria-haspopup="listbox">
+                    <span class="model-dropdown-label">Models</span>
+                    <span class="model-dropdown-icon">▼</span>
+                  </button>
+                  <div class="model-dropdown-content" id="model-dropdown-content" role="listbox" hidden>
+                    <div class="model-list" id="model-list"></div>
+                  </div>
+                </div>
+
                 <div class="input-row" id="input-row">
                   <label class="sr-only" for="user-input">Type your message</label>
                   <textarea
