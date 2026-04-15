@@ -10,6 +10,22 @@ const baseUrl = 'http://localhost:3000';
 let sharedEmail = 'test@example.com';
 let sharedPassword = 'password123';
 
+async function ensureAtLeastOneModelSelected(page) {
+  await page.waitForSelector('#model-dropdown-btn', { timeout: 10000 });
+  await page.click('#model-dropdown-btn');
+  await page.waitForSelector('#model-list .model-item input[type="checkbox"]', { timeout: 10000 });
+
+  const selectedCount = await page.evaluate(() => {
+    return document.querySelectorAll('#model-list .model-item input[type="checkbox"]:checked').length;
+  });
+
+  if (selectedCount === 0) {
+    await page.click('#model-list .model-item input[type="checkbox"]');
+  }
+
+  await page.click('#model-dropdown-btn');
+}
+
 // ==================== Scenario: Landing Page Access ====================
 
 Given('I am not logged in', async function () {
@@ -187,6 +203,9 @@ Given('I am logged in and on the dashboard', async function () {
 
 When('I enter a prompt in the chat box and click {string}', async function (buttonText) {
   await this.page.waitForSelector('#user-input');
+
+  // Current dashboard requires at least one selected model before sending.
+  await ensureAtLeastOneModelSelected(this.page);
   
   // Highlight input field
   await this.page.evaluate(() => {
@@ -271,6 +290,7 @@ Given('I have completed a chat session', async function () {
 
   // Now on dashboard - send a message to create history
   await this.page.waitForSelector('#user-input', { timeout: 10000 });
+  await ensureAtLeastOneModelSelected(this.page);
   await new Promise(r => setTimeout(r, 1000));
   
   await this.page.type('#user-input', 'Test message for history', { delay: 3 });
@@ -334,6 +354,7 @@ Given('I have multiple saved chats', async function () {
   
   // Create just ONE conversation with searchable keyword
   await this.page.waitForSelector('#user-input', { timeout: 10000 });
+  await ensureAtLeastOneModelSelected(this.page);
   await new Promise(r => setTimeout(r, 500));
   
   // Conversation with keyword "weather" for search testing
@@ -430,6 +451,7 @@ Given('I have saved conversations in my history', async function () {
   
   // Create a conversation
   await this.page.waitForSelector('#user-input', { timeout: 10000 });
+  await ensureAtLeastOneModelSelected(this.page);
   await new Promise(r => setTimeout(r, 1000));
   
   await this.page.type('#user-input', 'Original conversation message', { delay: 3 });
@@ -459,20 +481,28 @@ When('I click on a past conversation in the sidebar', async function () {
   
   // Get all history items
   const historyItems = await this.page.$$('#history-list .history-item');
-  assert.ok(historyItems.length >= 2, `Need at least 2 conversations (found ${historyItems.length})`);
-  
-  // Click on SECOND item (first is the new empty chat, second is the original with messages)
-  const secondItem = historyItems[1];
-  
-  // Highlight second conversation item
-  await this.page.evaluate(() => {
-    const items = document.querySelectorAll('#history-list .history-item');
-    if (items[1]) items[1].style.outline = '3px solid #ffc107';
+  assert.ok(historyItems.length >= 1, `Need at least 1 conversation (found ${historyItems.length})`);
+
+  const targetIndex = await this.page.evaluate(() => {
+    const items = Array.from(document.querySelectorAll('#history-list .history-item'));
+    const nonEmptyIndex = items.findIndex((item) => {
+      const title = item.querySelector('.hi-title');
+      return title && title.textContent.trim() !== 'New Conversation';
+    });
+    return nonEmptyIndex >= 0 ? nonEmptyIndex : 0;
   });
+
+  const targetItem = historyItems[targetIndex];
+
+  // Highlight selected conversation item
+  await this.page.evaluate((index) => {
+    const items = document.querySelectorAll('#history-list .history-item');
+    if (items[index]) items[index].style.outline = '3px solid #ffc107';
+  }, targetIndex);
   await new Promise(r => setTimeout(r, 2000));
   
-  // Click on second conversation item
-  await secondItem.click();
+  // Click on selected conversation item
+  await targetItem.click();
   await new Promise(r => setTimeout(r, 2000));
 });
 

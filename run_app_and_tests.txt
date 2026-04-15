@@ -44,9 +44,10 @@ Individual Test Files:
   npx jasmine spec/dashboardSpec.js     # Dashboard + multi-model unit tests (28 specs)
 
 Cucumber.js (Acceptance Tests):
-  npm run test:cucumber                 # All features (7 scenarios total)
+  npm run test:cucumber                 # All features (10 scenarios total)
   npx cucumber-js features/authentication.feature  # Iteration 1 (3 scenarios)
   npx cucumber-js features/chat.feature            # Iteration 2 (4 scenarios)
+  npx cucumber-js features/multi-model.feature     # Iteration Individual (3 scenarios)
 
 Puppeteer (Browser Automation):
   # Puppeteer is integrated with Cucumber.js
@@ -74,6 +75,10 @@ Test Breakdown by Iteration:
     - Select one or two models from dashboard model selector
     - One prompt sends parallel requests to all selected models
     - Responses are labeled by model and saved with model_name in messages
+    - Cucumber: 3 scenarios in features/multi-model.feature
+      1. Select one or two models from selector
+      2. Send one prompt to two models and verify both labels
+      3. Reopen conversation and verify persisted model labels
 
 
 
