@@ -108,11 +108,13 @@ function appendMultiModelBubble(content, modelName, animate = true, messagesCont
     row.style.animation = 'none';
   }
 
+  const normalizedContent = String(content).replace(/^(?:\r?\n)+/, '');
+
   row.innerHTML = `
     <div class="avatar bot">AI</div>
     <div class="multi-bubble">
       <div class="model-label">${escapeHtml(modelName)}</div>
-      <div class="bubble">${formatMessage(content)}</div>
+      <div class="bubble">${formatMessage(normalizedContent)}</div>
     </div>
   `;
 
@@ -121,6 +123,36 @@ function appendMultiModelBubble(content, modelName, animate = true, messagesCont
     container.scrollTop = container.scrollHeight;
   }
   return row;
+}
+
+function showTransientAssistantBubble(content, messagesContainer, options = {}) {
+  const container = messagesContainer || messages;
+  const row = appendBubble('assistant', content, false, container);
+  const totalDurationMs = Number.isFinite(options.totalDurationMs) ? options.totalDurationMs : 1000;
+  const fadeDurationMs = Number.isFinite(options.fadeDurationMs) ? options.fadeDurationMs : 500;
+  const fadeStartDelayMs = Math.max(0, totalDurationMs - fadeDurationMs);
+
+  row.classList.add('transient-warning');
+  row.style.setProperty('--transient-fade-duration', `${fadeDurationMs}ms`);
+
+  setTimeout(() => {
+    if (!row.parentNode) {
+      return;
+    }
+    requestAnimationFrame(() => {
+      row.classList.add('fade-out');
+    });
+  }, fadeStartDelayMs);
+
+  setTimeout(() => {
+    if (row.parentNode) {
+      row.parentNode.removeChild(row);
+    }
+
+    if (container.querySelectorAll && container.querySelectorAll('.msg-row').length === 0) {
+      setEmptyState(container);
+    }
+  }, totalDurationMs);
 }
 
 function renderMessages(messageList, messagesContainer) {
@@ -220,15 +252,14 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
   });
 }
 
-async function callLLM(messageList, selectedModels = []) {
+async function callLLM(messageList, selectedModels = [], abortSignal = null) {
   console.log('Dashboard: callLLM called with messages:', messageList, 'models:', selectedModels);
   
   try {
     console.log('Dashboard: Making fetch request to /api/chat');
     
-    // If no models provided, this is an error case - should not happen
-    if (!selectedModels || selectedModels.length === 0) {
-      throw new Error('No models selected');
+    if (!selectedModels || selectedModels.length < 1) {
+      throw new Error('Please select at least one model.');
     }
 
     const response = await fetch('/api/chat', {
@@ -236,6 +267,7 @@ async function callLLM(messageList, selectedModels = []) {
       headers: {
         'Content-Type': 'application/json'
       },
+      signal: abortSignal,
       body: JSON.stringify({ 
         messages: messageList,
         models: selectedModels
@@ -395,7 +427,8 @@ if (typeof module !== 'undefined' && module.exports) {
     appendMultiModelBubble,
     renderMessages,
     renderHistory,
-    updateSelectedModels,
+    handleModelSelection,
+    renderModelListUI,
     loadAvailableModels,
     callLLM
   };
@@ -405,7 +438,37 @@ if (typeof module !== 'undefined' && module.exports) {
 let conversations = [];
 let activeId = null;
 let selectedModels = [];
-let historyList, searchInput, newChatButton, chatTitle, messages, typingIndicator, textarea, sendButton, modelDropdownBtn, modelDropdownContent;
+let isGenerating = false;
+let activeChatAbortController = null;
+const defaultInputPlaceholder = 'Type your message...';
+const generatingInputPlaceholder = 'Esc to stop response';
+let historyList, searchInput, newChatButton, chatTitle, messages, typingIndicator, textarea, sendButton, modelDropdownBtn, modelDropdownContent, inputRow;
+
+function setGenerationState(isActive) {
+  isGenerating = isActive;
+
+  if (textarea) {
+    textarea.disabled = isActive;
+    textarea.placeholder = isActive ? generatingInputPlaceholder : defaultInputPlaceholder;
+  }
+
+  if (sendButton) {
+    sendButton.disabled = isActive;
+  }
+
+  if (inputRow) {
+    inputRow.classList.toggle('is-generating', isActive);
+  }
+}
+
+function stopGeneration() {
+  if (!isGenerating || !activeChatAbortController) {
+    return false;
+  }
+
+  activeChatAbortController.abort();
+  return true;
+}
 
 // Load conversations from server
 async function loadConversationsFromServer() {
@@ -451,6 +514,7 @@ async function loadMessagesFromServer(conversationId) {
         conversation.messages = data.messages.map(msg => ({
           role: msg.role,
           content: msg.content,
+          model: msg.model_name || null,
           timestamp: new Date(msg.created_at).getTime()
         }));
         console.log('Dashboard: Loaded messages:', conversation.messages.length);
@@ -545,12 +609,25 @@ async function sendMessage() {
     console.log('Dashboard: textarea not initialized yet');
     return;
   }
+
+  if (isGenerating) {
+    console.log('Dashboard: Ignoring send while generation is in progress');
+    return;
+  }
   
   const text = textarea.value.trim();
   console.log('Dashboard: Input text -', text);
   
   if (!text) {
     console.log('Dashboard: No text, returning');
+    return;
+  }
+
+  if (selectedModels.length < 1) {
+    showTransientAssistantBubble('Please select at least one model before sending your prompt.', messages, {
+      totalDurationMs: 1500,
+      fadeDurationMs: 500
+    });
     return;
   }
 
@@ -570,40 +647,80 @@ async function sendMessage() {
 
   console.log('Dashboard: Found conversation', conversation);
 
-  // If this is a new conversation, save it to server first
-  if (conversation.messages.length === 0) {
+  const isNewConversation = conversation.messages.length === 0;
+  const previousUpdatedAt = conversation.updatedAt;
+
+  // Set title immediately for UX; persistence happens after a non-cancelled response.
+  if (isNewConversation) {
     conversation.title = autoTitle(text);
     chatTitle.textContent = conversation.title;
-    await saveConversationToServer(conversation);
   }
 
-  conversation.messages.push({ role: 'user', content: text });
+  const userMessage = { role: 'user', content: text };
+  conversation.messages.push(userMessage);
   conversation.updatedAt = Date.now();
-  appendBubble('user', text, true, messages);
+  const userBubbleRow = appendBubble('user', text, true, messages);
   renderHistory(conversations, historyList, searchInput, activeId);
-
-  // Save user message to server
-  await saveMessageToServer(activeId, 'user', text);
 
   console.log('Dashboard: Showing typing indicator');
   typingIndicator.classList.add('show');
   typingIndicator.setAttribute('aria-hidden', 'false');
   messages.scrollTop = messages.scrollHeight;
 
-  let reply = '';
+  let reply = null;
+  setGenerationState(true);
+  activeChatAbortController = new AbortController();
 
   try {
     console.log('Dashboard: Calling LLM with messages', conversation.messages, 'selectedModels:', selectedModels);
-    reply = await callLLM(conversation.messages, selectedModels);
+    reply = await callLLM(conversation.messages, selectedModels, activeChatAbortController.signal);
     console.log('Dashboard: LLM reply received', reply);
   } catch (error) {
-    console.error('Dashboard: LLM call failed', error);
-    reply = 'Unable to reach the AI right now. Please check the API configuration and try again.';
+    if (error && error.name === 'AbortError') {
+      console.log('Dashboard: LLM request cancelled by user');
+      reply = null;
+    } else {
+      console.error('Dashboard: LLM call failed', error);
+      reply = error && error.message
+        ? `AI request failed: ${error.message}`
+        : 'Unable to reach the AI right now. Please check the API configuration and try again.';
+    }
+  } finally {
+    setGenerationState(false);
+    activeChatAbortController = null;
+
+    console.log('Dashboard: Hiding typing indicator');
+    typingIndicator.classList.remove('show');
+    typingIndicator.setAttribute('aria-hidden', 'true');
   }
 
-  console.log('Dashboard: Hiding typing indicator');
-  typingIndicator.classList.remove('show');
-  typingIndicator.setAttribute('aria-hidden', 'true');
+  if (reply === null) {
+    const userMessageIndex = conversation.messages.lastIndexOf(userMessage);
+    if (userMessageIndex >= 0) {
+      conversation.messages.splice(userMessageIndex, 1);
+    }
+
+    if (userBubbleRow && userBubbleRow.parentNode) {
+      userBubbleRow.parentNode.removeChild(userBubbleRow);
+    }
+
+    conversation.updatedAt = previousUpdatedAt;
+    renderHistory(conversations, historyList, searchInput, activeId);
+
+    showTransientAssistantBubble('Response stopped.', messages, {
+      totalDurationMs: 2000,
+      fadeDurationMs: 500
+    });
+
+    return;
+  }
+
+  if (isNewConversation) {
+    await saveConversationToServer(conversation);
+  }
+
+  // Save user message to server only after response is not cancelled.
+  await saveMessageToServer(activeId, 'user', text);
 
   // Handle both single response and multi-model responses
   if (Array.isArray(reply)) {
@@ -702,6 +819,7 @@ if (typeof document !== 'undefined') {
     chatTitle = document.getElementById('chat-title');
     messages = document.getElementById('messages');
     typingIndicator = document.getElementById('typing-indicator');
+    inputRow = document.getElementById('input-row');
     textarea = document.getElementById('user-input');
     sendButton = document.getElementById('send-btn');
     modelDropdownBtn = document.getElementById('model-dropdown-btn');
@@ -714,6 +832,7 @@ if (typeof document !== 'undefined') {
       chatTitle: !!chatTitle,
       messages: !!messages,
       typingIndicator: !!typingIndicator,
+      inputRow: !!inputRow,
       textarea: !!textarea,
       sendButton: !!sendButton,
       modelDropdownBtn: !!modelDropdownBtn,
@@ -730,6 +849,15 @@ if (typeof document !== 'undefined') {
       console.log('Dashboard: Enter key pressed');
       event.preventDefault();
       sendMessage();
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && isGenerating) {
+      event.preventDefault();
+      if (stopGeneration()) {
+        console.log('Dashboard: Esc pressed, stopping generation');
+      }
     }
   });
 

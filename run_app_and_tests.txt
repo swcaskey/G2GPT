@@ -36,12 +36,12 @@ API Endpoints:
 # ====================
 # Running Tests
 # ====================
-Complete Test Suite (46 tests):
+Complete Test Suite (51 tests):
   npm test                              # Runs all Jasmine unit tests
 
 Individual Test Files:
-  npx jasmine spec/loginSpec.js         # Iteration 1 unit tests (19 specs)
-  npx jasmine spec/dashboardSpec.js     # Iteration 2 unit tests (27 specs)
+  npx jasmine spec/loginSpec.js         # Auth/API unit tests (23 specs)
+  npx jasmine spec/dashboardSpec.js     # Dashboard + multi-model unit tests (28 specs)
 
 Cucumber.js (Acceptance Tests):
   npm run test:cucumber                 # All features (7 scenarios total)
@@ -56,19 +56,24 @@ Puppeteer (Browser Automation):
 
 Test Breakdown by Iteration:
   Iteration 1 (Authentication):
-    - Jasmine: 19 specs in spec/loginSpec.js
+    - Jasmine: covered in spec/loginSpec.js
     - Cucumber: 3 scenarios in features/authentication.feature
       1. Landing Page Access
       2. Account Registration  
       3. Local Log In and Log Out
   
   Iteration 2 (LLM Chat):
-    - Jasmine: 27 specs in spec/dashboardSpec.js
+    - Jasmine: covered in spec/dashboardSpec.js
     - Cucumber: 4 scenarios in features/chat.feature
       1. Send a prompt and receive a response
       2. Conversation history is saved
       3. Search conversation history
       4. Resume a conversation from history
+
+  Iteration Individual (Multi-LLM):
+    - Select one or two models from dashboard model selector
+    - One prompt sends parallel requests to all selected models
+    - Responses are labeled by model and saved with model_name in messages
 
 
 

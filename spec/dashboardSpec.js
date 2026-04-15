@@ -302,18 +302,25 @@ describe("Dashboard Conversation Management", () => {
       global.fetch = originalFetch;
     });
 
-    it("should return LLM response", async () => {
+    it("should return multi-model responses", async () => {
       const mockResponse = {
         ok: true,
-        json: () => Promise.resolve({ reply: 'Hello from LLM' })
+        json: () => Promise.resolve({
+          responses: [
+            { model: 'llama3', content: 'Response from llama3' },
+            { model: 'mistral', content: 'Response from mistral' }
+          ]
+        })
       };
 
       global.fetch = jasmine.createSpy('fetch').and.resolveTo(mockResponse);
 
       const messageList = [{ role: 'user', content: 'Hello' }];
-      const result = await dashboard.callLLM(messageList);
+      const result = await dashboard.callLLM(messageList, ['llama3', 'mistral']);
 
-      expect(result).toBe('Hello from LLM');
+      expect(Array.isArray(result)).toBeTrue();
+      expect(result.length).toBe(2);
+      expect(result[0].model).toBe('llama3');
     });
 
     it("should throw error for failed response", async () => {
@@ -327,7 +334,13 @@ describe("Dashboard Conversation Management", () => {
 
       const messageList = [{ role: 'user', content: 'Hello' }];
       
-      await expectAsync(dashboard.callLLM(messageList)).toBeRejected();
+      await expectAsync(dashboard.callLLM(messageList, ['llama3', 'mistral'])).toBeRejected();
+    });
+
+    it("should throw error when no models are selected", async () => {
+      const messageList = [{ role: 'user', content: 'Hello' }];
+      
+      await expectAsync(dashboard.callLLM(messageList, [])).toBeRejectedWithError('Please select at least one model.');
     });
   });
 });

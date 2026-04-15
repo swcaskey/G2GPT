@@ -199,33 +199,49 @@ describe("GET /api/health", () => {
 });
 
 describe("GET /api/models", () => {
-  it("should return models list when Ollama is available or handle gracefully when not", async () => {
+  let originalFetch;
+
+  beforeEach(() => {
+    originalFetch = global.fetch;
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it("should return normalized model names when Ollama is available", async () => {
+    global.fetch = jasmine.createSpy("fetch").and.resolveTo({
+      ok: true,
+      json: async () => ({ models: [{ name: "llama3" }, { name: "mistral" }] })
+    });
+
     const res = await request(app).get("/api/models");
-    
-    // Accept either success or expected failure
-    expect([200, 503]).toContain(res.status);
-    
-    if (res.status === 200) {
-      expect(res.body.success).toBe(true);
-      expect(res.body.models).toBeDefined();
-      expect(Array.isArray(res.body.models)).toBe(true);
-    } else {
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toBe("Could not connect to Ollama.");
-    }
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.models).toEqual(["llama3", "mistral"]);
+  });
+
+  it("should return 503 when Ollama is unavailable", async () => {
+    global.fetch = jasmine.createSpy("fetch").and.rejectWith(new Error("Connection failed"));
+
+    const res = await request(app).get("/api/models");
+
+    expect(res.status).toBe(503);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toBe("Could not connect to Ollama.");
   });
 });
 
 describe("POST /api/chat", () => {
-  beforeEach((done) => {
-    try {
-      // Clear test data using better-sqlite3 syntax
-      db.prepare("DELETE FROM conversations").run();
-      db.prepare("DELETE FROM messages").run();
-      done();
-    } catch (err) {
-      done.fail(err);
-    }
+  let originalFetch;
+
+  beforeEach(() => {
+    originalFetch = global.fetch;
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
   });
 
   it("should return 400 if messages array is missing", async () => {
@@ -256,5 +272,116 @@ describe("POST /api/chat", () => {
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
     expect(res.body.message).toBe("Messages array is required and must not be empty.");
+  });
+
+  it("should return 400 when no models are provided", async () => {
+    const res = await request(app)
+      .post("/api/chat")
+      .send({ messages: [{ role: "user", content: "Hello" }], models: [] });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toBe("At least one model name is required.");
+  });
+
+  it("should return single-model response when one model is selected", async () => {
+    global.fetch = jasmine.createSpy("fetch").and.callFake(async (url, options) => {
+      if (url.endsWith("/api/tags")) {
+        return {
+          ok: true,
+          json: async () => ({ models: [{ name: "llama3" }, { name: "mistral" }] })
+        };
+      }
+
+      const payload = JSON.parse(options.body);
+      return {
+        ok: true,
+        json: async () => ({
+          message: { content: `reply-${payload.model}` }
+        })
+      };
+    });
+
+    const res = await request(app)
+      .post("/api/chat")
+      .send({
+        messages: [{ role: "user", content: "Hello there" }],
+        models: ["llama3"]
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.responses).toEqual([
+      { model: "llama3", content: "reply-llama3" }
+    ]);
+  });
+
+  it("should return multi-model responses when request is valid", async () => {
+    global.fetch = jasmine.createSpy("fetch").and.callFake(async (url, options) => {
+      if (url.endsWith("/api/tags")) {
+        return {
+          ok: true,
+          json: async () => ({ models: [{ name: "llama3" }, { name: "mistral" }] })
+        };
+      }
+
+      const payload = JSON.parse(options.body);
+      return {
+        ok: true,
+        json: async () => ({
+          message: { content: `reply-${payload.model}` }
+        })
+      };
+    });
+
+    const res = await request(app)
+      .post("/api/chat")
+      .send({
+        messages: [{ role: "user", content: "Hello there" }],
+        models: ["llama3", "mistral"]
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.responses).toEqual([
+      { model: "llama3", content: "reply-llama3" },
+      { model: "mistral", content: "reply-mistral" }
+    ]);
+  });
+});
+
+describe("Conversation messages model attribution", () => {
+  let agent;
+  let userId;
+  const conversationId = "conv-model-test";
+
+  beforeEach(async () => {
+    db.prepare("DELETE FROM messages").run();
+    db.prepare("DELETE FROM conversations").run();
+    db.prepare("DELETE FROM users").run();
+
+    const result = db.prepare("INSERT INTO users (email, password) VALUES (?, ?)").run("modeltest@example.com", "password123");
+    userId = result.lastInsertRowid;
+
+    agent = request.agent(app);
+    await agent.post("/login").send({ email: "modeltest@example.com", password: "password123" });
+
+    db.prepare("INSERT INTO conversations (id, user_id, title) VALUES (?, ?, ?)").run(conversationId, userId, "Model Conversation");
+  });
+
+  it("should save and return model_name for assistant messages", async () => {
+    const postRes = await agent
+      .post(`/api/conversations/${conversationId}/messages`)
+      .send({ role: "assistant", content: "Parallel answer", model_name: "llama3" });
+
+    expect(postRes.status).toBe(200);
+    expect(postRes.body.success).toBe(true);
+    expect(postRes.body.message.model_name).toBe("llama3");
+
+    const getRes = await agent.get(`/api/conversations/${conversationId}/messages`);
+    expect(getRes.status).toBe(200);
+    expect(getRes.body.success).toBe(true);
+    expect(getRes.body.messages.length).toBe(1);
+    expect(getRes.body.messages[0].model_name).toBe("llama3");
   });
 });
