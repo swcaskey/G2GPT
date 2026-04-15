@@ -93,7 +93,7 @@ a {
 
 .brand-block {
   width: 100%;
-  padding: 18px 24px 18px 10px;
+  padding: 18px 24px 18px 18px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -942,7 +942,7 @@ h1 {
 
 @media (max-width: 768px) {
   .brand-block {
-    padding: 16px 16px 16px 10px;
+    padding: 16px;
   }
 
   .brand-name {
