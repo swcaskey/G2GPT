@@ -9,7 +9,7 @@ function genId() {
 
 function autoTitle(text) {
   const trimmed = text.trim();
-  return trimmed.slice(0, 42) + (trimmed.length > 42 ? '.' : '');
+  return trimmed.slice(0, 42) + (trimmed.length > 42 ? "." : "");
 }
 
 function groupConvs(list) {
@@ -33,14 +33,14 @@ function groupConvs(list) {
 
 function escapeHtml(str) {
   return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function formatMessage(str) {
-  return escapeHtml(str).replace(/\n/g, '<br>');
+  return escapeHtml(str).replace(/\n/g, "<br>");
 }
 
 function setEmptyState(messagesContainer) {
@@ -49,47 +49,43 @@ function setEmptyState(messagesContainer) {
     <div id="empty-state" class="empty-state">
       <div class="empty-badge">AI</div>
       <h3 class="empty-title">Welcome to G2GPT</h3>
-      <p class="empty-sub">Start a new conversation or select one from the sidebar.</p>
+      <p class="empty-sub">Enter one prompt and compare responses from multiple AI models.</p>
     </div>
   `;
 }
 
 function appendBubble(role, content, animate = true, messagesContainer) {
   const container = messagesContainer || messages;
-  const emptyState = container.querySelector ? container.querySelector('#empty-state') : 
-                     (container.getElementById ? container.getElementById('empty-state') : null);
-  
+  const emptyState = container.querySelector
+    ? container.querySelector("#empty-state")
+    : null;
+
   if (emptyState && emptyState.remove) {
     emptyState.remove();
   }
 
-  const row = document.createElement ? document.createElement('div') : { 
-    className: '',
-    style: {},
-    innerHTML: '',
-  };
-  
+  const row = document.createElement("div");
   row.className = `msg-row ${role}`;
 
   if (!animate) {
-    row.style.animation = 'none';
+    row.style.animation = "none";
   }
 
   row.innerHTML = `
-    <div class="avatar ${role === 'assistant' ? 'bot' : role}">${role === 'user' ? 'You' : 'AI'}</div>
+    <div class="avatar ${role === "assistant" ? "bot" : role}">
+      ${role === "user" ? "You" : "AI"}
+    </div>
     <div class="bubble">${formatMessage(content)}</div>
   `;
 
-  if (container.appendChild) {
-    container.appendChild(row);
-    container.scrollTop = container.scrollHeight;
-  }
+  container.appendChild(row);
+  container.scrollTop = container.scrollHeight;
   return row;
 }
 
 function renderMessages(messageList, messagesContainer) {
   const container = messagesContainer || messages;
-  container.innerHTML = '';
+  container.innerHTML = "";
 
   if (!messageList || messageList.length === 0) {
     setEmptyState(container);
@@ -97,17 +93,18 @@ function renderMessages(messageList, messagesContainer) {
   }
 
   messageList.forEach((message) => appendBubble(message.role, message.content, false, container));
-  if (container.scrollTop !== undefined) {
-    container.scrollTop = container.scrollHeight;
-  }
+  container.scrollTop = container.scrollHeight;
 }
 
 function renderHistory(conversations, historyListContainer, searchInputElement, currentActiveId) {
   const historyContainer = historyListContainer || historyList;
   const searchElement = searchInputElement || searchInput;
-  
-  const query = (searchElement && searchElement.value) ? searchElement.value.trim().toLowerCase() : '';
-  historyContainer.innerHTML = '';
+
+  const query = (searchElement && searchElement.value)
+    ? searchElement.value.trim().toLowerCase()
+    : "";
+
+  historyContainer.innerHTML = "";
 
   if (!conversations) {
     conversations = [];
@@ -124,90 +121,190 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
 
   const groups = groupConvs(filtered);
 
-  ['Today', 'Yesterday', 'Older'].forEach((label) => {
+  ["Today", "Yesterday", "Older"].forEach((label) => {
     if (!groups[label].length) {
       return;
     }
 
-    const sectionLabel = document.createElement ? document.createElement('div') : {};
-    sectionLabel.className = 'section-label';
+    const sectionLabel = document.createElement("div");
+    sectionLabel.className = "section-label";
     sectionLabel.textContent = label;
-    
-    if (historyContainer.appendChild) {
-      historyContainer.appendChild(sectionLabel);
-    }
+    historyContainer.appendChild(sectionLabel);
 
     groups[label].forEach((conversation) => {
-      const item = document.createElement ? document.createElement('div') : {};
-      // Use passed activeId parameter or try to access global activeId if in browser
-      const activeIdToCheck = currentActiveId !== undefined ? currentActiveId : (typeof activeId !== 'undefined' ? activeId : null);
-      item.className = `history-item${conversation.id === activeIdToCheck ? ' active' : ''}`;
+      const item = document.createElement("div");
+      const activeIdToCheck =
+        currentActiveId !== undefined
+          ? currentActiveId
+          : (typeof activeId !== "undefined" ? activeId : null);
+
+      item.className = `history-item${conversation.id === activeIdToCheck ? " active" : ""}`;
       item.innerHTML = `
         <span class="hi-title">${escapeHtml(conversation.title)}</span>
         <button class="hi-delete" type="button" title="Delete conversation" aria-label="Delete conversation">✕</button>
       `;
 
-      // Add click handler for conversation selection
-      if (item.addEventListener) {
-        item.addEventListener('click', (event) => {
-          // Don't trigger if delete button was clicked
-          if (event.target.classList.contains('hi-delete')) {
-            return;
-          }
-          console.log('Dashboard: Loading conversation from history:', conversation.id);
-          loadConv(conversation.id);
-        });
-
-        // Add click handler for delete button
-        const deleteBtn = item.querySelector('.hi-delete');
-        if (deleteBtn) {
-          deleteBtn.addEventListener('click', (event) => {
-            console.log('Dashboard: Deleting conversation:', conversation.id);
-            deleteConv(event, conversation.id);
-          });
+      item.addEventListener("click", (event) => {
+        if (event.target.classList.contains("hi-delete")) {
+          return;
         }
+        loadConv(conversation.id);
+      });
+
+      const deleteBtn = item.querySelector(".hi-delete");
+      if (deleteBtn) {
+        deleteBtn.addEventListener("click", (event) => {
+          deleteConv(event, conversation.id);
+        });
       }
 
-      if (historyContainer.appendChild) {
-        historyContainer.appendChild(item);
+      historyContainer.appendChild(item);
+    });
+  });
+}
+
+async function callMultiLLM(messageList, selectedModels, conversationId = null) {
+  console.log("Dashboard: callMultiLLM called", { selectedModels, conversationId });
+
+  try {
+    const response = await fetch("/api/chat-multi", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        messages: messageList,
+        selectedModels,
+        conversationId
+      })
+    });
+
+    const data = await response.json();
+    console.log("Dashboard: Multi-model response", data);
+
+    if (!response.ok) {
+      throw new Error(data.message || "Unable to reach the multi-model AI service.");
+    }
+
+    return data.responses || [];
+  } catch (error) {
+    console.error("Dashboard: callMultiLLM error:", error);
+    throw error;
+  }
+}
+
+function getSelectedModels() {
+  const checked = Array.from(
+    document.querySelectorAll('input[name="modelOption"]:checked')
+  ).map((input) => input.value);
+
+  return checked.slice(0, 3);
+}
+
+function setStatus(message, isError = false) {
+  if (!statusMessage) return;
+  statusMessage.textContent = message;
+  statusMessage.style.color = isError ? "#b91c1c" : "";
+}
+
+function clearMultiResponses() {
+  if (!multiResponseArea) return;
+
+  multiResponseArea.style.display = "none";
+
+  if (modelName1) modelName1.textContent = "Model 1";
+  if (modelName2) modelName2.textContent = "Model 2";
+  if (modelName3) modelName3.textContent = "Model 3";
+
+  if (response1) response1.textContent = "No response yet.";
+  if (response2) response2.textContent = "No response yet.";
+  if (response3) response3.textContent = "No response yet.";
+}
+
+function renderMultiResponses(responses) {
+  if (!multiResponseArea) return;
+
+  multiResponseArea.style.display = "block";
+
+  const names = [modelName1, modelName2, modelName3];
+  const texts = [response1, response2, response3];
+
+  for (let i = 0; i < 3; i++) {
+    const res = responses[i];
+
+    if (!res) {
+      names[i].textContent = `Model ${i + 1}`;
+      texts[i].textContent = "No response.";
+      continue;
+    }
+
+    names[i].textContent = res.model || `Model ${i + 1}`;
+
+    if (res.success) {
+      texts[i].textContent = res.reply || "No response.";
+    } else {
+      texts[i].textContent = res.error || "Failed to respond.";
+    }
+  }
+}
+
+function renderModelOptions(models) {
+  if (!modelsContainer) return;
+
+  if (!models || models.length === 0) {
+    modelsContainer.innerHTML = "<p>No models available.</p>";
+    return;
+  }
+
+  modelsContainer.innerHTML = models.map((model, index) => `
+    <label class="model-option">
+      <input
+        type="checkbox"
+        name="modelOption"
+        value="${escapeHtml(model.name)}"
+        ${index < 3 ? "checked" : ""}
+      />
+      <span>${escapeHtml(model.name)}</span>
+    </label>
+  `).join("");
+
+  const checkboxes = document.querySelectorAll('input[name="modelOption"]');
+  checkboxes.forEach((checkbox) => {
+    checkbox.addEventListener("change", () => {
+      const selected = getSelectedModels();
+      if (selected.length > 3) {
+        checkbox.checked = false;
+        setStatus("You can select up to 3 models.", true);
+      } else {
+        setStatus("");
       }
     });
   });
 }
 
-async function callLLM(messageList) {
-  console.log('Dashboard: callLLM called with messages:', messageList);
-  
+async function loadModels() {
+  if (!modelsContainer) return;
+
+  modelsContainer.innerHTML = "<p>Loading models...</p>";
+
   try {
-    console.log('Dashboard: Making fetch request to /api/chat');
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ messages: messageList })
-    });
-
-    console.log('Dashboard: Fetch response status:', response.status, response.ok);
+    const response = await fetch("/api/models");
     const data = await response.json();
-    console.log('Dashboard: Fetch response data:', data);
 
-    if (!response.ok) {
-      console.error('Dashboard: Response not ok:', data.message);
-      throw new Error(data.message || 'Unable to reach the AI service.');
+    if (!response.ok || !data.success) {
+      modelsContainer.innerHTML = `<p>${escapeHtml(data.message || "Failed to load models.")}</p>`;
+      return;
     }
 
-    const reply = data.reply || data.response || 'No response was returned.';
-    console.log('Dashboard: Returning reply:', reply);
-    return reply;
+    renderModelOptions(data.models || []);
   } catch (error) {
-    console.error('Dashboard: callLLM error:', error);
-    throw error;
+    console.error("Dashboard: loadModels error:", error);
+    modelsContainer.innerHTML = "<p>Could not load models.</p>";
   }
 }
 
 // Export functions for testing (Node.js environment)
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     getConv,
     genId,
@@ -219,42 +316,57 @@ if (typeof module !== 'undefined' && module.exports) {
     appendBubble,
     renderMessages,
     renderHistory,
-    callLLM
+    callMultiLLM,
+    getSelectedModels,
+    clearMultiResponses,
+    renderMultiResponses
   };
 }
 
 // Global variables for the dashboard
 let conversations = [];
 let activeId = null;
-let historyList, searchInput, newChatButton, chatTitle, messages, typingIndicator, textarea, sendButton;
+
+let historyList;
+let searchInput;
+let newChatButton;
+let chatTitle;
+let messages;
+let typingIndicator;
+let textarea;
+let sendButton;
+
+let modelsContainer;
+let statusMessage;
+let multiResponseArea;
+let modelName1;
+let modelName2;
+let modelName3;
+let response1;
+let response2;
+let response3;
 
 // Load conversations from server
 async function loadConversationsFromServer() {
   try {
-    console.log('Dashboard: Loading conversations from server');
-    const response = await fetch('/api/conversations');
-    
-    console.log('Dashboard: Load conversations response status:', response.status);
-    
+    console.log("Dashboard: Loading conversations from server");
+    const response = await fetch("/api/conversations");
+
     if (response.ok) {
       const data = await response.json();
-      console.log('Dashboard: Load conversations response:', data);
-      conversations = data.conversations.map(conv => ({
+      conversations = (data.conversations || []).map((conv) => ({
         id: conv.id,
         title: conv.title,
-        messages: [], // Will be loaded separately
+        messages: [],
         createdAt: new Date(conv.created_at).getTime(),
         updatedAt: new Date(conv.updated_at).getTime(),
         messageCount: conv.message_count
       }));
-      console.log('Dashboard: Loaded conversations:', conversations);
     } else {
-      const errorData = await response.json();
-      console.log('Dashboard: Failed to load conversations:', response.status, errorData);
       conversations = [];
     }
   } catch (error) {
-    console.error('Dashboard: Error loading conversations:', error);
+    console.error("Dashboard: Error loading conversations:", error);
     conversations = [];
   }
 }
@@ -262,180 +374,160 @@ async function loadConversationsFromServer() {
 // Load messages for a specific conversation
 async function loadMessagesFromServer(conversationId) {
   try {
-    console.log('Dashboard: Loading messages for conversation:', conversationId);
     const response = await fetch(`/api/conversations/${conversationId}/messages`);
-    
+
     if (response.ok) {
       const data = await response.json();
       const conversation = getConv(conversations, conversationId);
+
       if (conversation) {
-        conversation.messages = data.messages.map(msg => ({
+        conversation.messages = (data.messages || []).map((msg) => ({
           role: msg.role,
           content: msg.content,
           timestamp: new Date(msg.created_at).getTime()
         }));
-        console.log('Dashboard: Loaded messages:', conversation.messages.length);
       }
     } else {
-      console.error('Dashboard: Failed to load messages:', response.status);
+      console.error("Dashboard: Failed to load messages:", response.status);
     }
   } catch (error) {
-    console.error('Dashboard: Error loading messages:', error);
+    console.error("Dashboard: Error loading messages:", error);
   }
 }
 
 // Save conversation to server
 async function saveConversationToServer(conversation) {
   try {
-    console.log('Dashboard: Saving conversation to server:', conversation.id, conversation.title);
-    const response = await fetch('/api/conversations', {
-      method: 'POST',
+    const response = await fetch("/api/conversations", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
         id: conversation.id,
         title: conversation.title
       })
     });
-    
-    console.log('Dashboard: Save conversation response status:', response.status);
-    const responseData = await response.json();
-    console.log('Dashboard: Save conversation response:', responseData);
-    
-    if (!response.ok) {
-      console.error('Dashboard: Failed to save conversation:', responseData);
-    } else {
-      console.log('Dashboard: Conversation saved successfully');
-    }
-  } catch (error) {
-    console.error('Dashboard: Error saving conversation:', error);
-  }
-}
 
-// Save message to server
-async function saveMessageToServer(conversationId, role, content) {
-  try {
-    console.log('Dashboard: Saving message to server:', conversationId, role);
-    const response = await fetch(`/api/conversations/${conversationId}/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        role: role,
-        content: content
-      })
-    });
-    
     if (!response.ok) {
-      console.error('Dashboard: Failed to save message:', response.status);
+      console.error("Dashboard: Failed to save conversation:", response.status);
     }
   } catch (error) {
-    console.error('Dashboard: Error saving message:', error);
+    console.error("Dashboard: Error saving conversation:", error);
   }
 }
 
 // Delete conversation from server
 async function deleteConversationFromServer(conversationId) {
   try {
-    console.log('Dashboard: Deleting conversation from server:', conversationId);
     const response = await fetch(`/api/conversations/${conversationId}`, {
-      method: 'DELETE'
+      method: "DELETE"
     });
-    
+
     if (!response.ok) {
-      console.error('Dashboard: Failed to delete conversation:', response.status);
+      console.error("Dashboard: Failed to delete conversation:", response.status);
     }
   } catch (error) {
-    console.error('Dashboard: Error deleting conversation:', error);
+    console.error("Dashboard: Error deleting conversation:", error);
   }
 }
 
 // Global function to send message
 async function sendMessage() {
-  console.log('Dashboard: sendMessage called');
-  if (!textarea) {
-    console.log('Dashboard: textarea not initialized yet');
-    return;
-  }
-  
-  const text = textarea.value.trim();
-  console.log('Dashboard: Input text -', text);
-  
-  if (!text) {
-    console.log('Dashboard: No text, returning');
-    return;
-  }
+  if (!textarea) return;
 
-  textarea.value = '';
-  textarea.style.height = 'auto';
+  const text = textarea.value.trim();
+  if (!text) return;
+
+  textarea.value = "";
+  textarea.style.height = "auto";
+  setStatus("");
+  clearMultiResponses();
 
   if (!activeId) {
-    console.log('Dashboard: No active chat, creating new chat');
     newChat();
   }
 
   const conversation = getConv(conversations, activeId);
-  if (!conversation) {
-    console.log('Dashboard: No conversation found for activeId', activeId);
-    return;
-  }
+  if (!conversation) return;
 
-  console.log('Dashboard: Found conversation', conversation);
-
-  // If this is a new conversation, save it to server first
   if (conversation.messages.length === 0) {
     conversation.title = autoTitle(text);
     chatTitle.textContent = conversation.title;
     await saveConversationToServer(conversation);
   }
 
-  conversation.messages.push({ role: 'user', content: text });
+  conversation.messages.push({
+    role: "user",
+    content: text,
+    timestamp: Date.now()
+  });
   conversation.updatedAt = Date.now();
-  appendBubble('user', text, true, messages);
+
+  appendBubble("user", text, true, messages);
   renderHistory(conversations, historyList, searchInput, activeId);
 
-  // Save user message to server
-  await saveMessageToServer(activeId, 'user', text);
-
-  console.log('Dashboard: Showing typing indicator');
-  typingIndicator.classList.add('show');
-  typingIndicator.setAttribute('aria-hidden', 'false');
+  typingIndicator.classList.add("show");
+  typingIndicator.setAttribute("aria-hidden", "false");
   messages.scrollTop = messages.scrollHeight;
 
-  let reply = '';
+  let responses = [];
 
   try {
-    console.log('Dashboard: Calling LLM with messages', conversation.messages);
-    reply = await callLLM(conversation.messages);
-    console.log('Dashboard: LLM reply received', reply);
+    const selectedModels = getSelectedModels();
+
+    if (selectedModels.length === 0) {
+      throw new Error("Please select at least one model.");
+    }
+
+    responses = await callMultiLLM(
+      conversation.messages.map((message) => ({
+        role: message.role,
+        content: message.content
+      })),
+      selectedModels,
+      activeId
+    );
   } catch (error) {
-    console.error('Dashboard: LLM call failed', error);
-    reply = 'Unable to reach the AI right now. Please check the API configuration and try again.';
+    console.error("Dashboard: Multi-model request failed", error);
+    responses = [
+      {
+        model: "Error",
+        success: false,
+        reply: "",
+        error: error.message || "Unable to reach the AI service."
+      }
+    ];
+    setStatus(error.message || "Unable to reach the AI service.", true);
   }
 
-  console.log('Dashboard: Hiding typing indicator');
-  typingIndicator.classList.remove('show');
-  typingIndicator.setAttribute('aria-hidden', 'true');
+  typingIndicator.classList.remove("show");
+  typingIndicator.setAttribute("aria-hidden", "true");
 
-  conversation.messages.push({ role: 'assistant', content: reply });
+  responses.forEach((response) => {
+    const content = response.success
+      ? `[${response.model}] ${response.reply}`
+      : `[${response.model}] ${response.error || "Failed to respond."}`;
+
+    conversation.messages.push({
+      role: "assistant",
+      content,
+      timestamp: Date.now()
+    });
+  });
+
   conversation.updatedAt = Date.now();
-  appendBubble('assistant', reply, true, messages);
   renderHistory(conversations, historyList, searchInput, activeId);
-  
-  // Save assistant message to server
-  await saveMessageToServer(activeId, 'assistant', reply);
-  
-  console.log('Dashboard: Message exchange complete');
+  renderMultiResponses(responses);
+
+  setStatus("Responses loaded successfully.");
 }
 
 // Global function to create new chat
 function newChat() {
-  console.log('Dashboard: Creating new chat');
   const conversation = {
     id: genId(),
-    title: 'New Conversation',
+    title: "New Conversation",
     messages: [],
     createdAt: Date.now(),
     updatedAt: Date.now()
@@ -447,24 +539,24 @@ function newChat() {
 
 // Global function to load conversation
 async function loadConv(id) {
-  console.log('Dashboard: Loading conversation', id);
   activeId = id;
   const conversation = getConv(conversations, id);
 
+  clearMultiResponses();
+
   if (!conversation) {
-    chatTitle.textContent = 'New Conversation';
+    chatTitle.textContent = "New Conversation";
     renderMessages([], messages);
     renderHistory(conversations, historyList, searchInput, activeId);
     return;
   }
 
   chatTitle.textContent = conversation.title;
-  
-  // Load messages from server if not already loaded
+
   if (conversation.messages.length === 0 && conversation.messageCount > 0) {
     await loadMessagesFromServer(id);
   }
-  
+
   renderMessages(conversation.messages, messages);
   renderHistory(conversations, historyList, searchInput, activeId);
 }
@@ -472,11 +564,8 @@ async function loadConv(id) {
 // Global function to delete conversation
 async function deleteConv(event, id) {
   event.stopPropagation();
-  
-  // Delete from server first
+
   await deleteConversationFromServer(id);
-  
-  // Remove from client-side array
   conversations = conversations.filter((conversation) => conversation.id !== id);
 
   if (activeId === id) {
@@ -484,7 +573,8 @@ async function deleteConv(event, id) {
       await loadConv(conversations[0].id);
     } else {
       activeId = null;
-      chatTitle.textContent = 'New Conversation';
+      chatTitle.textContent = "New Conversation";
+      clearMultiResponses();
       renderMessages([], messages);
     }
   }
@@ -493,59 +583,58 @@ async function deleteConv(event, id) {
 }
 
 // Browser initialization
-if (typeof document !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', () => {
-    console.log('Dashboard: DOM loaded');
-    
-    // Initialize DOM elements
-    historyList = document.getElementById('history-list');
-    searchInput = document.getElementById('search-input');
-    newChatButton = document.getElementById('new-chat-btn');
-    chatTitle = document.getElementById('chat-title');
-    messages = document.getElementById('messages');
-    typingIndicator = document.getElementById('typing-indicator');
-    textarea = document.getElementById('user-input');
-    sendButton = document.getElementById('send-btn');
+if (typeof document !== "undefined") {
+  document.addEventListener("DOMContentLoaded", () => {
+    historyList = document.getElementById("history-list");
+    searchInput = document.getElementById("search-input");
+    newChatButton = document.getElementById("new-chat-btn");
+    chatTitle = document.getElementById("chat-title");
+    messages = document.getElementById("messages");
+    typingIndicator = document.getElementById("typing-indicator");
+    textarea = document.getElementById("user-input");
+    sendButton = document.getElementById("send-btn");
 
-    console.log('Dashboard: Elements found -', {
-      historyList: !!historyList,
-      searchInput: !!searchInput,
-      newChatButton: !!newChatButton,
-      chatTitle: !!chatTitle,
-      messages: !!messages,
-      typingIndicator: !!typingIndicator,
-      textarea: !!textarea,
-      sendButton: !!sendButton
+    modelsContainer = document.getElementById("models-container");
+    statusMessage = document.getElementById("status-message");
+    multiResponseArea = document.getElementById("multi-response-area");
+    modelName1 = document.getElementById("model-name-1");
+    modelName2 = document.getElementById("model-name-2");
+    modelName3 = document.getElementById("model-name-3");
+    response1 = document.getElementById("response-1");
+    response2 = document.getElementById("response-2");
+    response3 = document.getElementById("response-3");
+
+    clearMultiResponses();
+
+    textarea.addEventListener("input", function handleInput() {
+      this.style.height = "auto";
+      this.style.height = `${Math.min(this.scrollHeight, 120)}px`;
     });
 
-  textarea.addEventListener('input', function handleInput() {
-    this.style.height = 'auto';
-    this.style.height = `${Math.min(this.scrollHeight, 120)}px`;
-  });
+    textarea.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
 
-  textarea.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      console.log('Dashboard: Enter key pressed');
-      event.preventDefault();
+    sendButton.addEventListener("click", () => {
       sendMessage();
-    }
-  });
+    });
 
-  sendButton.addEventListener('click', () => {
-    console.log('Dashboard: Send button clicked');
-    sendMessage();
-  });
-  newChatButton.addEventListener('click', newChat);
-  searchInput.addEventListener('input', () => renderHistory(conversations, historyList, searchInput, activeId));
+    newChatButton.addEventListener("click", newChat);
+    searchInput.addEventListener("input", () => {
+      renderHistory(conversations, historyList, searchInput, activeId);
+    });
 
-  console.log('Dashboard: Event listeners attached');
-  
-  // Load conversations from server on page load
-  loadConversationsFromServer().then(() => {
-    renderHistory(conversations, historyList, searchInput, activeId);
-    if (conversations.length === 0) {
-      setEmptyState(messages);
-    }
+    loadModels();
+
+    loadConversationsFromServer().then(() => {
+      renderHistory(conversations, historyList, searchInput, activeId);
+
+      if (conversations.length === 0) {
+        setEmptyState(messages);
+      }
+    });
   });
-});
 }
