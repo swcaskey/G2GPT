@@ -231,7 +231,8 @@ h1 {
 .sidebar-top,
 .chat-header,
 .input-area,
-.sidebar-footer {
+.sidebar-footer,
+.models-toolbar {
   background: rgba(255, 255, 255, 0.78);
 }
 
@@ -290,7 +291,6 @@ h1 {
   background: rgba(148, 163, 184, 0.85);
 }
 
-/* Firefox scrollbar */
 .history-list {
   scrollbar-width: thin;
   scrollbar-color: rgba(148, 163, 184, 0.65) transparent;
@@ -428,7 +428,6 @@ h1 {
   background: rgba(148, 163, 184, 0.85);
 }
 
-/* Firefox scrollbar */
 .messages {
   scrollbar-width: thin;
   scrollbar-color: rgba(148, 163, 184, 0.65) transparent;
@@ -693,6 +692,84 @@ h1 {
   border: 0;
 }
 
+/* ================= MULTI-MODEL FEATURE ================= */
+
+.models-toolbar {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--panel-line);
+}
+
+.models-toolbar h3 {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--charcoal);
+}
+
+.models-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.model-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--input-border);
+  background: #ffffff;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.model-option:hover {
+  border-color: var(--rutgers-red);
+  background: rgba(204, 0, 51, 0.05);
+}
+
+.model-option input {
+  cursor: pointer;
+}
+
+.multi-response-area {
+  margin-top: 18px;
+}
+
+.multi-response-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.multi-response-box {
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-small);
+  background: var(--surface-strong);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  min-height: 180px;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+}
+
+.multi-response-box h3 {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--rutgers-red);
+}
+
+.multi-response-text {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--charcoal);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 @media (max-width: 1024px) {
   .workspace-shell {
     grid-template-columns: 1fr;
@@ -710,6 +787,12 @@ h1 {
   .chat-panel {
     order: 1;
     min-height: 620px;
+  }
+}
+
+@media (max-width: 900px) {
+  .multi-response-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -752,7 +835,8 @@ h1 {
   .messages,
   .chat-header,
   .input-area,
-  .sidebar-top {
+  .sidebar-top,
+  .models-toolbar {
     padding-left: 16px;
     padding-right: 16px;
   }
