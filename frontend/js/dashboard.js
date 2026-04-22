@@ -74,14 +74,14 @@ function appendBubble(role, content, animate = true, messagesContainer) {
     innerHTML: ""
   };
 
-  row.className = `msg-row ${role === "assistant" ? "bot" : role}`;
+  row.className = `msg-row ${role}`;
 
   if (!animate && row.style) {
     row.style.animation = "none";
   }
 
   row.innerHTML = `
-    <div class="avatar ${role === "assistant" ? "bot" : role}">
+    <div class="avatar ${role}">
       ${role === "user" ? "You" : "AI"}
     </div>
     <div class="bubble">${formatMessage(content)}</div>
