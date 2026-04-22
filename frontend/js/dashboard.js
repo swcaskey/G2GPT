@@ -442,7 +442,6 @@ async function sendMessage() {
   textarea.value = "";
   textarea.style.height = "auto";
   setStatus("");
-  clearMultiResponses();
 
   if (!activeId) {
     newChat();
@@ -457,14 +456,17 @@ async function sendMessage() {
     await saveConversationToServer(conversation);
   }
 
-  conversation.messages.push({
+  // Save and show user message
+  const userMessage = {
     role: "user",
     content: text,
     timestamp: Date.now()
-  });
+  };
+
+  conversation.messages.push(userMessage);
   conversation.updatedAt = Date.now();
 
-  appendBubble("user", text, true, messages);
+  renderMessages(conversation.messages, messages);
   renderHistory(conversations, historyList, searchInput, activeId);
 
   typingIndicator.classList.add("show");
@@ -504,6 +506,7 @@ async function sendMessage() {
   typingIndicator.classList.remove("show");
   typingIndicator.setAttribute("aria-hidden", "true");
 
+  // Save each model response into the conversation history
   responses.forEach((response) => {
     const content = response.success
       ? `[${response.model}] ${response.reply}`
@@ -517,7 +520,12 @@ async function sendMessage() {
   });
 
   conversation.updatedAt = Date.now();
+
+  // Re-render full chat history so old prompts/responses stay visible
+  renderMessages(conversation.messages, messages);
   renderHistory(conversations, historyList, searchInput, activeId);
+
+  // Still show the 3-column comparison view for the latest prompt
   renderMultiResponses(responses);
 
   setStatus("Responses loaded successfully.");
@@ -561,7 +569,6 @@ async function loadConv(id) {
   renderHistory(conversations, historyList, searchInput, activeId);
 }
 
-// Global function to delete conversation
 async function deleteConv(event, id) {
   event.stopPropagation();
 
