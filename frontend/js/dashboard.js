@@ -49,7 +49,7 @@ function setEmptyState(messagesContainer) {
     <div id="empty-state" class="empty-state">
       <div class="empty-badge">AI</div>
       <h3 class="empty-title">Welcome to G2GPT</h3>
-      <p class="empty-sub">Enter one prompt and compare responses from multiple AI models.</p>
+      <p class="empty-sub">Start a new conversation or select one from the sidebar.</p>
     </div>
   `;
 }
@@ -65,7 +65,7 @@ function appendBubble(role, content, animate = true, messagesContainer) {
   }
 
   const row = document.createElement("div");
-  row.className = `msg-row ${role}`;
+  row.className = `msg-row ${role === "assistant" ? "bot" : role}`;
 
   if (!animate) {
     row.style.animation = "none";
@@ -161,6 +161,33 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
       historyContainer.appendChild(item);
     });
   });
+}
+
+// Backward-compatible single-model API helper for existing tests
+async function callLLM(messageList) {
+  console.log("Dashboard: callLLM called with messages:", messageList);
+
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ messages: messageList })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Unable to reach the AI service.");
+    }
+
+    const reply = data.reply || data.response || "No response was returned.";
+    return reply;
+  } catch (error) {
+    console.error("Dashboard: callLLM error:", error);
+    throw error;
+  }
 }
 
 async function callMultiLLM(messageList, selectedModels, conversationId = null) {
@@ -316,6 +343,7 @@ if (typeof module !== "undefined" && module.exports) {
     appendBubble,
     renderMessages,
     renderHistory,
+    callLLM,
     callMultiLLM,
     getSelectedModels,
     clearMultiResponses,
@@ -456,7 +484,6 @@ async function sendMessage() {
     await saveConversationToServer(conversation);
   }
 
-  // Save and show user message
   const userMessage = {
     role: "user",
     content: text,
@@ -506,7 +533,7 @@ async function sendMessage() {
   typingIndicator.classList.remove("show");
   typingIndicator.setAttribute("aria-hidden", "true");
 
-  // Save each model response into the conversation history
+  // Save each model response into conversation history
   responses.forEach((response) => {
     const content = response.success
       ? `[${response.model}] ${response.reply}`
@@ -521,11 +548,8 @@ async function sendMessage() {
 
   conversation.updatedAt = Date.now();
 
-  // Re-render full chat history so old prompts/responses stay visible
   renderMessages(conversation.messages, messages);
   renderHistory(conversations, historyList, searchInput, activeId);
-
-  // Still show the 3-column comparison view for the latest prompt
   renderMultiResponses(responses);
 
   setStatus("Responses loaded successfully.");
