@@ -495,3 +495,63 @@ Then('the conversation should be loaded into the chat window', async function ()
   await new Promise(r => setTimeout(r, 2000));
 });
 
+// ==================== ITERATION 1: Multi-Model Feature Tests ====================
+
+Given('I am an authenticated user on the multi-model interface', async function () {
+  const timestamp = Date.now();
+  const testEmail = `testmultimodel${timestamp}@example.com`;
+  
+  await this.page.goto(`${baseUrl}/signup`);
+  await this.page.waitForSelector('#signupEmail');
+  await this.page.type('#signupEmail', testEmail, { delay: 3 });
+  await this.page.type('#signupPassword', 'password123', { delay: 3 });
+  await this.page.type('#signupConfirmPassword', 'password123', { delay: 3 });
+  await this.page.click('#create-account-btn');
+  await this.page.waitForNavigation({ timeout: 10000 });
+  
+  await this.page.waitForSelector('#loginEmail');
+  await this.page.type('#loginEmail', testEmail, { delay: 3 });
+  await this.page.type('#loginPassword', 'password123', { delay: 3 });
+  await this.page.click('#login-btn');
+  await this.page.waitForNavigation({ timeout: 10000 });
+  
+  await this.page.waitForSelector('#settings-btn', { timeout: 10000 });
+  await this.page.click('#settings-btn');
+  await this.page.waitForSelector('#settings-modal.show', { timeout: 5000 });
+  
+  await this.page.click('#save-settings');
+});
+
+When('I submit a factual question asking {string}', async function (promptText) {
+  await this.page.waitForSelector('#user-input');
+  
+  await this.page.type('#user-input', promptText, { delay: 5 });
+  await new Promise(r => setTimeout(r, 1000));
+  
+  await this.page.click('#send-btn');
+});
+
+Then('the system should query three different LLMs simultaneously', async function () {
+  await this.page.waitForSelector('#typing-indicator.show', { timeout: 10000 }).catch(() => {});
+  
+  await this.page.waitForFunction(
+    () => !document.getElementById('typing-indicator').classList.contains('show'),
+    { timeout: 110000 }
+  );
+  await new Promise(r => setTimeout(r, 2000));
+});
+
+Then('I should see three distinct responses displayed side-by-side on the screen', async function () {
+  await this.page.waitForSelector('.msg-row.multi-col', { timeout: 10000 });
+  
+  const modelCols = await this.page.$$('.msg-row.multi-col .model-col');
+  
+  assert.ok(modelCols.length >= 1, 'Multi-model responses not found in chat');
+  
+  await this.page.evaluate(() => {
+    const cols = document.querySelectorAll('.model-col');
+    cols.forEach(col => col.style.outline = '3px solid #ff4081');
+  });
+  await new Promise(r => setTimeout(r, 2000));
+});
+

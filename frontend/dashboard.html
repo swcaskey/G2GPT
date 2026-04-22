@@ -29,6 +29,9 @@
                 <button id="new-chat-btn" class="btn sidebar-btn" type="button">
                   + New Conversation
                 </button>
+                <button id="settings-btn" class="btn sidebar-btn" type="button" style="margin-top: 10px; background: var(--slate);">
+                  ⚙️ Model Settings
+                </button>
 
                 <label class="sr-only" for="search-input">Search conversations</label>
                 <input
@@ -115,6 +118,21 @@
         </div>
       </section>
     </main>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="settings-modal-overlay">
+    <div class="settings-modal">
+      <h2>AI Model Selection</h2>
+      <p>Select up to 3 models to respond simultaneously.</p>
+      <div id="model-list" class="model-list">
+        <!-- populated dynamically -->
+      </div>
+      <div class="settings-actions">
+        <button id="cancel-settings" class="btn" style="background: var(--slate);">Cancel</button>
+        <button id="save-settings" class="btn">Save Choices</button>
+      </div>
+    </div>
   </div>
 
   <script src="js/dashboard.js"></script>

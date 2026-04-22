@@ -248,9 +248,9 @@ app.get("/api/models", async (req, res) => {
 
 // ==================== LLM Chat Endpoint ====================
 
-// POST /api/chat - Send prompt to Ollama and save conversation
-app.post("/api/chat", async (req, res) => {
-  const { messages } = req.body;
+// POST /api/chat/multi - Send prompt to multiple Ollama models simultaneously
+app.post("/api/chat/multi", async (req, res) => {
+  const { messages, modelNames } = req.body;
 
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({
@@ -259,97 +259,53 @@ app.post("/api/chat", async (req, res) => {
     });
   }
 
+  let modelsToQuery = modelNames;
+  if (!modelsToQuery || !Array.isArray(modelsToQuery) || modelsToQuery.length === 0) {
+    try {
+      const modelsRes = await fetch("http://127.0.0.1:11434/api/tags");
+      const data = await modelsRes.json();
+      if (data.models && data.models.length > 0) {
+        modelsToQuery = [data.models[0].name];
+      } else {
+        return res.status(503).json({ success: false, message: "No Ollama models found." });
+      }
+    } catch (e) {
+      return res.status(503).json({ success: false, message: "Unable to connect to Ollama." });
+    }
+  }
+
   try {
-    // First, get available models to ensure we have at least one
-    const modelsResponse = await fetch("http://127.0.0.1:11434/api/tags");
-    
-    if (!modelsResponse.ok) {
-      return res.status(503).json({
-        success: false,
-        message: "Unable to connect to Ollama. Is it running?"
-      });
-    }
-    
-    const modelsData = await modelsResponse.json();
-    const models = modelsData.models || [];
-    
-    if (models.length === 0) {
-      return res.status(503).json({
-        success: false,
-        message: "No models found in Ollama."
-      });
-    }
-    
-    // Randomly select a model from available models
-    const randomModel = models[Math.floor(Math.random() * models.length)].name;
-    
-    // Call Ollama chat endpoint with selected model
-    const ollamaResponse = await fetch(`http://127.0.0.1:11434/api/chat`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: randomModel,
-        messages: messages,
-        stream: false
-      })
+    const fetchPromises = modelsToQuery.map(async (modelName) => {
+      try {
+        const ollamaResponse = await fetch(`http://127.0.0.1:11434/api/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: modelName,
+            messages: messages,
+            stream: false
+          })
+        });
+
+        if (!ollamaResponse.ok) {
+          const errData = await ollamaResponse.json().catch(() => ({}));
+          return { model: modelName, content: errData.error || "AI service error", error: true };
+        }
+        const data = await ollamaResponse.json();
+        return { model: modelName, content: data.message?.content || "", error: false };
+      } catch (err) {
+        return { model: modelName, content: err.message, error: true };
+      }
     });
 
-    if (!ollamaResponse.ok) {
-      const errorData = await ollamaResponse.json().catch(() => ({}));
-      console.error("Ollama error:", errorData);
-      return res.status(502).json({
-        success: false,
-        message: errorData.error || "Unable to reach the AI service."
-      });
-    }
-
-    const ollamaData = await ollamaResponse.json();
-    const reply = ollamaData.message?.content || "";
-
-    if (!reply) {
-      return res.status(502).json({
-        success: false,
-        message: "Ollama returned an empty response."
-      });
-    }
-
-    // Save conversation to database (simplified: one conversation per session)
-    // In production, you'd associate conversations with user_id and use activeId from frontend
-    const conversationId = generateUUID();
-    const now = new Date().toISOString();
-
-    try {
-      // Get the first available user ID or use NULL for anonymous conversations
-      const firstUser = db.prepare("SELECT id FROM users ORDER BY id LIMIT 1").get();
-      const userId = firstUser ? firstUser.id : null;
-      
-      if (userId) {
-        // Create new conversation (better-sqlite3 is synchronous)
-        const insertConversation = db.prepare(`INSERT INTO conversations (id, user_id, title, created_at, updated_at)
-                                               VALUES (?, ?, ?, ?, ?)`);
-        insertConversation.run(conversationId, userId, "New Chat", now, now);
-
-        // Save user message
-        const insertMessage = db.prepare(`INSERT INTO messages (conversation_id, role, content, created_at)
-                                          VALUES (?, ?, ?, ?)`);
-        insertMessage.run(conversationId, 'user', messages[messages.length - 1].content, now);
-
-        // Save assistant message
-        insertMessage.run(conversationId, 'assistant', reply, now);
-      }
-    } catch (dbError) {
-      console.warn("Database error while saving conversation:", dbError.message);
-      // Continue anyway - don't fail the API call just because we couldn't save to DB
-    }
+    const results = await Promise.all(fetchPromises);
 
     return res.status(200).json({
       success: true,
-      reply: reply
+      replies: results
     });
   } catch (error) {
-    console.error("Chat API error:", error.message);
+    console.error("Chat API multiple error:", error.message);
     return res.status(500).json({
       success: false,
       message: "Server error while calling AI service."
@@ -507,7 +463,7 @@ app.post("/api/conversations/:id/messages", (req, res) => {
   }
 
   const conversationId = req.params.id;
-  const { role, content } = req.body;
+  const { role, content, model_name } = req.body;
 
   if (!role || !content) {
     return res.status(400).json({
@@ -539,10 +495,10 @@ app.post("/api/conversations/:id/messages", (req, res) => {
 
     // Add message
     const insertStmt = db.prepare(`
-      INSERT INTO messages (conversation_id, role, content)
-      VALUES (?, ?, ?)
+      INSERT INTO messages (conversation_id, role, content, model_name)
+      VALUES (?, ?, ?, ?)
     `);
-    const result = insertStmt.run(conversationId, role, content);
+    const result = insertStmt.run(conversationId, role, content, model_name || null);
 
     // Update conversation timestamp
     const updateStmt = db.prepare(`
@@ -559,6 +515,7 @@ app.post("/api/conversations/:id/messages", (req, res) => {
         conversation_id: conversationId,
         role: role,
         content: content,
+        model_name: model_name || null,
         created_at: new Date().toISOString()
       }
     });

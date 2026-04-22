@@ -237,7 +237,12 @@ describe("Dashboard Conversation Management", () => {
       
       expect(messagesContainer.appendChild.calls.count()).toBe(2);
       expect(messagesContainer.appendChild.calls.argsFor(0)[0].innerHTML).toContain('Hello');
-      expect(messagesContainer.appendChild.calls.argsFor(1)[0].innerHTML).toContain('Hi');
+      
+      // Because we mock document.createElement, appending a child doesn't update its parent's innerHTML natively.
+      // We check that the multi-col wrapper received the appended child containing 'Hi'.
+      const multiColDiv = messagesContainer.appendChild.calls.argsFor(1)[0];
+      const appendedCol = multiColDiv.appendChild.calls.argsFor(0)[0];
+      expect(appendedCol.innerHTML).toContain('Hi');
     });
   });
 
@@ -305,7 +310,7 @@ describe("Dashboard Conversation Management", () => {
     it("should return LLM response", async () => {
       const mockResponse = {
         ok: true,
-        json: () => Promise.resolve({ reply: 'Hello from LLM' })
+        json: () => Promise.resolve({ replies: [{content:'Hello from LLM'}] })
       };
 
       global.fetch = jasmine.createSpy('fetch').and.resolveTo(mockResponse);
@@ -313,7 +318,7 @@ describe("Dashboard Conversation Management", () => {
       const messageList = [{ role: 'user', content: 'Hello' }];
       const result = await dashboard.callLLM(messageList);
 
-      expect(result).toBe('Hello from LLM');
+      expect(result).toEqual([{ content: 'Hello from LLM' }]);
     });
 
     it("should throw error for failed response", async () => {
