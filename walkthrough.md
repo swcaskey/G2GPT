@@ -7,7 +7,6 @@ We established comprehensive SMART User Stories centered around the simultaneous
 - **Multi-Model Fact Verification**: Querying three models back-to-back to cross-check research accuracy.
 - **Creative Ideation**: Aggregating diverse perspectives from various AI architectures.
 - **Custom Selection**: Introducing a settings overlay that parses local Ollama models dynamically, granting users full control over which models are queried.
-*(Refer to `lofi_transitions_iteration2.md` and `smart_user_stories.md` for complete mockups and story flows).*
 
 ## 2. Architecture & Design (Development Phase)
 The system was fundamentally rewritten from a linear 1-to-1 conversation architecture into a 1-to-N broadcasting architecture.
