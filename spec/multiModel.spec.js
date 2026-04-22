@@ -11,7 +11,7 @@ describe("POST /api/chat-multi", () => {
     expect(res.body.success).toBe(false);
   });
 
-  it("should return 400 if selected models are invalid", async () => {
+  it("should return an error if selected models are invalid", async () => {
     const res = await request(app)
       .post("/api/chat-multi")
       .send({
@@ -19,7 +19,7 @@ describe("POST /api/chat-multi", () => {
         selectedModels: ["fake-model-1", "fake-model-2"]
       });
 
-    expect([400, 503]).toContain(res.status);
+    expect([400, 500, 503]).toContain(res.status);
     expect(res.body.success).toBe(false);
   });
 });

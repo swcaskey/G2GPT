@@ -56,18 +56,27 @@ function setEmptyState(messagesContainer) {
 
 function appendBubble(role, content, animate = true, messagesContainer) {
   const container = messagesContainer || messages;
-  const emptyState = container.querySelector
-    ? container.querySelector("#empty-state")
-    : null;
+
+  let emptyState = null;
+  if (container.querySelector) {
+    emptyState = container.querySelector("#empty-state");
+  } else if (container.getElementById) {
+    emptyState = container.getElementById("empty-state");
+  }
 
   if (emptyState && emptyState.remove) {
     emptyState.remove();
   }
 
-  const row = document.createElement("div");
+  const row = document.createElement ? document.createElement("div") : {
+    className: "",
+    style: {},
+    innerHTML: ""
+  };
+
   row.className = `msg-row ${role === "assistant" ? "bot" : role}`;
 
-  if (!animate) {
+  if (!animate && row.style) {
     row.style.animation = "none";
   }
 
@@ -78,8 +87,11 @@ function appendBubble(role, content, animate = true, messagesContainer) {
     <div class="bubble">${formatMessage(content)}</div>
   `;
 
-  container.appendChild(row);
-  container.scrollTop = container.scrollHeight;
+  if (container.appendChild) {
+    container.appendChild(row);
+    container.scrollTop = container.scrollHeight;
+  }
+
   return row;
 }
 
@@ -93,7 +105,10 @@ function renderMessages(messageList, messagesContainer) {
   }
 
   messageList.forEach((message) => appendBubble(message.role, message.content, false, container));
-  container.scrollTop = container.scrollHeight;
+
+  if (container.scrollTop !== undefined) {
+    container.scrollTop = container.scrollHeight;
+  }
 }
 
 function renderHistory(conversations, historyListContainer, searchInputElement, currentActiveId) {
@@ -126,13 +141,16 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
       return;
     }
 
-    const sectionLabel = document.createElement("div");
+    const sectionLabel = document.createElement ? document.createElement("div") : {};
     sectionLabel.className = "section-label";
     sectionLabel.textContent = label;
-    historyContainer.appendChild(sectionLabel);
+
+    if (historyContainer.appendChild) {
+      historyContainer.appendChild(sectionLabel);
+    }
 
     groups[label].forEach((conversation) => {
-      const item = document.createElement("div");
+      const item = document.createElement ? document.createElement("div") : {};
       const activeIdToCheck =
         currentActiveId !== undefined
           ? currentActiveId
@@ -144,29 +162,31 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
         <button class="hi-delete" type="button" title="Delete conversation" aria-label="Delete conversation">✕</button>
       `;
 
-      item.addEventListener("click", (event) => {
-        if (event.target.classList.contains("hi-delete")) {
-          return;
-        }
-        loadConv(conversation.id);
-      });
-
-      const deleteBtn = item.querySelector(".hi-delete");
-      if (deleteBtn) {
-        deleteBtn.addEventListener("click", (event) => {
-          deleteConv(event, conversation.id);
+      if (item.addEventListener) {
+        item.addEventListener("click", (event) => {
+          if (event.target.classList.contains("hi-delete")) {
+            return;
+          }
+          loadConv(conversation.id);
         });
+
+        const deleteBtn = item.querySelector ? item.querySelector(".hi-delete") : null;
+        if (deleteBtn) {
+          deleteBtn.addEventListener("click", (event) => {
+            deleteConv(event, conversation.id);
+          });
+        }
       }
 
-      historyContainer.appendChild(item);
+      if (historyContainer.appendChild) {
+        historyContainer.appendChild(item);
+      }
     });
   });
 }
 
-// Backward-compatible single-model API helper for existing tests
+// Backward-compatible single-model API helper
 async function callLLM(messageList) {
-  console.log("Dashboard: callLLM called with messages:", messageList);
-
   try {
     const response = await fetch("/api/chat", {
       method: "POST",
@@ -182,8 +202,7 @@ async function callLLM(messageList) {
       throw new Error(data.message || "Unable to reach the AI service.");
     }
 
-    const reply = data.reply || data.response || "No response was returned.";
-    return reply;
+    return data.reply || data.response || "No response was returned.";
   } catch (error) {
     console.error("Dashboard: callLLM error:", error);
     throw error;
@@ -191,8 +210,6 @@ async function callLLM(messageList) {
 }
 
 async function callMultiLLM(messageList, selectedModels, conversationId = null) {
-  console.log("Dashboard: callMultiLLM called", { selectedModels, conversationId });
-
   try {
     const response = await fetch("/api/chat-multi", {
       method: "POST",
@@ -207,7 +224,6 @@ async function callMultiLLM(messageList, selectedModels, conversationId = null) 
     });
 
     const data = await response.json();
-    console.log("Dashboard: Multi-model response", data);
 
     if (!response.ok) {
       throw new Error(data.message || "Unable to reach the multi-model AI service.");
@@ -330,7 +346,7 @@ async function loadModels() {
   }
 }
 
-// Export functions for testing (Node.js environment)
+// Export functions for testing
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     getConv,
@@ -351,7 +367,7 @@ if (typeof module !== "undefined" && module.exports) {
   };
 }
 
-// Global variables for the dashboard
+// Global variables
 let conversations = [];
 let activeId = null;
 
@@ -374,10 +390,8 @@ let response1;
 let response2;
 let response3;
 
-// Load conversations from server
 async function loadConversationsFromServer() {
   try {
-    console.log("Dashboard: Loading conversations from server");
     const response = await fetch("/api/conversations");
 
     if (response.ok) {
@@ -399,7 +413,6 @@ async function loadConversationsFromServer() {
   }
 }
 
-// Load messages for a specific conversation
 async function loadMessagesFromServer(conversationId) {
   try {
     const response = await fetch(`/api/conversations/${conversationId}/messages`);
@@ -415,15 +428,12 @@ async function loadMessagesFromServer(conversationId) {
           timestamp: new Date(msg.created_at).getTime()
         }));
       }
-    } else {
-      console.error("Dashboard: Failed to load messages:", response.status);
     }
   } catch (error) {
     console.error("Dashboard: Error loading messages:", error);
   }
 }
 
-// Save conversation to server
 async function saveConversationToServer(conversation) {
   try {
     const response = await fetch("/api/conversations", {
@@ -445,7 +455,6 @@ async function saveConversationToServer(conversation) {
   }
 }
 
-// Delete conversation from server
 async function deleteConversationFromServer(conversationId) {
   try {
     const response = await fetch(`/api/conversations/${conversationId}`, {
@@ -460,7 +469,6 @@ async function deleteConversationFromServer(conversationId) {
   }
 }
 
-// Global function to send message
 async function sendMessage() {
   if (!textarea) return;
 
@@ -496,9 +504,13 @@ async function sendMessage() {
   renderMessages(conversation.messages, messages);
   renderHistory(conversations, historyList, searchInput, activeId);
 
-  typingIndicator.classList.add("show");
-  typingIndicator.setAttribute("aria-hidden", "false");
-  messages.scrollTop = messages.scrollHeight;
+  if (typingIndicator) {
+    typingIndicator.classList.add("show");
+    typingIndicator.setAttribute("aria-hidden", "false");
+  }
+  if (messages) {
+    messages.scrollTop = messages.scrollHeight;
+  }
 
   let responses = [];
 
@@ -530,10 +542,11 @@ async function sendMessage() {
     setStatus(error.message || "Unable to reach the AI service.", true);
   }
 
-  typingIndicator.classList.remove("show");
-  typingIndicator.setAttribute("aria-hidden", "true");
+  if (typingIndicator) {
+    typingIndicator.classList.remove("show");
+    typingIndicator.setAttribute("aria-hidden", "true");
+  }
 
-  // Save each model response into conversation history
   responses.forEach((response) => {
     const content = response.success
       ? `[${response.model}] ${response.reply}`
@@ -555,7 +568,6 @@ async function sendMessage() {
   setStatus("Responses loaded successfully.");
 }
 
-// Global function to create new chat
 function newChat() {
   const conversation = {
     id: genId(),
@@ -569,7 +581,6 @@ function newChat() {
   loadConv(conversation.id);
 }
 
-// Global function to load conversation
 async function loadConv(id) {
   activeId = id;
   const conversation = getConv(conversations, id);
@@ -577,13 +588,13 @@ async function loadConv(id) {
   clearMultiResponses();
 
   if (!conversation) {
-    chatTitle.textContent = "New Conversation";
+    if (chatTitle) chatTitle.textContent = "New Conversation";
     renderMessages([], messages);
     renderHistory(conversations, historyList, searchInput, activeId);
     return;
   }
 
-  chatTitle.textContent = conversation.title;
+  if (chatTitle) chatTitle.textContent = conversation.title;
 
   if (conversation.messages.length === 0 && conversation.messageCount > 0) {
     await loadMessagesFromServer(id);
@@ -604,7 +615,7 @@ async function deleteConv(event, id) {
       await loadConv(conversations[0].id);
     } else {
       activeId = null;
-      chatTitle.textContent = "New Conversation";
+      if (chatTitle) chatTitle.textContent = "New Conversation";
       clearMultiResponses();
       renderMessages([], messages);
     }
@@ -613,7 +624,6 @@ async function deleteConv(event, id) {
   renderHistory(conversations, historyList, searchInput, activeId);
 }
 
-// Browser initialization
 if (typeof document !== "undefined") {
   document.addEventListener("DOMContentLoaded", () => {
     historyList = document.getElementById("history-list");
@@ -637,26 +647,35 @@ if (typeof document !== "undefined") {
 
     clearMultiResponses();
 
-    textarea.addEventListener("input", function handleInput() {
-      this.style.height = "auto";
-      this.style.height = `${Math.min(this.scrollHeight, 120)}px`;
-    });
+    if (textarea) {
+      textarea.addEventListener("input", function handleInput() {
+        this.style.height = "auto";
+        this.style.height = `${Math.min(this.scrollHeight, 120)}px`;
+      });
 
-    textarea.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
+      textarea.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          sendMessage();
+        }
+      });
+    }
+
+    if (sendButton) {
+      sendButton.addEventListener("click", () => {
         sendMessage();
-      }
-    });
+      });
+    }
 
-    sendButton.addEventListener("click", () => {
-      sendMessage();
-    });
+    if (newChatButton) {
+      newChatButton.addEventListener("click", newChat);
+    }
 
-    newChatButton.addEventListener("click", newChat);
-    searchInput.addEventListener("input", () => {
-      renderHistory(conversations, historyList, searchInput, activeId);
-    });
+    if (searchInput) {
+      searchInput.addEventListener("input", () => {
+        renderHistory(conversations, historyList, searchInput, activeId);
+      });
+    }
 
     loadModels();
 
