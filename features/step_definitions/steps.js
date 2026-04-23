@@ -494,4 +494,29 @@ Then('the conversation should be loaded into the chat window', async function ()
   });
   await new Promise(r => setTimeout(r, 2000));
 });
+Given('I have selected multiple models', async function () {
+  await this.page.waitForSelector('#model-picker');
+});
+
+Then('I should see a response from each selected model', async function () {
+  await this.page.waitForFunction(
+    () => document.querySelectorAll('.msg-row.assistant').length >= 2,
+    { timeout: 10000 }
+  );
+
+  const assistantTexts = await this.page.evaluate(() =>
+    Array.from(document.querySelectorAll('.msg-row.assistant .bubble'))
+      .map((el) => el.textContent)
+  );
+
+  assert.ok(
+    assistantTexts.some((text) => text.includes('llama3.2')),
+    'Missing llama3.2 response'
+  );
+
+  assert.ok(
+    assistantTexts.some((text) => text.includes('mistral')),
+    'Missing mistral response'
+  );
+});
 
