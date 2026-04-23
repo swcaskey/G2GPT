@@ -258,3 +258,30 @@ describe("POST /api/chat", () => {
     expect(res.body.message).toBe("Messages array is required and must not be empty.");
   });
 });
+
+describe("POST /api/chat multi-LLM validation", () => {
+  it("should return 400 if models array is missing", async () => {
+    const res = await request(app)
+      .post("/api/chat")
+      .send({
+        messages: [{ role: "user", content: "Hello" }]
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toBe("Models array is required and must not be empty.");
+  });
+
+  it("should return 400 if models array is empty", async () => {
+    const res = await request(app)
+      .post("/api/chat")
+      .send({
+        messages: [{ role: "user", content: "Hello" }],
+        models: []
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toBe("Models array is required and must not be empty.");
+  });
+});
