@@ -56,19 +56,19 @@ function setEmptyState(messagesContainer) {
 
 function appendBubble(role, content, animate = true, messagesContainer) {
   const container = messagesContainer || messages;
-  const emptyState = container.querySelector ? container.querySelector('#empty-state') : 
+  const emptyState = container.querySelector ? container.querySelector('#empty-state') :
                      (container.getElementById ? container.getElementById('empty-state') : null);
-  
+
   if (emptyState && emptyState.remove) {
     emptyState.remove();
   }
 
-  const row = document.createElement ? document.createElement('div') : { 
+  const row = document.createElement ? document.createElement('div') : {
     className: '',
     style: {},
     innerHTML: '',
   };
-  
+
   row.className = `msg-row ${role}`;
 
   if (!animate) {
@@ -87,25 +87,50 @@ function appendBubble(role, content, animate = true, messagesContainer) {
   return row;
 }
 
+
 function renderMessages(messageList, messagesContainer) {
   const container = messagesContainer || messages;
   container.innerHTML = '';
-
   if (!messageList || messageList.length === 0) {
     setEmptyState(container);
     return;
   }
 
-  messageList.forEach((message) => appendBubble(message.role, message.content, false, container));
+  let currentMultiCol = null;
+
+  messageList.forEach((msg) => {
+    if (msg.role === 'assistant') {
+      if (!currentMultiCol) {
+        currentMultiCol = document.createElement('div');
+        currentMultiCol.className = 'msg-row bot multi-col';
+        currentMultiCol.innerHTML = '<div class="avatar bot">AI</div><div class="multi-col-wrapper" style="width:100%; display:flex; gap:16px;"></div>';
+        if (container.appendChild) { container.appendChild(currentMultiCol); }
+      }
+      const wrapper = currentMultiCol.querySelector('.multi-col-wrapper');
+      const col = document.createElement('div');
+      col.className = 'model-col';
+      col.innerHTML = `
+        <div class="model-col-header">
+           <span>Assistant</span>
+           <span class="model-badge">${escapeHtml(msg.model_name || 'AI Model')}</span>
+        </div>
+        <div class="model-col-content bubble">${formatMessage(msg.content)}</div>
+      `;
+      wrapper.appendChild(col);
+    } else {
+      currentMultiCol = null;
+      appendBubble('user', msg.content, false, container);
+    }
+  });
+
   if (container.scrollTop !== undefined) {
     container.scrollTop = container.scrollHeight;
   }
 }
-
 function renderHistory(conversations, historyListContainer, searchInputElement, currentActiveId) {
   const historyContainer = historyListContainer || historyList;
   const searchElement = searchInputElement || searchInput;
-  
+
   const query = (searchElement && searchElement.value) ? searchElement.value.trim().toLowerCase() : '';
   historyContainer.innerHTML = '';
 
@@ -132,7 +157,7 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
     const sectionLabel = document.createElement ? document.createElement('div') : {};
     sectionLabel.className = 'section-label';
     sectionLabel.textContent = label;
-    
+
     if (historyContainer.appendChild) {
       historyContainer.appendChild(sectionLabel);
     }
@@ -176,32 +201,21 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
 }
 
 async function callLLM(messageList) {
-  console.log('Dashboard: callLLM called with messages:', messageList);
-  
+  console.log('Dashboard: callLLM multi called');
+  // Strip out model_name from messages before sending
+  const cleanMsgs = messageList.map(m => ({ role: m.role, content: m.content }));
+
   try {
-    console.log('Dashboard: Making fetch request to /api/chat');
-    const response = await fetch('/api/chat', {
+    const response = await fetch('/api/chat/multi', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ messages: messageList })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: cleanMsgs, modelNames: selectedModels })
     });
-
-    console.log('Dashboard: Fetch response status:', response.status, response.ok);
     const data = await response.json();
-    console.log('Dashboard: Fetch response data:', data);
-
-    if (!response.ok) {
-      console.error('Dashboard: Response not ok:', data.message);
-      throw new Error(data.message || 'Unable to reach the AI service.');
-    }
-
-    const reply = data.reply || data.response || 'No response was returned.';
-    console.log('Dashboard: Returning reply:', reply);
-    return reply;
+    if (!response.ok) throw new Error(data.message);
+    return data.replies || [];
   } catch (error) {
-    console.error('Dashboard: callLLM error:', error);
+    console.error('LLM error:', error);
     throw error;
   }
 }
@@ -225,6 +239,8 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // Global variables for the dashboard
 let conversations = [];
+let selectedModels = [];
+let settingsModal, settingsBtn, cancelSettingsBtn, saveSettingsBtn, modelListDiv;
 let activeId = null;
 let historyList, searchInput, newChatButton, chatTitle, messages, typingIndicator, textarea, sendButton;
 
@@ -233,9 +249,9 @@ async function loadConversationsFromServer() {
   try {
     console.log('Dashboard: Loading conversations from server');
     const response = await fetch('/api/conversations');
-    
+
     console.log('Dashboard: Load conversations response status:', response.status);
-    
+
     if (response.ok) {
       const data = await response.json();
       console.log('Dashboard: Load conversations response:', data);
@@ -264,7 +280,7 @@ async function loadMessagesFromServer(conversationId) {
   try {
     console.log('Dashboard: Loading messages for conversation:', conversationId);
     const response = await fetch(`/api/conversations/${conversationId}/messages`);
-    
+
     if (response.ok) {
       const data = await response.json();
       const conversation = getConv(conversations, conversationId);
@@ -272,6 +288,7 @@ async function loadMessagesFromServer(conversationId) {
         conversation.messages = data.messages.map(msg => ({
           role: msg.role,
           content: msg.content,
+          model_name: msg.model_name || null,
           timestamp: new Date(msg.created_at).getTime()
         }));
         console.log('Dashboard: Loaded messages:', conversation.messages.length);
@@ -298,11 +315,11 @@ async function saveConversationToServer(conversation) {
         title: conversation.title
       })
     });
-    
+
     console.log('Dashboard: Save conversation response status:', response.status);
     const responseData = await response.json();
     console.log('Dashboard: Save conversation response:', responseData);
-    
+
     if (!response.ok) {
       console.error('Dashboard: Failed to save conversation:', responseData);
     } else {
@@ -314,7 +331,7 @@ async function saveConversationToServer(conversation) {
 }
 
 // Save message to server
-async function saveMessageToServer(conversationId, role, content) {
+async function saveMessageToServer(conversationId, role, content, model_name = null) {
   try {
     console.log('Dashboard: Saving message to server:', conversationId, role);
     const response = await fetch(`/api/conversations/${conversationId}/messages`, {
@@ -322,12 +339,9 @@ async function saveMessageToServer(conversationId, role, content) {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        role: role,
-        content: content
-      })
+      body: JSON.stringify({ role, content, model_name })
     });
-    
+
     if (!response.ok) {
       console.error('Dashboard: Failed to save message:', response.status);
     }
@@ -343,7 +357,7 @@ async function deleteConversationFromServer(conversationId) {
     const response = await fetch(`/api/conversations/${conversationId}`, {
       method: 'DELETE'
     });
-    
+
     if (!response.ok) {
       console.error('Dashboard: Failed to delete conversation:', response.status);
     }
@@ -354,37 +368,14 @@ async function deleteConversationFromServer(conversationId) {
 
 // Global function to send message
 async function sendMessage() {
-  console.log('Dashboard: sendMessage called');
-  if (!textarea) {
-    console.log('Dashboard: textarea not initialized yet');
-    return;
-  }
-  
+  if (!textarea || !textarea.value.trim()) return;
   const text = textarea.value.trim();
-  console.log('Dashboard: Input text -', text);
-  
-  if (!text) {
-    console.log('Dashboard: No text, returning');
-    return;
-  }
+  textarea.value = ''; textarea.style.height = 'auto';
 
-  textarea.value = '';
-  textarea.style.height = 'auto';
-
-  if (!activeId) {
-    console.log('Dashboard: No active chat, creating new chat');
-    newChat();
-  }
-
+  if (!activeId) newChat();
   const conversation = getConv(conversations, activeId);
-  if (!conversation) {
-    console.log('Dashboard: No conversation found for activeId', activeId);
-    return;
-  }
+  if (!conversation) return;
 
-  console.log('Dashboard: Found conversation', conversation);
-
-  // If this is a new conversation, save it to server first
   if (conversation.messages.length === 0) {
     conversation.title = autoTitle(text);
     chatTitle.textContent = conversation.title;
@@ -393,41 +384,34 @@ async function sendMessage() {
 
   conversation.messages.push({ role: 'user', content: text });
   conversation.updatedAt = Date.now();
-  appendBubble('user', text, true, messages);
+  renderMessages(conversation.messages, messages);
   renderHistory(conversations, historyList, searchInput, activeId);
-
-  // Save user message to server
   await saveMessageToServer(activeId, 'user', text);
 
-  console.log('Dashboard: Showing typing indicator');
   typingIndicator.classList.add('show');
   typingIndicator.setAttribute('aria-hidden', 'false');
   messages.scrollTop = messages.scrollHeight;
 
-  let reply = '';
-
   try {
-    console.log('Dashboard: Calling LLM with messages', conversation.messages);
-    reply = await callLLM(conversation.messages);
-    console.log('Dashboard: LLM reply received', reply);
+    const replies = await callLLM(conversation.messages);
+    typingIndicator.classList.remove('show');
+    typingIndicator.setAttribute('aria-hidden', 'true');
+
+    for (const rep of replies) {
+        if (!rep.error && rep.content) {
+             conversation.messages.push({ role: 'assistant', content: rep.content, model_name: rep.model });
+             await saveMessageToServer(activeId, 'assistant', rep.content, rep.model);
+        }
+    }
+    conversation.updatedAt = Date.now();
   } catch (error) {
-    console.error('Dashboard: LLM call failed', error);
-    reply = 'Unable to reach the AI right now. Please check the API configuration and try again.';
+    typingIndicator.classList.remove('show');
+    typingIndicator.setAttribute('aria-hidden', 'true');
+    conversation.messages.push({ role: 'assistant', content: 'Connection Error', model_name: 'System' });
   }
 
-  console.log('Dashboard: Hiding typing indicator');
-  typingIndicator.classList.remove('show');
-  typingIndicator.setAttribute('aria-hidden', 'true');
-
-  conversation.messages.push({ role: 'assistant', content: reply });
-  conversation.updatedAt = Date.now();
-  appendBubble('assistant', reply, true, messages);
+  renderMessages(conversation.messages, messages);
   renderHistory(conversations, historyList, searchInput, activeId);
-  
-  // Save assistant message to server
-  await saveMessageToServer(activeId, 'assistant', reply);
-  
-  console.log('Dashboard: Message exchange complete');
 }
 
 // Global function to create new chat
@@ -459,12 +443,12 @@ async function loadConv(id) {
   }
 
   chatTitle.textContent = conversation.title;
-  
+
   // Load messages from server if not already loaded
   if (conversation.messages.length === 0 && conversation.messageCount > 0) {
     await loadMessagesFromServer(id);
   }
-  
+
   renderMessages(conversation.messages, messages);
   renderHistory(conversations, historyList, searchInput, activeId);
 }
@@ -472,10 +456,10 @@ async function loadConv(id) {
 // Global function to delete conversation
 async function deleteConv(event, id) {
   event.stopPropagation();
-  
+
   // Delete from server first
   await deleteConversationFromServer(id);
-  
+
   // Remove from client-side array
   conversations = conversations.filter((conversation) => conversation.id !== id);
 
@@ -496,7 +480,7 @@ async function deleteConv(event, id) {
 if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {
     console.log('Dashboard: DOM loaded');
-    
+
     // Initialize DOM elements
     historyList = document.getElementById('history-list');
     searchInput = document.getElementById('search-input');
@@ -506,6 +490,36 @@ if (typeof document !== 'undefined') {
     typingIndicator = document.getElementById('typing-indicator');
     textarea = document.getElementById('user-input');
     sendButton = document.getElementById('send-btn');
+
+    settingsModal = document.getElementById('settings-modal');
+    settingsBtn = document.getElementById('settings-btn');
+    cancelSettingsBtn = document.getElementById('cancel-settings');
+    saveSettingsBtn = document.getElementById('save-settings');
+    modelListDiv = document.getElementById('model-list');
+
+    // Load available models
+    fetch('/api/models').then(r => r.json()).then(data => {
+      const models = (data.models || []).map(m => m.name || m);
+      if(models.length > 0) {
+        selectedModels = models.slice(0, 3);
+        modelListDiv.innerHTML = models.map(m =>
+          `<label><input type="checkbox" value="${m}" ${selectedModels.includes(m)?'checked':''}> ${m}</label>`
+        ).join('');
+      } else {
+        modelListDiv.innerHTML = 'No models detected.';
+      }
+    }).catch(e => console.error(e));
+
+    if(settingsBtn) settingsBtn.addEventListener('click', () => { settingsModal.classList.add('show'); });
+    if(cancelSettingsBtn) cancelSettingsBtn.addEventListener('click', () => { settingsModal.classList.remove('show'); });
+    if(saveSettingsBtn) saveSettingsBtn.addEventListener('click', () => {
+       const checked = Array.from(modelListDiv.querySelectorAll('input:checked')).map(cb => cb.value);
+       if(checked.length > 3) { alert('Please select a maximum of 3 models.'); return; }
+       if(checked.length === 0) { alert('Please select at least 1 model.'); return; }
+       selectedModels = checked;
+       settingsModal.classList.remove('show');
+    });
+
 
     console.log('Dashboard: Elements found -', {
       historyList: !!historyList,
@@ -539,7 +553,7 @@ if (typeof document !== 'undefined') {
   searchInput.addEventListener('input', () => renderHistory(conversations, historyList, searchInput, activeId));
 
   console.log('Dashboard: Event listeners attached');
-  
+
   // Load conversations from server on page load
   loadConversationsFromServer().then(() => {
     renderHistory(conversations, historyList, searchInput, activeId);

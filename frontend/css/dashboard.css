@@ -771,3 +771,107 @@ h1 {
     max-width: 100%;
   }
 }
+
+/* AI Settings Modal */
+.settings-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-modal-overlay.show {
+  display: flex;
+}
+
+.settings-modal {
+  background: #fff;
+  border-radius: var(--radius-medium);
+  padding: 30px;
+  width: 400px;
+  max-width: 90vw;
+  box-shadow: var(--shadow-main);
+}
+
+.settings-modal h2 {
+   margin-top: 0;
+   color: var(--rutgers-red);
+ }
+
+.settings-modal .model-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.settings-modal label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+
+.settings-modal input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* Multi-Column Layout */
+.msg-row.multi-col {
+  width: 100%;
+  max-width: 100%;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.multi-col-wrapper {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  gap: 16px;
+}
+.model-col {
+  flex: 1;
+  min-width: 200px;
+  background: var(--surface-strong);
+  border: 1px solid var(--bubble-bot-border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 12px rgba(15,23,42,0.04);
+}
+.model-col-header {
+  font-weight: 700;
+  color: var(--charcoal);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--panel-line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.model-col-content {
+  font-size: 0.96rem;
+  line-height: 1.65;
+  color: var(--charcoal);
+  flex-grow: 1;
+}
+.model-badge {
+    background: rgba(204, 0, 51, 0.10);
+    color: var(--rutgers-red);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+}
