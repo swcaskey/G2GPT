@@ -48,9 +48,15 @@ db.exec(`
     conversation_id TEXT NOT NULL,
     role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
     content TEXT NOT NULL,
+    model_name TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
   );
 `);
+
+//Adds model attribution to assistant messages.
+const messageColumns = db.prepare("PRAGMA table_info(messages)").all();
+const hasModelNameColumn = messageColumns.some((column) => column.name === "model_name");
+if (!hasModelNameColumn) db.exec("ALTER TABLE messages ADD COLUMN model_name TEXT");
 
 module.exports = db;
