@@ -83,9 +83,10 @@ Before(async function () {
     new Response(
       JSON.stringify({
         responses: [
-          { model: 'llama3.2', content: 'Mocked response from llama3.2' },
-          { model: 'mistral', content: 'Mocked response from mistral' }
-        ]
+  { model: 'llama3.2', content: 'Mocked response from llama3.2' },
+  { model: 'mistral', content: 'Mocked response from mistral' },
+  { model: 'phi3', content: 'Mocked response from phi3' }
+]
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     )

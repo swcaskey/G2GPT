@@ -500,7 +500,7 @@ Given('I have selected multiple models', async function () {
 
 Then('I should see a response from each selected model', async function () {
   await this.page.waitForFunction(
-    () => document.querySelectorAll('.msg-row.assistant').length >= 2,
+  () => document.querySelectorAll('.msg-row.assistant').length >= 3,
     { timeout: 10000 }
   );
 
@@ -518,5 +518,10 @@ Then('I should see a response from each selected model', async function () {
     assistantTexts.some((text) => text.includes('mistral')),
     'Missing mistral response'
   );
+
+  assert.ok(
+  assistantTexts.some((text) => text.includes('phi3')),
+  'Missing phi3 response'
+);
 });
 
