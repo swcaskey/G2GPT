@@ -175,9 +175,14 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
   });
 }
 
-async function callLLM(messageList) {
-  console.log('Dashboard: callLLM called with messages:', messageList);
-  
+function getSelectedModels() {
+  const checked = document.querySelectorAll('#model-picker input[type="checkbox"]:checked');
+  return Array.from(checked).map((input) => input.value);
+}
+
+async function callLLM(messageList, selectedModels = []) {
+  console.log('Dashboard: callLLM called with messages:', messageList, 'models:', selectedModels);
+
   try {
     console.log('Dashboard: Making fetch request to /api/chat');
     const response = await fetch('/api/chat', {
@@ -185,7 +190,10 @@ async function callLLM(messageList) {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ messages: messageList })
+      body: JSON.stringify({
+        messages: messageList,
+        models: selectedModels
+      })
     });
 
     console.log('Dashboard: Fetch response status:', response.status, response.ok);
@@ -197,9 +205,12 @@ async function callLLM(messageList) {
       throw new Error(data.message || 'Unable to reach the AI service.');
     }
 
-    const reply = data.reply || data.response || 'No response was returned.';
-    console.log('Dashboard: Returning reply:', reply);
-    return reply;
+    if (Array.isArray(data.responses)) {
+      return data.responses;
+    }
+
+    const singleReply = data.reply || data.response || 'No response was returned.';
+    return [{ model: 'default', content: singleReply }];
   } catch (error) {
     console.error('Dashboard: callLLM error:', error);
     throw error;
@@ -209,18 +220,19 @@ async function callLLM(messageList) {
 // Export functions for testing (Node.js environment)
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
-    getConv,
-    genId,
-    autoTitle,
-    groupConvs,
-    escapeHtml,
-    formatMessage,
-    setEmptyState,
-    appendBubble,
-    renderMessages,
-    renderHistory,
-    callLLM
-  };
+  getConv,
+  genId,
+  autoTitle,
+  groupConvs,
+  escapeHtml,
+  formatMessage,
+  setEmptyState,
+  appendBubble,
+  renderMessages,
+  renderHistory,
+  callLLM,
+  getSelectedModels
+};
 }
 
 // Global variables for the dashboard
@@ -314,7 +326,7 @@ async function saveConversationToServer(conversation) {
 }
 
 // Save message to server
-async function saveMessageToServer(conversationId, role, content) {
+async function saveMessageToServer(conversationId, role, content, modelName = null) {
   try {
     console.log('Dashboard: Saving message to server:', conversationId, role);
     const response = await fetch(`/api/conversations/${conversationId}/messages`, {
@@ -323,9 +335,10 @@ async function saveMessageToServer(conversationId, role, content) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        role: role,
-        content: content
-      })
+  role: role,
+  content: content,
+  model_name: modelName
+})
     });
     
     if (!response.ok) {
@@ -404,28 +417,38 @@ async function sendMessage() {
   typingIndicator.setAttribute('aria-hidden', 'false');
   messages.scrollTop = messages.scrollHeight;
 
-  let reply = '';
+ let replies = [];
 
-  try {
-    console.log('Dashboard: Calling LLM with messages', conversation.messages);
-    reply = await callLLM(conversation.messages);
-    console.log('Dashboard: LLM reply received', reply);
-  } catch (error) {
-    console.error('Dashboard: LLM call failed', error);
-    reply = 'Unable to reach the AI right now. Please check the API configuration and try again.';
-  }
+try {
+  const selectedModels = getSelectedModels();
+  console.log('Dashboard: Calling LLM with messages', conversation.messages, 'and models', selectedModels);
+  replies = await callLLM(conversation.messages, selectedModels);
+  console.log('Dashboard: LLM replies received', replies);
+} catch (error) {
+  console.error('Dashboard: LLM call failed', error);
+  replies = [
+    {
+      model: 'system',
+      content: 'Unable to reach the AI right now. Please check the API configuration and try again.'
+    }
+  ];
+}
 
-  console.log('Dashboard: Hiding typing indicator');
-  typingIndicator.classList.remove('show');
-  typingIndicator.setAttribute('aria-hidden', 'true');
+console.log('Dashboard: Hiding typing indicator');
+typingIndicator.classList.remove('show');
+typingIndicator.setAttribute('aria-hidden', 'true');
 
-  conversation.messages.push({ role: 'assistant', content: reply });
+for (const replyObj of replies) {
+  const labeledReply = `[${replyObj.model}] ${replyObj.content}`;
+  conversation.messages.push({ role: 'assistant', content: labeledReply });
   conversation.updatedAt = Date.now();
-  appendBubble('assistant', reply, true, messages);
-  renderHistory(conversations, historyList, searchInput, activeId);
-  
+  appendBubble('assistant', labeledReply, true, messages);
+
   // Save assistant message to server
-  await saveMessageToServer(activeId, 'assistant', reply);
+  await saveMessageToServer(activeId, 'assistant', labeledReply, replyObj.model);
+}
+
+renderHistory(conversations, historyList, searchInput, activeId);
   
   console.log('Dashboard: Message exchange complete');
 }
