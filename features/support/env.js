@@ -79,15 +79,18 @@ Before(async function () {
         
         // Mock the /api/chat endpoint for faster tests
         if (typeof resource === 'string' && resource.includes('/api/chat')) {
-          return Promise.resolve(
-            new Response(
-              JSON.stringify({
-                response: 'Mocked AI response for testing. Real LLM would respond here.'
-              }),
-              { status: 200, headers: { 'Content-Type': 'application/json' } }
-            )
-          );
-        }
+  return Promise.resolve(
+    new Response(
+      JSON.stringify({
+        responses: [
+          { model: 'llama3.2', content: 'Mocked response from llama3.2' },
+          { model: 'mistral', content: 'Mocked response from mistral' }
+        ]
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    )
+  );
+}
         
         // Use real fetch for all other endpoints
         return originalFetch.apply(this, args);
