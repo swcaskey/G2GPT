@@ -250,7 +250,7 @@ app.get("/api/models", async (req, res) => {
 
 // POST /api/chat - Send prompt to Ollama and save conversation
 app.post("/api/chat", async (req, res) => {
-  const { messages } = req.body;
+  const { messages, models } = req.body;
 
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({
@@ -259,62 +259,56 @@ app.post("/api/chat", async (req, res) => {
     });
   }
 
+  if (!models || !Array.isArray(models) || models.length === 0) {
+  return res.status(400).json({
+    success: false,
+    message: "Models array is required and must not be empty."
+  });
+}
+
   try {
-    // First, get available models to ensure we have at least one
-    const modelsResponse = await fetch("http://127.0.0.1:11434/api/tags");
-    
-    if (!modelsResponse.ok) {
-      return res.status(503).json({
-        success: false,
-        message: "Unable to connect to Ollama. Is it running?"
+    const responses = await Promise.all(
+  models.map(async (model) => {
+    try {
+      const ollamaResponse = await fetch("http://127.0.0.1:11434/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          stream: false
+        })
       });
-    }
-    
-    const modelsData = await modelsResponse.json();
-    const models = modelsData.models || [];
-    
-    if (models.length === 0) {
-      return res.status(503).json({
-        success: false,
-        message: "No models found in Ollama."
-      });
-    }
-    
-    // Randomly select a model from available models
-    const randomModel = models[Math.floor(Math.random() * models.length)].name;
-    
-    // Call Ollama chat endpoint with selected model
-    const ollamaResponse = await fetch(`http://127.0.0.1:11434/api/chat`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: randomModel,
-        messages: messages,
-        stream: false
-      })
-    });
 
-    if (!ollamaResponse.ok) {
-      const errorData = await ollamaResponse.json().catch(() => ({}));
-      console.error("Ollama error:", errorData);
-      return res.status(502).json({
-        success: false,
-        message: errorData.error || "Unable to reach the AI service."
-      });
+      if (!ollamaResponse.ok) {
+        const errorData = await ollamaResponse.json().catch(() => ({}));
+        console.error(`Ollama error for model ${model}:`, errorData);
+
+        return {
+          model,
+          content: errorData.error || "Error: model failed to respond."
+        };
+      }
+
+      const ollamaData = await ollamaResponse.json();
+      const content = ollamaData.message?.content || "No response.";
+
+      return {
+        model,
+        content
+      };
+    } catch (modelError) {
+      console.error(`Chat API error for model ${model}:`, modelError.message);
+
+      return {
+        model,
+        content: "Error: server could not reach this model."
+      };
     }
-
-    const ollamaData = await ollamaResponse.json();
-    const reply = ollamaData.message?.content || "";
-
-    if (!reply) {
-      return res.status(502).json({
-        success: false,
-        message: "Ollama returned an empty response."
-      });
-    }
-
+  })
+);
     // Save conversation to database (simplified: one conversation per session)
     // In production, you'd associate conversations with user_id and use activeId from frontend
     const conversationId = generateUUID();
@@ -337,7 +331,14 @@ app.post("/api/chat", async (req, res) => {
         insertMessage.run(conversationId, 'user', messages[messages.length - 1].content, now);
 
         // Save assistant message
-        insertMessage.run(conversationId, 'assistant', reply, now);
+        responses.forEach((responseObj) => {
+  insertMessage.run(
+    conversationId,
+    'assistant',
+    `[${responseObj.model}] ${responseObj.content}`,
+    now
+  );
+});
       }
     } catch (dbError) {
       console.warn("Database error while saving conversation:", dbError.message);
@@ -345,9 +346,9 @@ app.post("/api/chat", async (req, res) => {
     }
 
     return res.status(200).json({
-      success: true,
-      reply: reply
-    });
+  success: true,
+  responses: responses
+});
   } catch (error) {
     console.error("Chat API error:", error.message);
     return res.status(500).json({
