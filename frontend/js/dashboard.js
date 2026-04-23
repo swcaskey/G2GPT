@@ -101,13 +101,13 @@ function renderMessages(messageList, messagesContainer) {
   messageList.forEach((msg) => {
     if (msg.role === 'assistant') {
       if (!currentMultiCol) {
-        currentMultiCol = document.createElement('div');
+        currentMultiCol = document.createElement ? document.createElement('div') : { innerHTML: '', appendChild: function(){} };
         currentMultiCol.className = 'msg-row bot multi-col';
         currentMultiCol.innerHTML = '<div class="avatar bot">AI</div><div class="multi-col-wrapper" style="width:100%; display:flex; gap:16px;"></div>';
         if (container.appendChild) { container.appendChild(currentMultiCol); }
       }
-      const wrapper = currentMultiCol.querySelector('.multi-col-wrapper');
-      const col = document.createElement('div');
+      const wrapper = currentMultiCol.querySelector ? currentMultiCol.querySelector('.multi-col-wrapper') : null;
+      const col = document.createElement ? document.createElement('div') : { innerHTML: '', className: '' };
       col.className = 'model-col';
       col.innerHTML = `
         <div class="model-col-header">
@@ -116,7 +116,8 @@ function renderMessages(messageList, messagesContainer) {
         </div>
         <div class="model-col-content bubble">${formatMessage(msg.content)}</div>
       `;
-      wrapper.appendChild(col);
+      if (wrapper && wrapper.appendChild) wrapper.appendChild(col);
+      else if (currentMultiCol.appendChild) currentMultiCol.appendChild(col);
     } else {
       currentMultiCol = null;
       appendBubble('user', msg.content, false, container);
@@ -497,14 +498,25 @@ if (typeof document !== 'undefined') {
     saveSettingsBtn = document.getElementById('save-settings');
     modelListDiv = document.getElementById('model-list');
 
-    // Load available models
+    // Load available models and display grouped by Cloud vs Local!
     fetch('/api/models').then(r => r.json()).then(data => {
       const models = (data.models || []).map(m => m.name || m);
       if(models.length > 0) {
         selectedModels = models.slice(0, 3);
-        modelListDiv.innerHTML = models.map(m => 
-          `<label><input type="checkbox" value="${m}" ${selectedModels.includes(m)?'checked':''}> ${m}</label>`
-        ).join('');
+        let cloudHTML = '';
+        let localHTML = '';
+        models.forEach(modelName => {
+           const isCloud = modelName.includes(':') && (modelName.startsWith('openai:') || modelName.startsWith('gemini:') || modelName.startsWith('claude:'));
+           const box = `<label><input type="checkbox" value="${modelName}" ${selectedModels.includes(modelName)?'checked':''}> ${modelName}</label><br>`;
+           if (isCloud) cloudHTML += box;
+           else localHTML += box;
+        });
+
+        let fullHTML = '';
+        if (cloudHTML) fullHTML += '<h4 style="margin: 4px; font-size: 11px; text-transform: uppercase; color: #888;">☁️ Cloud API Models</h4>' + cloudHTML;
+        if (localHTML) fullHTML += '<h4 style="margin: 4px; font-size: 11px; border-top: 1px solid #444; padding-top: 5px; text-transform: uppercase; color: #888;">🦙 Local Models</h4>' + localHTML;
+        
+        modelListDiv.innerHTML = fullHTML;
       } else {
         modelListDiv.innerHTML = 'No models detected.';
       }
@@ -514,7 +526,7 @@ if (typeof document !== 'undefined') {
     if(cancelSettingsBtn) cancelSettingsBtn.addEventListener('click', () => { settingsModal.classList.remove('show'); });
     if(saveSettingsBtn) saveSettingsBtn.addEventListener('click', () => {
        const checked = Array.from(modelListDiv.querySelectorAll('input:checked')).map(cb => cb.value);
-       if(checked.length > 3) { alert('Please select a maximum of 3 models.'); return; }
+       
        if(checked.length === 0) { alert('Please select at least 1 model.'); return; }
        selectedModels = checked;
        settingsModal.classList.remove('show');

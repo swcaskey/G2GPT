@@ -211,105 +211,81 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// GET /api/models - Get available models from Ollama
+// GET /api/models - Get available models from Ollama and Cloud Mock
 app.get("/api/models", async (req, res) => {
+  let modelNames = [
+    "openai:gpt-4o",
+    "openai:gpt-4o-mini",
+    "gemini:gemini-1.5-pro",
+    "gemini:gemini-1.5-flash",
+    "claude:claude-3.5-sonnet"
+  ];
+
   try {
     const ollamaResponse = await fetch("http://127.0.0.1:11434/api/tags");
-    
-    if (!ollamaResponse.ok) {
-      return res.status(503).json({
-        success: false,
-        message: "Unable to connect to Ollama. Is it running?"
-      });
+    if (ollamaResponse.ok) {
+      const ollamaData = await ollamaResponse.json();
+      const models = ollamaData.models || [];
+      const localNames = models
+        .map((model) => (typeof model === "string" ? model : model.name))
+        .filter(Boolean);
+      modelNames = [...modelNames, ...localNames];
     }
-    
-    const ollamaData = await ollamaResponse.json();
-    const models = ollamaData.models || [];
-    
-    if (models.length === 0) {
-      return res.status(503).json({
-        success: false,
-        message: "No models found in Ollama."
-      });
-    }
-    
-    res.json({
-      success: true,
-      models: models
-    });
   } catch (error) {
-    console.error("Models API error:", error.message);
-    return res.status(503).json({
-      success: false,
-      message: "Could not connect to Ollama."
-    });
+    console.warn("Ollama is offline or unreachable. Returning cloud models only.");
   }
+  
+  res.json({
+    success: true,
+    models: modelNames
+  });
 });
 
 // ==================== LLM Chat Endpoint ====================
 
-// POST /api/chat/multi - Send prompt to multiple Ollama models simultaneously
+// POST /api/chat/multi - Send prompt to multiple Ollama and Cloud Mock models simultaneously
 app.post("/api/chat/multi", async (req, res) => {
   const { messages, modelNames } = req.body;
 
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
-    return res.status(400).json({
-      success: false,
-      message: "Messages array is required and must not be empty."
-    });
+    return res.status(400).json({ success: false, message: "Messages array is required and must not be empty." });
   }
 
-  let modelsToQuery = modelNames;
-  if (!modelsToQuery || !Array.isArray(modelsToQuery) || modelsToQuery.length === 0) {
-    try {
-      const modelsRes = await fetch("http://127.0.0.1:11434/api/tags");
-      const data = await modelsRes.json();
-      if (data.models && data.models.length > 0) {
-        modelsToQuery = [data.models[0].name];
-      } else {
-        return res.status(503).json({ success: false, message: "No Ollama models found." });
-      }
-    } catch (e) {
-      return res.status(503).json({ success: false, message: "Unable to connect to Ollama." });
-    }
+  if (!modelNames || !Array.isArray(modelNames) || modelNames.length === 0) {
+     return res.status(400).json({ success: false, message: "At least one model name is required." });
   }
 
   try {
-    const fetchPromises = modelsToQuery.map(async (modelName) => {
-      try {
-        const ollamaResponse = await fetch(`http://127.0.0.1:11434/api/chat`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: modelName,
-            messages: messages,
-            stream: false
-          })
-        });
+    const fetchPromises = modelNames.map(async (modelName) => {
+      const isCloud = modelName.startsWith("openai:") || modelName.startsWith("gemini:") || modelName.startsWith("claude:");
+      const lastMsg = (messages[messages.length - 1].content || "");
 
-        if (!ollamaResponse.ok) {
-          const errData = await ollamaResponse.json().catch(() => ({}));
-          return { model: modelName, content: errData.error || "AI service error", error: true };
-        }
-        const data = await ollamaResponse.json();
-        return { model: modelName, content: data.message?.content || "", error: false };
-      } catch (err) {
-        return { model: modelName, content: err.message, error: true };
+      if (isCloud) {
+          return { model: modelName, content: `[MOCK ${modelName}] You said: "${lastMsg}". This is a mocked cloud AI response.`, error: false };
+      } else {
+          try {
+            const ollamaResponse = await fetch(`http://127.0.0.1:11434/api/chat`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ model: modelName, messages: messages, stream: false })
+            });
+
+            if (!ollamaResponse.ok) {
+              const errData = await ollamaResponse.json().catch(() => ({}));
+              return { model: modelName, content: errData.error || "AI service error", error: true };
+            }
+            const data = await ollamaResponse.json();
+            return { model: modelName, content: data.message?.content || "", error: false };
+          } catch (err) {
+            return { model: modelName, content: err.message, error: true };
+          }
       }
     });
 
     const results = await Promise.all(fetchPromises);
-
-    return res.status(200).json({
-      success: true,
-      replies: results
-    });
+    return res.status(200).json({ success: true, replies: results });
   } catch (error) {
-    console.error("Chat API multiple error:", error.message);
-    return res.status(500).json({
-      success: false,
-      message: "Server error while calling AI service."
-    });
+    return res.status(500).json({ success: false, message: "Server error while calling AI service." });
   }
 });
 

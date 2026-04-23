@@ -33,8 +33,8 @@ describe("Multi-Model API Endpoints", () => {
       const res = await request(app).get("/api/models");
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.models.length).toBe(2);
-      expect(res.body.models[0].name).toBe("mock-model-a");
+      expect(res.body.models.length).toBe(7);
+      expect(res.body.models).toContain("mock-model-a");
     });
   });
 
