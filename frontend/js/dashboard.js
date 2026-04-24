@@ -201,15 +201,15 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
 }
 
 async function callLLM(messageList) {
-  console.log('Dashboard: callLLM multi called');
+  console.log(`Dashboard: callLLM multi called :: ${selectedModels}`);
   // Strip out model_name from messages before sending
   const cleanMsgs = messageList.map(m => ({ role: m.role, content: m.content }));
 
   try {
-    const response = await fetch('/api/chat/multi', {
+    const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: cleanMsgs, modelNames: selectedModels })
+      body: JSON.stringify({ messages: cleanMsgs, models: selectedModels })
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.message);
