@@ -46,7 +46,7 @@ AfterAll(async function () {
         // Silently ignore errors during cleanup
       }
     }
-    
+
     // Close browser
     try {
       await browser.close();
@@ -65,10 +65,10 @@ AfterAll(async function () {
 Before(async function () {
   this.browser = browser;
   this.page = await browser.newPage();
-  
+
   // Set viewport for consistent testing
   await this.page.setViewport({ width: 1280, height: 800 });
-  
+
   // Setup LLM mocking if enabled
   if (MOCK_LLM) {
     // Override fetch to intercept /api/chat calls with instant mocks
@@ -76,19 +76,29 @@ Before(async function () {
       const originalFetch = window.fetch;
       window.fetch = function(...args) {
         const [resource] = args;
-        
+
         // Mock the /api/chat endpoint for faster tests
         if (typeof resource === 'string' && resource.includes('/api/chat')) {
           return Promise.resolve(
             new Response(
               JSON.stringify({
-                response: 'Mocked AI response for testing. Real LLM would respond here.'
+                responses: [
+                  {
+                    model: "mock-ai-1",
+                    response: 'Mocked AI response for testing. Real LLM would respond here.'
+                  },
+                  {
+                    model: "mock-ai-2",
+                    response: 'Mocked AI response for testing. Real LLM would respond here.'
+                  }
+                ]
+
               }),
               { status: 200, headers: { 'Content-Type': 'application/json' } }
             )
           );
         }
-        
+
         // Use real fetch for all other endpoints
         return originalFetch.apply(this, args);
       };
