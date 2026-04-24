@@ -47,6 +47,21 @@
             <section class="chat-panel" aria-label="Chat workspace">
               <div class="chat-header">
                 <h2 id="chat-title" class="chat-title">New Conversation</h2>
+                <div class="model-controls">
+                  <label class="sr-only" for="model-select">Select model</label>
+                  <select id="model-select" class="model-select" title="Select AI model">
+                    <option value="">Loading models...</option>
+                  </select>
+                  <button id="compare-btn" class="btn compare-btn" type="button" title="Compare multiple models">
+                    ⇄ Compare Models
+                  </button>
+                </div>
+              </div>
+
+              <!-- Multi-model selector (shown in compare mode) -->
+              <div id="compare-panel" class="compare-panel" style="display:none;">
+                <p class="compare-label">Select models to compare:</p>
+                <div id="model-checkboxes" class="model-checkboxes"></div>
               </div>
 
               <div id="messages" class="messages">
