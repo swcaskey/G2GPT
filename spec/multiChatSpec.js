@@ -38,16 +38,16 @@ describe("Multi-Model API Endpoints", () => {
     });
   });
 
-  describe("POST /api/chat/multi", () => {
+  describe("POST /api/chat", () => {
     it("should return 400 if messages array is missing", async () => {
-      const res = await request(app).post("/api/chat/multi").send({});
+      const res = await request(app).post("/api/chat").send({});
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain("Messages array is required");
     });
 
     it("should process multi LLM responses successfully", async () => {
-      const res = await request(app).post("/api/chat/multi").send({
+      const res = await request(app).post("/api/chat").send({
          messages: [{ role: "user", content: "hello" }],
          modelNames: ["mock-model-x", "mock-model-y", "mock-model-z"]
       });
