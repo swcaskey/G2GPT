@@ -36,7 +36,7 @@ describe("Dashboard Conversation Management", () => {
     it("should return conversation by ID", () => {
       const conv = { id: 'abc123', title: 'Test Chat', messages: [] };
       conversations.push(conv);
-      
+
       expect(dashboard.getConv(conversations, 'abc123')).toBe(conv);
     });
 
@@ -49,7 +49,7 @@ describe("Dashboard Conversation Management", () => {
     it("should generate a unique ID", () => {
       const id1 = dashboard.genId();
       const id2 = dashboard.genId();
-      
+
       expect(id1).toBeDefined();
       expect(id1).not.toBe(id2);
       expect(typeof id1).toBe('string');
@@ -57,7 +57,7 @@ describe("Dashboard Conversation Management", () => {
 
     it("should generate IDs with expected format", () => {
       const id = dashboard.genId();
-      
+
       // Should be a combination of timestamp and random string in base36
       expect(id.length).toBeGreaterThan(10);
     });
@@ -67,7 +67,7 @@ describe("Dashboard Conversation Management", () => {
     it("should truncate long text to 42 characters", () => {
       const longText = 'a'.repeat(50);
       const result = dashboard.autoTitle(longText);
-      
+
       expect(result.length).toBe(43); // 42 + '.'
       expect(result).toBe('a'.repeat(42) + '.');
     });
@@ -75,14 +75,14 @@ describe("Dashboard Conversation Management", () => {
     it("should not truncate short text", () => {
       const shortText = 'Hello';
       const result = dashboard.autoTitle(shortText);
-      
+
       expect(result).toBe('Hello');
     });
 
     it("should trim whitespace before truncating", () => {
       const textWithSpaces = '  Hello World  ';
       const result = dashboard.autoTitle(textWithSpaces);
-      
+
       expect(result).toBe('Hello World');
     });
   });
@@ -112,7 +112,7 @@ describe("Dashboard Conversation Management", () => {
 
     it("should handle empty array", () => {
       const groups = dashboard.groupConvs([]);
-      
+
       expect(groups.Today).toEqual([]);
       expect(groups.Yesterday).toEqual([]);
       expect(groups.Older).toEqual([]);
@@ -146,7 +146,7 @@ describe("Dashboard Conversation Management", () => {
     it("should escape HTML and convert newlines to br", () => {
       const input = '<script>alert("XSS")</script>\nHello\nWorld';
       const result = dashboard.formatMessage(input);
-      
+
       expect(result).toBe('&lt;script&gt;alert(&quot;XSS&quot;)&lt;/script&gt;<br>Hello<br>World');
     });
   });
@@ -154,9 +154,9 @@ describe("Dashboard Conversation Management", () => {
   describe("setEmptyState", () => {
     it("should set empty state HTML", () => {
       const mockMessages = { innerHTML: '' };
-      
+
       dashboard.setEmptyState(mockMessages);
-      
+
       expect(mockMessages.innerHTML).toContain('Welcome to G2GPT');
       expect(mockMessages.innerHTML).toContain('Start a new conversation');
     });
@@ -167,7 +167,7 @@ describe("Dashboard Conversation Management", () => {
     let emptyState;
 
     beforeEach(() => {
-      messagesContainer = { 
+      messagesContainer = {
         appendChild: jasmine.createSpy('appendChild'),
         scrollTop: 0,
         innerHTML: '<div id="empty-state"></div>'
@@ -184,7 +184,7 @@ describe("Dashboard Conversation Management", () => {
 
     it("should append user message bubble", () => {
       dashboard.appendBubble('user', 'Hello', false, messagesContainer);
-      
+
       expect(messagesContainer.appendChild).toHaveBeenCalled();
       const appended = messagesContainer.appendChild.calls.argsFor(0)[0];
       expect(appended.className).toBe('msg-row user');
@@ -194,7 +194,7 @@ describe("Dashboard Conversation Management", () => {
 
     it("should append assistant message bubble", () => {
       dashboard.appendBubble('assistant', 'Hi there', false, messagesContainer);
-      
+
       expect(messagesContainer.appendChild).toHaveBeenCalled();
       const appended = messagesContainer.appendChild.calls.argsFor(0)[0];
       expect(appended.className).toBe('msg-row assistant');
@@ -204,7 +204,7 @@ describe("Dashboard Conversation Management", () => {
 
     it("should not animate if animate is false", () => {
       dashboard.appendBubble('user', 'Hello', false, messagesContainer);
-      
+
       const appended = messagesContainer.appendChild.calls.argsFor(0)[0];
       expect(appended.style.animation).toBe('none');
     });
@@ -234,10 +234,15 @@ describe("Dashboard Conversation Management", () => {
       ];
 
       dashboard.renderMessages(messageList, messagesContainer);
-      
+
       expect(messagesContainer.appendChild.calls.count()).toBe(2);
       expect(messagesContainer.appendChild.calls.argsFor(0)[0].innerHTML).toContain('Hello');
-      expect(messagesContainer.appendChild.calls.argsFor(1)[0].innerHTML).toContain('Hi');
+
+      // Because we mock document.createElement, appending a child doesn't update its parent's innerHTML natively.
+      // We check that the multi-col wrapper received the appended child containing 'Hi'.
+      const multiColDiv = messagesContainer.appendChild.calls.argsFor(1)[0];
+      const appendedCol = multiColDiv.appendChild.calls.argsFor(0)[0];
+      expect(appendedCol.innerHTML).toContain('Hi');
     });
   });
 
@@ -246,8 +251,8 @@ describe("Dashboard Conversation Management", () => {
     let searchInput;
 
     beforeEach(() => {
-      historyList = { 
-        innerHTML: '', 
+      historyList = {
+        innerHTML: '',
         appendChild: jasmine.createSpy('appendChild').and.callFake((element) => {
           historyList.innerHTML += element.outerHTML || element.textContent || element.className || '';
         })
@@ -305,7 +310,7 @@ describe("Dashboard Conversation Management", () => {
     it("should return LLM response", async () => {
       const mockResponse = {
         ok: true,
-        json: () => Promise.resolve({ reply: 'Hello from LLM' })
+        json: () => Promise.resolve({ replies: [{content:'Hello from LLM'}] })
       };
 
       global.fetch = jasmine.createSpy('fetch').and.resolveTo(mockResponse);
@@ -313,7 +318,7 @@ describe("Dashboard Conversation Management", () => {
       const messageList = [{ role: 'user', content: 'Hello' }];
       const result = await dashboard.callLLM(messageList);
 
-      expect(result).toBe('Hello from LLM');
+      expect(result).toEqual([{ content: 'Hello from LLM' }]);
     });
 
     it("should throw error for failed response", async () => {
@@ -326,7 +331,7 @@ describe("Dashboard Conversation Management", () => {
       global.fetch = jasmine.createSpy('fetch').and.resolveTo(mockResponse);
 
       const messageList = [{ role: 'user', content: 'Hello' }];
-      
+
       await expectAsync(dashboard.callLLM(messageList)).toBeRejected();
     });
   });
