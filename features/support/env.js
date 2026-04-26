@@ -88,7 +88,7 @@ if (typeof resource === 'string' && resource.includes('/api/chat')) {
     requestBody = {};
   }
 
-  const selectedModels = requestBody.models || ['llama3.2', 'mistral', 'phi3'];
+  const selectedModels = requestBody.models || ['llama3.2', 'misqwen2.5:0.5btral', 'phi3'];
   const messages = requestBody.messages || [];
   const lastUserMessage =
     messages.length > 0
@@ -102,7 +102,7 @@ if (typeof resource === 'string' && resource.includes('/api/chat')) {
     if (model === 'llama3.2') {
       return 'I cannot access live weather in this automated test, but I can still answer the request directly: normally I would give the current temperature, conditions, and short forecast.';
     }
-    if (model === 'mistral') {
+    if (model === 'qwen2.5:0.5b') {
       return 'For a weather question, I would normally provide a fuller forecast summary, including current conditions, expected changes, and any important warnings.';
     }
     return 'Weather check: live data is disabled in this test, but the expected response would be a concise forecast with temperature and conditions.';
@@ -112,7 +112,7 @@ if (typeof resource === 'string' && resource.includes('/api/chat')) {
     if (model === 'llama3.2') {
       return 'The fall of Rome was mainly caused by political instability, economic decline, military weakness, and outside invasions.';
     }
-    if (model === 'mistral') {
+    if (model === 'qwen2.5:0.5b') {
       return 'Rome fell because several long-term pressures built up together: unstable leadership, financial strain, reliance on mercenaries, administrative division, and repeated invasions.';
     }
     return 'Short answer: Rome declined because its government, economy, army, and borders all weakened over time.';
@@ -122,7 +122,7 @@ if (typeof resource === 'string' && resource.includes('/api/chat')) {
     if (model === 'llama3.2') {
       return 'Hello! I am ready to help with your question.';
     }
-    if (model === 'mistral') {
+    if (model === 'qwen2.5:0.5b') {
       return 'Hi! I can help you think through the problem step by step.';
     }
     return 'Hey! Send me what you want help with.';
@@ -132,7 +132,7 @@ if (typeof resource === 'string' && resource.includes('/api/chat')) {
     if (model === 'llama3.2') {
       return `I can explain "${prompt}" in simple terms by focusing on the main idea first.`;
     }
-    if (model === 'mistral') {
+    if (model === 'qwen2.5:0.5b') {
       return `I would explain "${prompt}" by giving context, breaking it into parts, and then summarizing the key takeaway.`;
     }
     return `Quick explanation: I would simplify "${prompt}" into the most important points.`;
@@ -142,7 +142,7 @@ if (typeof resource === 'string' && resource.includes('/api/chat')) {
     if (model === 'llama3.2') {
       return `My direct answer to "${prompt}" would focus on the main facts.`;
     }
-    if (model === 'mistral') {
+    if (model === 'qwen2.5:0.5b') {
       return `That question deserves a more detailed answer. I would explain the background, reasoning, and conclusion for "${prompt}".`;
     }
     return `Concise answer: I would respond to "${prompt}" with the shortest useful explanation.`;
@@ -151,7 +151,7 @@ if (typeof resource === 'string' && resource.includes('/api/chat')) {
   if (model === 'llama3.2') {
     return `I understand your statement: "${prompt}". I would respond clearly and directly.`;
   }
-  if (model === 'mistral') {
+  if (model === 'qwen2.5:0.5b') {
     return `You said: "${prompt}". I would build on that with a more detailed and thoughtful response.`;
   }
   return `Got it: "${prompt}". I would keep my response brief and practical.`;

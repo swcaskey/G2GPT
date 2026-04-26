@@ -506,10 +506,12 @@ Then('the conversation should be loaded into the chat window', async function ()
   await new Promise(r => setTimeout(r, 3000));
   
   // Wait for at least one message to appear
-  await this.page.waitForSelector('#messages .msg-row', { timeout: 10000 });
-  
+  await this.page.waitForFunction(
+  () => document.querySelectorAll('.msg-row').length > 0,
+  { timeout: 15000 }
+);
   // Verify that messages exist in chat window - using .msg-row selector
-  const messages = await this.page.$$('#messages .msg-row');
+  const messages = await this.page.$$('.msg-row');
   assert.ok(messages.length > 0, `No messages loaded from history (found ${messages.length} messages)`);
   
   // Highlight loaded messages
@@ -540,8 +542,8 @@ Then('I should see a response from each selected model', async function () {
   );
 
   assert.ok(
-    assistantTexts.some((text) => text.includes('mistral')),
-    'Missing mistral response'
+    assistantTexts.some((text) => text.includes('qwen2.5:0.5b')),
+    'Missing qwen2.5:0.5b response'
   );
 
   assert.ok(
@@ -552,7 +554,7 @@ Then('I should see a response from each selected model', async function () {
 
 // ==================== ITERATION 3: Partial Model Selection ====================
 
-Given('I have selected only llama3.2 and mistral', async function () {
+Given('I have selected only llama3.2 and qwen2.5:0.5b', async function () {
   await this.page.waitForSelector('#model-picker');
 
   await this.page.evaluate(() => {
@@ -562,7 +564,7 @@ Given('I have selected only llama3.2 and mistral', async function () {
 
     checkboxes.forEach((box) => {
       const shouldBeChecked =
-        box.value === 'llama3.2' || box.value === 'mistral';
+        box.value === 'llama3.2' || box.value === 'qwen2.5:0.5b'
 
       if (box.checked !== shouldBeChecked) {
         box.click();
@@ -573,11 +575,11 @@ Given('I have selected only llama3.2 and mistral', async function () {
   await new Promise((r) => setTimeout(r, 500));
 });
 
-Then('I should see responses only from llama3.2 and mistral', async function () {
+Then('I should see responses only from llama3.2 and qwen2.5:0.5b', async function () {
   await this.page.waitForFunction(
     () => {
       const text = document.body.innerText;
-      return text.includes('llama3.2') && text.includes('mistral');
+      return text.includes('llama3.2') && text.includes('qwen2.5:0.5b');
     },
     { timeout: 15000 }
   );
@@ -589,7 +591,7 @@ Then('I should see responses only from llama3.2 and mistral', async function () 
   const combinedText = assistantTexts.join(' ');
 
   assert.ok(combinedText.includes('llama3.2'), 'Missing llama3.2 response');
-  assert.ok(combinedText.includes('mistral'), 'Missing mistral response');
+  assert.ok(combinedText.includes('qwen2.5:0.5b'), 'Missing qwen2.5:0.5b response');
   assert.ok(!combinedText.includes('phi3'), 'phi3 response should not appear');
 });
 

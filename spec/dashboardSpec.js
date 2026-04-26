@@ -313,7 +313,9 @@ describe("Dashboard Conversation Management", () => {
       const messageList = [{ role: 'user', content: 'Hello' }];
       const result = await dashboard.callLLM(messageList);
 
-      expect(result).toBe('Hello from LLM');
+      expect(result.length).toBe(1);
+      expect(result[0].model).toBe('default');
+      expect(result[0].content).toBe('Hello from LLM');
     });
 
     it("should throw error for failed response", async () => {
@@ -335,13 +337,13 @@ describe("Dashboard Conversation Management", () => {
     json: async () => ({
       responses: [
         { model: "llama3.2", content: "A" },
-        { model: "mistral", content: "B" }
+        { model: "qwen2.5:0.5b", content: "B" }
       ]
     })
   });
 
   const messages = [{ role: "user", content: "Hello" }];
-  const models = ["llama3.2", "mistral"];
+  const models = ["llama3.2", "qwen2.5:0.5b"];
 
   const result = await dashboard.callLLM(messages, models);
 

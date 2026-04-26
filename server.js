@@ -30,8 +30,7 @@ app.use(session({
 }));
 app.use(express.static(path.join(__dirname, "./frontend")));
 
-// ==================== Helper Functions ====================
-
+// Helper Functions:
 function generateUUID() {
   return crypto.randomUUID();
 }
@@ -39,66 +38,104 @@ function generateUUID() {
 function buildFallbackReply(model, prompt) {
   const lower = prompt.toLowerCase();
 
-  if (lower.includes("weather")) {
+  const styles = {
+    "llama3.2": "Direct answer",
+    "qwen2.5:0.5b": "Detailed explanation",
+    "phi3": "Short practical answer"
+  };
+
+  const style = styles[model] || "Response";
+
+  // Weather questions
+  if (lower.includes("weather") || lower.includes("temperature") || lower.includes("forecast")) {
     if (model === "llama3.2") {
-      return "I cannot access live weather right now, but I can still help you think through what weather information you may need, such as temperature, rain chance, and forecast conditions.";
+      return `${style}: I cannot access live weather data in this demo, but I would normally provide the current conditions, temperature, and forecast for the requested location.`;
     }
-    if (model === "mistral") {
-      return "Since I cannot reach live weather data, I would normally answer by summarizing the current conditions, expected forecast, and any important weather warnings.";
+    if (model === "qwen2.5:0.5b") {
+      return `${style}: For a weather question, I would check the location, current temperature, chance of rain, wind conditions, and short-term forecast. Since this is a fallback response, I cannot retrieve live data, but I can still explain what weather information would be useful.`;
     }
-    return "Live weather is unavailable, but the short answer is that I would check temperature, conditions, and forecast for your location.";
+    return `${style}: I cannot fetch live weather right now, but I would summarize temperature, conditions, and forecast.`;
   }
 
+  // Simple math questions
+  const mathMatch = prompt.match(/(-?\d+(\.\d+)?)\s*([+\-*/x])\s*(-?\d+(\.\d+)?)/);
+
+  if (mathMatch) {
+    const a = parseFloat(mathMatch[1]);
+    const op = mathMatch[3];
+    const b = parseFloat(mathMatch[4]);
+
+    let answer;
+
+    if (op === "+") answer = a + b;
+    else if (op === "-") answer = a - b;
+    else if (op === "*" || op.toLowerCase() === "x") answer = a * b;
+    else if (op === "/") answer = b !== 0 ? a / b : "undefined because division by zero is not allowed";
+
+    if (model === "llama3.2") {
+      return `${style}: ${a} ${op} ${b} = ${answer}.`;
+    }
+    if (model === "qwen2.5:0.5b") {
+      return `${style}: To solve this, perform the operation ${op} on ${a} and ${b}. The result is ${answer}.`;
+    }
+    return `${style}: Answer: ${answer}.`;
+  }
+
+  // Rome / factual example
   if (lower.includes("rome")) {
     if (model === "llama3.2") {
-      return "The fall of Rome was mainly caused by political instability, economic problems, military weakness, and invasions.";
+      return `${style}: The fall of Rome was mainly caused by political instability, economic problems, military weakness, and invasions.`;
     }
-    if (model === "mistral") {
-      return "Rome fell because multiple pressures built up over time, including unstable leadership, economic strain, military issues, administrative division, and repeated invasions.";
+    if (model === "qwen2.5:0.5b") {
+      return `${style}: Rome fell because several pressures built up over time, including unstable leadership, economic strain, military issues, administrative division, and repeated invasions.`;
     }
-    return "Short answer: Rome declined because its government, economy, army, and borders weakened over time.";
+    return `${style}: Rome declined because its government, economy, army, and borders weakened over time.`;
   }
 
-  if (lower.includes("hello") || lower.includes("hi")) {
+  // Greeting
+  if (lower.includes("hello") || lower.includes("hi") || lower.includes("how are you")) {
     if (model === "llama3.2") {
-      return "Hello! I am ready to help with your question.";
+      return `${style}: Hello! I am ready to help with your question.`;
     }
-    if (model === "mistral") {
-      return "Hi! I can help you work through your question step by step.";
+    if (model === "qwen2.5:0.5b") {
+      return `${style}: Hi! I can help you work through your question step by step.`;
     }
-    return "Hey! Send me what you want help with.";
+    return `${style}: Hey! Send me what you want help with.`;
   }
 
+  // Explanation prompts
   if (lower.includes("explain")) {
     if (model === "llama3.2") {
-      return `I can explain "${prompt}" in simple terms by focusing on the main idea first.`;
+      return `${style}: I can explain "${prompt}" by focusing on the main idea first.`;
     }
-    if (model === "mistral") {
-      return `I would explain "${prompt}" by giving context, breaking it into smaller parts, and summarizing the key takeaway.`;
+    if (model === "qwen2.5:0.5b") {
+      return `${style}: I would explain "${prompt}" by giving context, breaking it into smaller parts, and summarizing the key takeaway.`;
     }
-    return `Quick explanation: I would simplify "${prompt}" into the most important points.`;
+    return `${style}: I would simplify "${prompt}" into the most important points.`;
   }
 
+  // General question
   if (prompt.trim().endsWith("?")) {
     if (model === "llama3.2") {
-      return `My direct answer to "${prompt}" would focus on the main facts first.`;
+      return `${style}: My answer to "${prompt}" would focus on the main facts first.`;
     }
-    if (model === "mistral") {
-      return `That question deserves a detailed answer. I would explain the background, reasoning, and conclusion for "${prompt}".`;
+    if (model === "qwen2.5:0.5b") {
+      return `${style}: This question can be answered by identifying the key topic, explaining the reasoning, and giving a clear conclusion.`;
     }
-    return `Concise answer: I would respond to "${prompt}" with the shortest useful explanation.`;
+    return `${style}: I would give a concise answer to "${prompt}".`;
   }
 
+  // General statement
   if (model === "llama3.2") {
-    return `I understand your statement: "${prompt}". I would respond clearly and directly.`;
+    return `${style}: I understand your statement: "${prompt}".`;
   }
-  if (model === "mistral") {
-    return `You said: "${prompt}". I would build on that with a more detailed and thoughtful response.`;
+  if (model === "qwen2.5:0.5b") {
+    return `${style}: You said "${prompt}". I would respond by expanding on the idea and connecting it to the conversation.`;
   }
-  return `Got it: "${prompt}". I would keep my response brief and practical.`;
+  return `${style}: Got it. I would respond briefly and practically to "${prompt}".`;
 }
 
-// ==================== Routes: HTML Pages ====================
+// Routes: HTML Pages
 
 // Landing page (home)
 app.get("/", (req, res) => {
