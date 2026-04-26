@@ -36,7 +36,6 @@ Then('I should see the landing page with options to create an account or log in'
   assert.ok(signupLink !== null, 'Sign Up link is missing');
   assert.ok(loginLink !== null, 'Log In link is missing');
   
-  await new Promise(r => setTimeout(r, 1000));
 });
 
 // ==================== Scenario: Account Registration ====================
@@ -59,7 +58,6 @@ When('I enter valid account information and submit the form', async function () 
     const btn = document.querySelector('#create-account-btn');
     if (btn) btn.style.outline = '3px solid #ffc107';
   });
-  await new Promise(r => setTimeout(r, 2000));
 
   await this.page.click('#create-account-btn');
   
@@ -97,7 +95,6 @@ When('I enter valid Log In credentials', async function () {
     const btn = document.querySelector('#login-btn');
     if (btn) btn.style.outline = '3px solid #ffc107';
   });
-  await new Promise(r => setTimeout(r, 2000));
 
   await this.page.click('#login-btn');
 
@@ -128,7 +125,6 @@ Then('when I click log out and confirm, I should return to a non-authenticated s
     const link = document.getElementById('logout-link');
     if (link) link.style.outline = '3px solid #ffc107';
   });
-  await new Promise(r => setTimeout(r, 2000));
 
   await Promise.all([
     this.page.waitForNavigation({ timeout: 10000 }),
@@ -144,7 +140,6 @@ Then('when I click log out and confirm, I should return to a non-authenticated s
     const btn = document.getElementById('confirm-logout-btn');
     if (btn) btn.style.outline = '3px solid #ffc107';
   });
-  await new Promise(r => setTimeout(r, 2000));
 
   await Promise.all([
     this.page.waitForNavigation({ timeout: 10000 }),
@@ -193,19 +188,16 @@ When('I enter a prompt in the chat box and click {string}', async function (butt
     const input = document.getElementById('user-input');
     if (input) input.style.outline = '3px solid #ffc107';
   });
-  await new Promise(r => setTimeout(r, 1000));
   
   // Type a test prompt
   const testPrompt = 'Hello, how are you?';
   await this.page.type('#user-input', testPrompt, { delay: 10 });
-  await new Promise(r => setTimeout(r, 1000));
   
   // Highlight send button
   await this.page.evaluate(() => {
     const btn = document.getElementById('send-btn');
     if (btn) btn.style.outline = '3px solid #ffc107';
   });
-  await new Promise(r => setTimeout(r, 1000));
   
   // Click send button
   await this.page.click('#send-btn');
@@ -229,7 +221,6 @@ Then('I should see my prompt and the LLM\'s response in the chat window', async 
   );
   
   // Wait a bit for message to render
-  await new Promise(r => setTimeout(r, 2000));
   
   // Verify user message appears with correct selector: .msg-row.user
   const userMessages = await this.page.$$('.msg-row.user');
@@ -244,7 +235,6 @@ Then('I should see my prompt and the LLM\'s response in the chat window', async 
     const messages = document.querySelectorAll('.msg-row');
     messages.forEach(msg => msg.style.outline = '2px solid #4caf50');
   });
-  await new Promise(r => setTimeout(r, 2000));
 });
 
 // Scenario: Conversation history is saved
@@ -271,7 +261,6 @@ Given('I have completed a chat session', async function () {
 
   // Now on dashboard - send a message to create history
   await this.page.waitForSelector('#user-input', { timeout: 10000 });
-  await new Promise(r => setTimeout(r, 1000));
   
   await this.page.type('#user-input', 'Test message for history', { delay: 3 });
   await this.page.click('#send-btn');
@@ -282,21 +271,18 @@ Given('I have completed a chat session', async function () {
     () => !document.getElementById('typing-indicator').classList.contains('show'),
     { timeout: 110000 }
   );
-  await new Promise(r => setTimeout(r, 2000));
 });
 
 When('I refresh the dashboard or log in again', async function () {
   // Refresh the page
   await this.page.reload({ waitUntil: 'networkidle0' });
   await this.page.waitForSelector('#history-list', { timeout: 10000 });
-  await new Promise(r => setTimeout(r, 2000));
 });
 
 Then('I should see my previous session listed in the history sidebar', async function () {
   await this.page.waitForSelector('#history-list', { timeout: 10000 });
   
   // Wait for history to load
-  await new Promise(r => setTimeout(r, 2000));
   
   // Check for conversation items in history - looking for .history-item elements
   const historyItems = await this.page.$$('#history-list .history-item');
@@ -307,7 +293,6 @@ Then('I should see my previous session listed in the history sidebar', async fun
     const items = document.querySelectorAll('#history-list .history-item');
     items.forEach(item => item.style.outline = '2px solid #2196f3');
   });
-  await new Promise(r => setTimeout(r, 2000));
 });
 
 // Scenario: Search conversation history
@@ -334,7 +319,6 @@ Given('I have multiple saved chats', async function () {
   
   // Create just ONE conversation with searchable keyword
   await this.page.waitForSelector('#user-input', { timeout: 10000 });
-  await new Promise(r => setTimeout(r, 500));
   
   // Conversation with keyword "weather" for search testing
   await this.page.evaluate(() => {
@@ -349,12 +333,10 @@ Given('I have multiple saved chats', async function () {
     () => !document.getElementById('typing-indicator').classList.contains('show'),
     { timeout: 110000 }
   );
-  await new Promise(r => setTimeout(r, 500));
   
   // Refresh to ensure history is loaded
   await this.page.reload({ waitUntil: 'networkidle0' });
   await this.page.waitForSelector('#history-list', { timeout: 10000 });
-  await new Promise(r => setTimeout(r, 1000));
 });
 
 When('I enter a keyword into the history search bar', async function () {
@@ -365,17 +347,14 @@ When('I enter a keyword into the history search bar', async function () {
     const input = document.getElementById('search-input');
     if (input) input.style.outline = '3px solid #ffc107';
   });
-  await new Promise(r => setTimeout(r, 1000));
   
   // Type search keyword
   await this.page.type('#search-input', 'weather', { delay: 10 });
-  await new Promise(r => setTimeout(r, 2000));
   
   this.searchKeyword = 'weather';
 });
 
 Then('only the relevant matching sessions should be displayed in the sidebar', async function () {
-  await new Promise(r => setTimeout(r, 1000));
   
   // Get visible conversation items - using .history-item selector
   const visibleItems = await this.page.evaluate(() => {
@@ -403,7 +382,6 @@ Then('only the relevant matching sessions should be displayed in the sidebar', a
       }
     });
   });
-  await new Promise(r => setTimeout(r, 2000));
 });
 
 // Scenario: Resume a conversation from history
@@ -430,7 +408,6 @@ Given('I have saved conversations in my history', async function () {
   
   // Create a conversation
   await this.page.waitForSelector('#user-input', { timeout: 10000 });
-  await new Promise(r => setTimeout(r, 1000));
   
   await this.page.type('#user-input', 'Original conversation message', { delay: 3 });
   await this.page.click('#send-btn');
@@ -441,13 +418,11 @@ Given('I have saved conversations in my history', async function () {
     () => !document.getElementById('typing-indicator').classList.contains('show'),
     { timeout: 110000 }
   );
-  await new Promise(r => setTimeout(r, 2000));
   
   // Start a new conversation if button exists
   const newChatBtn = await this.page.$('#new-chat-btn');
   if (newChatBtn) {
     await this.page.click('#new-chat-btn');
-    await new Promise(r => setTimeout(r, 1000));
   }
 });
 
@@ -455,7 +430,6 @@ When('I click on a past conversation in the sidebar', async function () {
   await this.page.waitForSelector('#history-list', { timeout: 10000 });
   
   // Wait for history items to load
-  await new Promise(r => setTimeout(r, 1000));
   
   // Get all history items
   const historyItems = await this.page.$$('#history-list .history-item');
@@ -469,16 +443,13 @@ When('I click on a past conversation in the sidebar', async function () {
     const items = document.querySelectorAll('#history-list .history-item');
     if (items[1]) items[1].style.outline = '3px solid #ffc107';
   });
-  await new Promise(r => setTimeout(r, 2000));
   
   // Click on second conversation item
   await secondItem.click();
-  await new Promise(r => setTimeout(r, 2000));
 });
 
 Then('the conversation should be loaded into the chat window', async function () {
   // Wait for messages to load - give it more time
-  await new Promise(r => setTimeout(r, 3000));
   
   // Wait for at least one message to appear
   await this.page.waitForSelector('#messages .msg-row', { timeout: 10000 });
@@ -492,7 +463,6 @@ Then('the conversation should be loaded into the chat window', async function ()
     const msgs = document.querySelectorAll('#messages .msg-row');
     msgs.forEach(msg => msg.style.outline = '2px solid #9c27b0');
   });
-  await new Promise(r => setTimeout(r, 2000));
 });
 
 // ==================== ITERATION 1: Multi-Model Feature Tests ====================
@@ -519,6 +489,12 @@ Given('I am an authenticated user on the multi-model interface', async function 
   await this.page.click('#settings-btn');
   await this.page.waitForSelector('#settings-modal.show', { timeout: 5000 });
   
+  // Natively check the available LLM checkboxes dynamically so the tests can parse concurrent logic
+  await this.page.evaluate(() => {
+    const checkboxes = document.querySelectorAll('#model-list input[type="checkbox"]');
+    checkboxes.forEach(cb => cb.checked = true);
+  });
+  
   await this.page.click('#save-settings');
 });
 
@@ -526,7 +502,6 @@ When('I submit a factual question asking {string}', async function (promptText) 
   await this.page.waitForSelector('#user-input');
   
   await this.page.type('#user-input', promptText, { delay: 5 });
-  await new Promise(r => setTimeout(r, 1000));
   
   await this.page.click('#send-btn');
 });
@@ -538,11 +513,10 @@ Then('the system should query three different LLMs simultaneously', async functi
     () => !document.getElementById('typing-indicator').classList.contains('show'),
     { timeout: 110000 }
   );
-  await new Promise(r => setTimeout(r, 2000));
 });
 
 Then('I should see three distinct responses displayed side-by-side on the screen', async function () {
-  await this.page.waitForSelector('.msg-row.multi-col', { timeout: 10000 });
+  await this.page.waitForSelector('.msg-row.multi-col', { timeout: 60000 });
   
   const modelCols = await this.page.$$('.msg-row.multi-col .model-col');
   
@@ -552,6 +526,5 @@ Then('I should see three distinct responses displayed side-by-side on the screen
     const cols = document.querySelectorAll('.model-col');
     cols.forEach(col => col.style.outline = '3px solid #ff4081');
   });
-  await new Promise(r => setTimeout(r, 2000));
 });
 

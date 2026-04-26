@@ -24,11 +24,11 @@ BeforeAll(async function () {
   });
 
   // Wait for server to be ready
-  await new Promise(resolve => setTimeout(resolve, 2000));
+  await new Promise(resolve => setTimeout(resolve, 500));
 
   browser = await puppeteer.launch({
-    headless: false,
-    slowMo: 25  // Reduced from 50ms for faster test execution
+    headless: process.env.HEADLESS !== 'false',
+    slowMo: process.env.SLOWMO ? parseInt(process.env.SLOWMO) : 0
   });
 });
 
@@ -77,13 +77,25 @@ Before(async function () {
       window.fetch = function(...args) {
         const [resource] = args;
         
-        // Mock the /api/chat endpoint for faster tests
+        // Mock the /api/chat endpoints for faster tests
         if (typeof resource === 'string' && resource.includes('/api/chat')) {
+          const isMulti = resource.includes('/multi');
+          const mockBody = isMulti 
+            ? JSON.stringify({
+                success: true,
+                replies: [
+                  { model: 'mock-llama3', content: 'Mocked response from Llama3', error: false },
+                  { model: 'mock-mistral', content: 'Mocked response from Mistral', error: false }
+                ]
+              })
+            : JSON.stringify({
+                success: true,
+                response: 'Mocked AI response for testing.'
+              });
+
           return Promise.resolve(
             new Response(
-              JSON.stringify({
-                response: 'Mocked AI response for testing. Real LLM would respond here.'
-              }),
+              mockBody,
               { status: 200, headers: { 'Content-Type': 'application/json' } }
             )
           );

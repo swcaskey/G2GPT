@@ -102,11 +102,11 @@ function renderMessages(messageList, messagesContainer) {
     if (msg.role === 'assistant') {
       if (!currentMultiCol) {
         currentMultiCol = document.createElement('div');
-        currentMultiCol.className = 'msg-row bot multi-col';
-        currentMultiCol.innerHTML = '<div class="avatar bot">AI</div><div class="multi-col-wrapper" style="width:100%; display:flex; gap:16px;"></div>';
+        currentMultiCol.className = 'msg-row assistant multi-col';
+        currentMultiCol.innerHTML = '<div class="avatar assistant">AI</div><div class="multi-col-wrapper" style="width:100%; display:flex; gap:16px;"></div>';
         if (container.appendChild) { container.appendChild(currentMultiCol); }
       }
-      const wrapper = currentMultiCol.querySelector('.multi-col-wrapper');
+      const wrapper = currentMultiCol.querySelector('.multi-col-wrapper') || currentMultiCol;
       const col = document.createElement('div');
       col.className = 'model-col';
       col.innerHTML = `
@@ -116,7 +116,7 @@ function renderMessages(messageList, messagesContainer) {
         </div>
         <div class="model-col-content bubble">${formatMessage(msg.content)}</div>
       `;
-      wrapper.appendChild(col);
+      if (wrapper.appendChild) { wrapper.appendChild(col); }
     } else {
       currentMultiCol = null;
       appendBubble('user', msg.content, false, container);
