@@ -397,7 +397,7 @@ app.post("/api/chat", async (req, res) => {
           messages,
           stream: false,
           options: {
-            num_predict: 60
+            num_predict: 200 // 
           }
         })
       });
@@ -731,10 +731,10 @@ app.delete("/api/conversations/:id", (req, res) => {
 
 // ==================== Server Initialization ====================
 
-if (process.env.NODE_ENV !== "test") {
+if (process.env.NODE_ENV === "test") {
+  module.exports = app; // used by tests (Jasmine/Cucumber)
+} else {
   app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
   });
 }
-
-module.exports = app;
