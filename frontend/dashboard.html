@@ -81,12 +81,25 @@
               <div class="input-area">
                 <div class="input-row" id="input-row">
                   <label class="sr-only" for="user-input">Type your message</label>
+
                   <textarea
                     id="user-input"
                     rows="1"
                     placeholder="Type your message..."
                   ></textarea>
 
+                  <!-- RESEND BUTTON -->
+                  <button
+                    id="resend-btn"
+                    class="send-btn resend-btn"
+                    type="button"
+                    aria-label="Resend last message"
+                    title="Resend last message"
+                  >
+                    ↻
+                  </button>
+
+                  <!-- SEND BUTTON -->
                   <button
                     id="send-btn"
                     class="send-btn"

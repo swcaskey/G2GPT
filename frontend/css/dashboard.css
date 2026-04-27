@@ -947,3 +947,20 @@ h1 {
 .settings-col:first-child {
   border-right: 1px solid rgba(203, 210, 217, 0.5);
 }
+
+/* Copy response on click */
+.msg-actions button {
+  border: none;
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--charcoal);
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.msg-actions button:hover {
+  background: rgba(204, 0, 51, 0.12);
+  color: var(--rutgers-red);
+}

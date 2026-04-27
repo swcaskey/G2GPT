@@ -114,7 +114,14 @@ function renderMessages(messageList, messagesContainer) {
            <span>Assistant</span>
            <span class="model-badge">${escapeHtml(msg.model_name || 'AI Model')}</span>
         </div>
-        <div class="model-col-content bubble">${formatMessage(msg.content)}</div>
+
+        <div class="model-col-content bubble" data-content="${encodeURIComponent(msg.content)}">
+          ${formatMessage(msg.content)}
+        </div>
+
+        <div class="msg-actions" style="margin-top:10px; display:flex; gap:10px;">
+          <button class="copy-btn" data-content="${encodeURIComponent(msg.content)}">📋 Copy</button>
+        </div>
       `;
       if (wrapper && wrapper.appendChild) wrapper.appendChild(col);
       else if (currentMultiCol.appendChild) currentMultiCol.appendChild(col);
@@ -127,7 +134,23 @@ function renderMessages(messageList, messagesContainer) {
   if (container.scrollTop !== undefined) {
     container.scrollTop = container.scrollHeight;
   }
+
+  //use set timeout to let the DOM refresh
+  setTimeout(() => {
+    const copyBtns = container.querySelectorAll('.copy-btn');
+
+    copyBtns.forEach(btn => {
+      btn.onclick = async () => {
+        const text = decodeURIComponent(btn.dataset.content);
+        await navigator.clipboard.writeText(text);
+        btn.textContent = "Copied!";
+        setTimeout(() => (btn.textContent = "📋 Copy"), 1000);
+      };
+    });
+  }, 0);
+
 }
+
 function renderHistory(conversations, historyListContainer, searchInputElement, currentActiveId) {
   const historyContainer = historyListContainer || historyList;
   const searchElement = searchInputElement || searchInput;
@@ -201,6 +224,31 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
   });
 }
 
+document.getElementById('resend-btn').addEventListener('click', () => {
+  const conversation = getConv(conversations, activeId);
+  if (!conversation || !conversation.messages.length) return;
+
+  // find last user message
+  let lastUserMessage = null;
+
+  for (let i = conversation.messages.length - 1; i >= 0; i--) {
+    if (conversation.messages[i].role === 'user') {
+      lastUserMessage = conversation.messages[i];
+      break;
+    }
+  }
+
+  if (!lastUserMessage) return;
+
+  // put it back into textarea
+  textarea.value = lastUserMessage.content;
+  textarea.focus();
+
+  // optional UX: expand textarea height
+  textarea.style.height = 'auto';
+  textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
+});
+
 async function callLLM(messageList) {
   console.log('Dashboard: callLLM multi called');
   // Strip out model_name from messages before sending
@@ -212,6 +260,7 @@ async function callLLM(messageList) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: cleanMsgs, modelNames: selectedModels, level: level })
     });
+
     const data = await response.json();
     if (!response.ok) throw new Error(data.message);
     return data.replies || [];
