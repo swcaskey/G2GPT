@@ -61,6 +61,64 @@ AfterAll(async function () {
   }
 });
 
+// Helper function to setup LLM mocking
+async function setupLLMMocking(page) {
+  if (!MOCK_LLM) return;
+  
+  await page.evaluate(() => {
+    const originalFetch = window.fetch;
+    window.fetch = function(...args) {
+      const [resource, init] = args;
+      console.log('[MOCK] Fetch intercepted:', resource);
+      
+      // Mock the /api/chat and /api/chat/multi endpoints for faster tests
+      if (typeof resource === 'string' && (resource.includes('/api/chat/multi') || resource.includes('/api/chat'))) {
+        console.log('[MOCK] Mocking LLM endpoint:', resource);
+        // Parse the request body to determine how many models were selected
+        let numModels = 1;
+        if (init && init.body) {
+          try {
+            const body = JSON.parse(init.body);
+            console.log('[MOCK] Request body:', body);
+            numModels = (body.modelNames && body.modelNames.length) || 1;
+            console.log('[MOCK] Number of models:', numModels);
+          } catch (e) {
+            console.log('[MOCK] Failed to parse body:', e);
+            numModels = 1;
+          }
+        }
+        
+        // Create mock replies for each model
+        const mockReplies = [];
+        for (let i = 0; i < numModels; i++) {
+          mockReplies.push({
+            model: `mock-model-${i + 1}`,
+            content: 'This is a mocked response for testing purposes.',
+            error: false
+          });
+        }
+        
+        const responseBody = {
+          success: true,
+          replies: mockReplies
+        };
+        console.log('[MOCK] Returning mock response:', JSON.stringify(responseBody));
+        const response = new Response(JSON.stringify(responseBody), {
+          status: 200,
+          statusText: 'OK',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        console.log('[MOCK] Response OK:', response.ok);
+        return Promise.resolve(response);
+      }
+      
+      // Use real fetch for all other endpoints
+      console.log('[MOCK] Using real fetch for:', resource);
+      return originalFetch.apply(this, args);
+    };
+  });
+}
+
 // Create new page before each scenario
 Before(async function () {
   this.browser = browser;
@@ -69,31 +127,61 @@ Before(async function () {
   // Set viewport for consistent testing
   await this.page.setViewport({ width: 1280, height: 800 });
   
-  // Setup LLM mocking if enabled
+  // Setup LLM mocking by injecting a script before any page loads
   if (MOCK_LLM) {
-    // Override fetch to intercept /api/chat calls with instant mocks
+    // This script will run before any other scripts and before any fetch happens
     await this.page.evaluateOnNewDocument(() => {
+      window._llmMockReady = true;
+      window._llmMockReplies = null;
+      
+      // Override fetch for /api/chat/multi
       const originalFetch = window.fetch;
-      window.fetch = function(...args) {
-        const [resource] = args;
+      window.fetch = async function(...args) {
+        const [resource, init] = args;
+        const resourceStr = typeof resource === 'string' ? resource : resource.toString();
         
-        // Mock the /api/chat endpoint for faster tests
-        if (typeof resource === 'string' && resource.includes('/api/chat')) {
-          return Promise.resolve(
-            new Response(
-              JSON.stringify({
-                response: 'Mocked AI response for testing. Real LLM would respond here.'
-              }),
-              { status: 200, headers: { 'Content-Type': 'application/json' } }
-            )
-          );
+        if (resourceStr.includes('/api/chat/multi')) {
+          let numModels = 1;
+          if (init && init.body) {
+            try {
+              const body = JSON.parse(init.body);
+              numModels = (body.modelNames && body.modelNames.length) || 1;
+            } catch (e) {
+              // ignore
+            }
+          }
+          
+          const mockReplies = [];
+          for (let i = 0; i < numModels; i++) {
+            mockReplies.push({
+              model: `mock-model-${i + 1}`,
+              content: 'This is a mocked response for testing purposes.',
+              error: false
+            });
+          }
+          
+          const mockResponse = {
+            success: true,
+            replies: mockReplies
+          };
+          
+          return new Promise((resolve) => {
+            resolve(new Response(JSON.stringify(mockResponse), {
+              status: 200,
+              statusText: 'OK',
+              headers: { 'Content-Type': 'application/json' }
+            }));
+          });
         }
         
-        // Use real fetch for all other endpoints
+        // For all other endpoints, use the original fetch
         return originalFetch.apply(this, args);
       };
     });
   }
+  
+  // Store setupLLMMocking function on page for later use
+  this.setupLLMMocking = () => setupLLMMocking(this.page);
 });
 
 // Close page after each scenario

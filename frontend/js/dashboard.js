@@ -102,7 +102,7 @@ function renderMessages(messageList, messagesContainer) {
     if (msg.role === 'assistant') {
       if (!currentMultiCol) {
         currentMultiCol = document.createElement ? document.createElement('div') : { innerHTML: '', appendChild: function(){} };
-        currentMultiCol.className = 'msg-row bot multi-col';
+        currentMultiCol.className = 'msg-row assistant multi-col';
         currentMultiCol.innerHTML = '<div class="avatar bot">AI</div><div class="multi-col-wrapper" style="width:100%; display:flex; gap:16px;"></div>';
         if (container.appendChild) { container.appendChild(currentMultiCol); }
       }
@@ -137,16 +137,18 @@ function renderMessages(messageList, messagesContainer) {
 
   //use set timeout to let the DOM refresh
   setTimeout(() => {
-    const copyBtns = container.querySelectorAll('.copy-btn');
+    if (container && container.querySelectorAll) {
+      const copyBtns = container.querySelectorAll('.copy-btn');
 
-    copyBtns.forEach(btn => {
-      btn.onclick = async () => {
-        const text = decodeURIComponent(btn.dataset.content);
-        await navigator.clipboard.writeText(text);
-        btn.textContent = "Copied!";
-        setTimeout(() => (btn.textContent = "📋 Copy"), 1000);
-      };
-    });
+      copyBtns.forEach(btn => {
+        btn.onclick = async () => {
+          const text = decodeURIComponent(btn.dataset.content);
+          await navigator.clipboard.writeText(text);
+          btn.textContent = "Copied!";
+          setTimeout(() => (btn.textContent = "📋 Copy"), 1000);
+        };
+      });
+    }
   }, 0);
 
 }
@@ -224,30 +226,32 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
   });
 }
 
-document.getElementById('resend-btn').addEventListener('click', () => {
-  const conversation = getConv(conversations, activeId);
-  if (!conversation || !conversation.messages.length) return;
+if (typeof document !== 'undefined') {
+  document.getElementById('resend-btn').addEventListener('click', () => {
+    const conversation = getConv(conversations, activeId);
+    if (!conversation || !conversation.messages.length) return;
 
-  // find last user message
-  let lastUserMessage = null;
+    // find last user message
+    let lastUserMessage = null;
 
-  for (let i = conversation.messages.length - 1; i >= 0; i--) {
-    if (conversation.messages[i].role === 'user') {
-      lastUserMessage = conversation.messages[i];
-      break;
+    for (let i = conversation.messages.length - 1; i >= 0; i--) {
+      if (conversation.messages[i].role === 'user') {
+        lastUserMessage = conversation.messages[i];
+        break;
+      }
     }
-  }
 
-  if (!lastUserMessage) return;
+    if (!lastUserMessage) return;
 
-  // put it back into textarea
-  textarea.value = lastUserMessage.content;
-  textarea.focus();
+    // put it back into textarea
+    textarea.value = lastUserMessage.content;
+    textarea.focus();
 
-  // optional UX: expand textarea height
-  textarea.style.height = 'auto';
-  textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
-});
+    // optional UX: expand textarea height
+    textarea.style.height = 'auto';
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
+  });
+}
 
 async function callLLM(messageList) {
   console.log('Dashboard: callLLM multi called');
@@ -304,14 +308,16 @@ const levelMap = {
   expert: 3
 };
 
-document.querySelectorAll('input[name="level"]').forEach(radio => {
-  radio.addEventListener('change', (e) => {
-    if (e.target.checked) {
-      level = levelMap[e.target.value];
-      console.log("Level set to:", level);
-    }
+if (typeof document !== 'undefined') {
+  document.querySelectorAll('input[name="level"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        level = levelMap[e.target.value];
+        console.log("Level set to:", level);
+      }
+    });
   });
-});
+}
 
 // Load conversations from server
 async function loadConversationsFromServer() {
