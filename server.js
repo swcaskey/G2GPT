@@ -35,7 +35,7 @@ function generateUUID() {
   return crypto.randomUUID();
 }
 
-function buildFallbackReply(model, prompt) {
+function buildFallbackReply(model, prompt) { // can customize responses based on model and prompt for more realistic testing
   console.log("USING SERVER FALLBACK:", model, prompt);
   const lower = prompt.toLowerCase();
 // --- SIMPLE MATH HANDLER ---
@@ -48,10 +48,10 @@ function buildFallbackReply(model, prompt) {
 
     let result;
 
-    if (operator === "+") result = a + b;
-    else if (operator === "-") result = a - b;
-    else if (operator === "*" || operator === "x") result = a * b;
-    else if (operator === "/") result = b === 0 ? "undefined because division by zero is not allowed" : a / b;
+    if (operator === "+") result = a + b; //  addition
+    else if (operator === "-") result = a - b; // subtraction
+    else if (operator === "*" || operator === "x") result = a * b; // multiplication
+    else if (operator === "/") result = b === 0 ? "undefined because division by zero is not allowed" : a / b; // division with zero check
 
   if (model === "llama3.2") {
     console.log("MATH HIT llama3.2:", result);
@@ -397,7 +397,7 @@ app.post("/api/chat", async (req, res) => {
           messages,
           stream: false,
           options: {
-            num_predict: 200 // 
+            num_predict: 200 // limit response length for testing purposes
           }
         })
       });
