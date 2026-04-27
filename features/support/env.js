@@ -98,6 +98,36 @@ if (typeof resource === 'string' && resource.includes('/api/chat')) {
   function buildReply(model, prompt) {
   const lower = prompt.toLowerCase();
 
+    // --- SIMPLE MATH HANDLER ---
+  const mathCheck = prompt.match(/(-?\d+(?:\.\d+)?)\s*([+\-*/x])\s*(-?\d+(?:\.\d+)?)/i);
+
+  if (mathCheck) {
+    const a = Number(mathCheck[1]);
+    const operator = mathCheck[2].toLowerCase();
+    const b = Number(mathCheck[3]);
+
+    let result;
+
+    if (operator === "+") result = a + b;
+    else if (operator === "-") result = a - b;
+    else if (operator === "*" || operator === "x") result = a * b;
+    else if (operator === "/") result = b === 0 ? "undefined because division by zero is not allowed" : a / b;
+
+    if (model === "llama3.2") {
+      return `The answer is ${result}.`;
+    }
+
+    if (model === "qwen2.5:0.5b") {
+      return `Let's calculate it step by step: ${a} ${operator} ${b} = ${result}.`;
+    }
+
+    if (model === "phi3") {
+      return `Answer: ${result}.`;
+    }
+
+    return `${result}`;
+  }
+
   if (lower.includes('weather')) {
     if (model === 'llama3.2') {
       return 'I cannot access live weather in this automated test, but I can still answer the request directly: normally I would give the current temperature, conditions, and short forecast.';

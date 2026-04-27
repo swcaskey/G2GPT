@@ -36,7 +36,40 @@ function generateUUID() {
 }
 
 function buildFallbackReply(model, prompt) {
+  console.log("USING SERVER FALLBACK:", model, prompt);
   const lower = prompt.toLowerCase();
+// --- SIMPLE MATH HANDLER ---
+  const mathCheck = prompt.match(/(-?\d+(?:\.\d+)?)\s*([+\-*/x])\s*(-?\d+(?:\.\d+)?)/i);
+
+  if (mathCheck) {
+    const a = Number(mathCheck[1]);
+    const operator = mathCheck[2].toLowerCase();
+    const b = Number(mathCheck[3]);
+
+    let result;
+
+    if (operator === "+") result = a + b;
+    else if (operator === "-") result = a - b;
+    else if (operator === "*" || operator === "x") result = a * b;
+    else if (operator === "/") result = b === 0 ? "undefined because division by zero is not allowed" : a / b;
+
+  if (model === "llama3.2") {
+    console.log("MATH HIT llama3.2:", result);
+    return `The answer is ${result}.`;
+  }
+
+  if (model === "qwen2.5:0.5b") {
+    console.log("MATH HIT qwen:", result);
+    return `Let's calculate it step by step: ${a} ${operator} ${b} = ${result}.`;
+  }
+
+  if (model === "phi3") {
+    console.log("MATH HIT phi3:", result);
+    return `Answer: ${result}.`;
+  }
+
+    return `${result}`;
+  }
 
   const styles = {
     "llama3.2": "Direct answer",
@@ -55,30 +88,6 @@ function buildFallbackReply(model, prompt) {
       return `${style}: For a weather question, I would check the location, current temperature, chance of rain, wind conditions, and short-term forecast. Since this is a fallback response, I cannot retrieve live data, but I can still explain what weather information would be useful.`;
     }
     return `${style}: I cannot fetch live weather right now, but I would summarize temperature, conditions, and forecast.`;
-  }
-
-  // Simple math questions
-  const mathMatch = prompt.match(/(-?\d+(\.\d+)?)\s*([+\-*/x])\s*(-?\d+(\.\d+)?)/);
-
-  if (mathMatch) {
-    const a = parseFloat(mathMatch[1]);
-    const op = mathMatch[3];
-    const b = parseFloat(mathMatch[4]);
-
-    let answer;
-
-    if (op === "+") answer = a + b;
-    else if (op === "-") answer = a - b;
-    else if (op === "*" || op.toLowerCase() === "x") answer = a * b;
-    else if (op === "/") answer = b !== 0 ? a / b : "undefined because division by zero is not allowed";
-
-    if (model === "llama3.2") {
-      return `${style}: ${a} ${op} ${b} = ${answer}.`;
-    }
-    if (model === "qwen2.5:0.5b") {
-      return `${style}: To solve this, perform the operation ${op} on ${a} and ${b}. The result is ${answer}.`;
-    }
-    return `${style}: Answer: ${answer}.`;
   }
 
   // Rome / factual example
@@ -366,12 +375,55 @@ app.post("/api/chat", async (req, res) => {
 }
 
   try {
-const prompt = messages[messages.length - 1]?.content || "";
+    const prompt = messages[messages.length - 1]?.content || "";
 
-const responses = models.map((model) => ({
-  model,
-  content: buildFallbackReply(model, prompt)
-}));
+    const responses = await Promise.all(
+  models.map(async (model) => {
+
+    // This is the important part
+    if (process.env.NODE_ENV === "test") {
+      return {
+        model,
+        content: buildFallbackReply(model, prompt)
+      };
+    }
+
+    try {
+      const ollamaResponse = await fetch("http://127.0.0.1:11434/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model,
+          messages,
+          stream: false,
+          options: {
+            num_predict: 60
+          }
+        })
+      });
+
+      if (!ollamaResponse.ok) {
+        return {
+          model,
+          content: buildFallbackReply(model, prompt)
+        };
+      }
+
+      const data = await ollamaResponse.json();
+
+      return {
+        model,
+        content: data.message?.content || buildFallbackReply(model, prompt)
+      };
+
+    } catch (error) {
+      return {
+        model,
+        content: buildFallbackReply(model, prompt)
+      };
+    }
+  })
+);
     // Save conversation to database (simplified: one conversation per session)
     // In production, you'd associate conversations with user_id and use activeId from frontend
     const conversationId = generateUUID();
