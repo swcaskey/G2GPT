@@ -22,7 +22,7 @@ app.use(session({
   secret: "g2gpt-secret-key-change-in-production",
   resave: false,
   saveUninitialized: false,
-  cookie: { 
+  cookie: {
     secure: false, // Set to true with HTTPS
     httpOnly: true,
     maxAge: 1000 * 60 * 60 * 24 // 24 hours
@@ -166,7 +166,7 @@ app.post("/login", (req, res) => {
 // POST /logout - End user session
 app.post("/logout", (req, res) => {
   console.log("Logout: Destroying session for user", req.session?.userId);
-  
+
   req.session.destroy((err) => {
     if (err) {
       console.error("Logout: Error destroying session:", err);
@@ -175,7 +175,7 @@ app.post("/logout", (req, res) => {
         message: "Error during logout."
       });
     }
-    
+
     res.clearCookie('connect.sid'); // Clear session cookie
     return res.status(200).json({
       success: true,
@@ -234,7 +234,7 @@ app.get("/api/models", async (req, res) => {
   } catch (error) {
     console.warn("Ollama is offline or unreachable. Returning cloud models only.");
   }
-  
+
   res.json({
     success: true,
     models: modelNames
@@ -243,9 +243,28 @@ app.get("/api/models", async (req, res) => {
 
 // ==================== LLM Chat Endpoint ====================
 
+//system for level
+function buildLeveledPrompt(message, level) {
+  if (!level) return message;
+  if (level < 0) level = 0;
+
+  //0 - normal, 1 - child, 2 - beginner, 3 - expert
+  const styles = [
+    "",
+    "Explain this in very simple terms, like you're talking to a 5-year-old. Use analogies.",
+    "Explain this clearly for a beginner with simple examples.",
+    "Explain this in a detailed, technical way assuming deep knowledge."
+  ];
+
+  if (level > styles.length - 1) level = styles.length;
+
+  return `${styles[level]} ${message}`;
+}
+
+
 // POST /api/chat/multi - Send prompt to multiple Ollama and Cloud Mock models simultaneously
 app.post("/api/chat/multi", async (req, res) => {
-  const { messages, modelNames } = req.body;
+  let { messages, modelNames, level } = req.body;
 
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ success: false, message: "Messages array is required and must not be empty." });
@@ -254,6 +273,11 @@ app.post("/api/chat/multi", async (req, res) => {
   if (!modelNames || !Array.isArray(modelNames) || modelNames.length === 0) {
      return res.status(400).json({ success: false, message: "At least one model name is required." });
   }
+
+  if (!level) level = 0;
+
+  //parse the latest message and inject the custom header into the prompt
+  if (messages.length > 0) messages[messages.length - 1].content = buildLeveledPrompt(messages[messages.length - 1].content, level);
 
   try {
     const fetchPromises = modelNames.map(async (modelName) => {
@@ -296,7 +320,7 @@ app.get("/api/conversations", (req, res) => {
   console.log("API: GET /api/conversations called");
   console.log("API: Session:", req.session);
   console.log("API: User ID:", req.session?.userId);
-  
+
   if (!req.session || !req.session.userId) {
     console.log("API: Authentication required - no session or userId");
     return res.status(401).json({
@@ -338,7 +362,7 @@ app.post("/api/conversations", (req, res) => {
   console.log("API: Session:", req.session);
   console.log("API: User ID:", req.session?.userId);
   console.log("API: Request body:", req.body);
-  
+
   if (!req.session || !req.session.userId) {
     console.log("API: Authentication required - no session or userId");
     return res.status(401).json({
@@ -348,7 +372,7 @@ app.post("/api/conversations", (req, res) => {
   }
 
   const { id, title } = req.body;
-  
+
   if (!id || !title) {
     console.log("API: Missing id or title");
     return res.status(400).json({
@@ -359,9 +383,9 @@ app.post("/api/conversations", (req, res) => {
 
   try {
     const now = new Date().toISOString();
-    
+
     console.log("API: Saving conversation:", { id, userId: req.session.userId, title });
-    
+
     const stmt = db.prepare(`
       INSERT INTO conversations (id, user_id, title, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?)
@@ -478,8 +502,8 @@ app.post("/api/conversations/:id/messages", (req, res) => {
 
     // Update conversation timestamp
     const updateStmt = db.prepare(`
-      UPDATE conversations 
-      SET updated_at = ? 
+      UPDATE conversations
+      SET updated_at = ?
       WHERE id = ?
     `);
     updateStmt.run(new Date().toISOString(), conversationId);

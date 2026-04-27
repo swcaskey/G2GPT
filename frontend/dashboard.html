@@ -125,9 +125,43 @@
     <div class="settings-modal">
       <h2>AI Model Selection</h2>
       <p>Select up to 3 models to respond simultaneously.</p>
-      <div id="model-list" class="model-list">
-        <!-- populated dynamically -->
+
+      <div class="settings-grid">
+        <!-- LEFT: MODELS -->
+        <div class="settings-col">
+          <h3>Models</h3>
+          <div id="model-list" class="model-list">
+            <!-- populated dynamically -->
+          </div>
+        </div>
+
+        <!-- RIGHT: LEVEL -->
+        <div class="settings-col">
+          <h3>Response Level</h3>
+          <p class="settings-sub">Select one response style.</p>
+
+          <label>
+            <input type="radio" name="level" value="default" checked />
+            Default
+          </label>
+
+          <label>
+            <input type="radio" name="level" value="child" />
+            Child
+          </label>
+
+          <label>
+            <input type="radio" name="level" value="beginner" />
+            Beginner
+          </label>
+
+          <label>
+            <input type="radio" name="level" value="expert" />
+            Expert
+          </label>
+        </div>
       </div>
+
       <div class="settings-actions">
         <button id="cancel-settings" class="btn" style="background: var(--slate);">Cancel</button>
         <button id="save-settings" class="btn">Save Choices</button>

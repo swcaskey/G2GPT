@@ -56,19 +56,19 @@ function setEmptyState(messagesContainer) {
 
 function appendBubble(role, content, animate = true, messagesContainer) {
   const container = messagesContainer || messages;
-  const emptyState = container.querySelector ? container.querySelector('#empty-state') : 
+  const emptyState = container.querySelector ? container.querySelector('#empty-state') :
                      (container.getElementById ? container.getElementById('empty-state') : null);
-  
+
   if (emptyState && emptyState.remove) {
     emptyState.remove();
   }
 
-  const row = document.createElement ? document.createElement('div') : { 
+  const row = document.createElement ? document.createElement('div') : {
     className: '',
     style: {},
     innerHTML: '',
   };
-  
+
   row.className = `msg-row ${role}`;
 
   if (!animate) {
@@ -131,7 +131,7 @@ function renderMessages(messageList, messagesContainer) {
 function renderHistory(conversations, historyListContainer, searchInputElement, currentActiveId) {
   const historyContainer = historyListContainer || historyList;
   const searchElement = searchInputElement || searchInput;
-  
+
   const query = (searchElement && searchElement.value) ? searchElement.value.trim().toLowerCase() : '';
   historyContainer.innerHTML = '';
 
@@ -158,7 +158,7 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
     const sectionLabel = document.createElement ? document.createElement('div') : {};
     sectionLabel.className = 'section-label';
     sectionLabel.textContent = label;
-    
+
     if (historyContainer.appendChild) {
       historyContainer.appendChild(sectionLabel);
     }
@@ -205,12 +205,12 @@ async function callLLM(messageList) {
   console.log('Dashboard: callLLM multi called');
   // Strip out model_name from messages before sending
   const cleanMsgs = messageList.map(m => ({ role: m.role, content: m.content }));
-  
+
   try {
     const response = await fetch('/api/chat/multi', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: cleanMsgs, modelNames: selectedModels })
+      body: JSON.stringify({ messages: cleanMsgs, modelNames: selectedModels, level: level })
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.message);
@@ -241,18 +241,37 @@ if (typeof module !== 'undefined' && module.exports) {
 // Global variables for the dashboard
 let conversations = [];
 let selectedModels = [];
+let level = 0; //NONE
 let settingsModal, settingsBtn, cancelSettingsBtn, saveSettingsBtn, modelListDiv;
 let activeId = null;
 let historyList, searchInput, newChatButton, chatTitle, messages, typingIndicator, textarea, sendButton;
+
+
+//setup the level radio buttons
+const levelMap = {
+  default: 0,
+  child: 1,
+  beginner: 2,
+  expert: 3
+};
+
+document.querySelectorAll('input[name="level"]').forEach(radio => {
+  radio.addEventListener('change', (e) => {
+    if (e.target.checked) {
+      level = levelMap[e.target.value];
+      console.log("Level set to:", level);
+    }
+  });
+});
 
 // Load conversations from server
 async function loadConversationsFromServer() {
   try {
     console.log('Dashboard: Loading conversations from server');
     const response = await fetch('/api/conversations');
-    
+
     console.log('Dashboard: Load conversations response status:', response.status);
-    
+
     if (response.ok) {
       const data = await response.json();
       console.log('Dashboard: Load conversations response:', data);
@@ -281,7 +300,7 @@ async function loadMessagesFromServer(conversationId) {
   try {
     console.log('Dashboard: Loading messages for conversation:', conversationId);
     const response = await fetch(`/api/conversations/${conversationId}/messages`);
-    
+
     if (response.ok) {
       const data = await response.json();
       const conversation = getConv(conversations, conversationId);
@@ -316,11 +335,11 @@ async function saveConversationToServer(conversation) {
         title: conversation.title
       })
     });
-    
+
     console.log('Dashboard: Save conversation response status:', response.status);
     const responseData = await response.json();
     console.log('Dashboard: Save conversation response:', responseData);
-    
+
     if (!response.ok) {
       console.error('Dashboard: Failed to save conversation:', responseData);
     } else {
@@ -342,7 +361,7 @@ async function saveMessageToServer(conversationId, role, content, model_name = n
       },
       body: JSON.stringify({ role, content, model_name })
     });
-    
+
     if (!response.ok) {
       console.error('Dashboard: Failed to save message:', response.status);
     }
@@ -358,7 +377,7 @@ async function deleteConversationFromServer(conversationId) {
     const response = await fetch(`/api/conversations/${conversationId}`, {
       method: 'DELETE'
     });
-    
+
     if (!response.ok) {
       console.error('Dashboard: Failed to delete conversation:', response.status);
     }
@@ -444,12 +463,12 @@ async function loadConv(id) {
   }
 
   chatTitle.textContent = conversation.title;
-  
+
   // Load messages from server if not already loaded
   if (conversation.messages.length === 0 && conversation.messageCount > 0) {
     await loadMessagesFromServer(id);
   }
-  
+
   renderMessages(conversation.messages, messages);
   renderHistory(conversations, historyList, searchInput, activeId);
 }
@@ -457,10 +476,10 @@ async function loadConv(id) {
 // Global function to delete conversation
 async function deleteConv(event, id) {
   event.stopPropagation();
-  
+
   // Delete from server first
   await deleteConversationFromServer(id);
-  
+
   // Remove from client-side array
   conversations = conversations.filter((conversation) => conversation.id !== id);
 
@@ -481,7 +500,7 @@ async function deleteConv(event, id) {
 if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {
     console.log('Dashboard: DOM loaded');
-    
+
     // Initialize DOM elements
     historyList = document.getElementById('history-list');
     searchInput = document.getElementById('search-input');
@@ -515,7 +534,7 @@ if (typeof document !== 'undefined') {
         let fullHTML = '';
         if (cloudHTML) fullHTML += '<h4 style="margin: 4px; font-size: 11px; text-transform: uppercase; color: #888;">☁️ Cloud API Models</h4>' + cloudHTML;
         if (localHTML) fullHTML += '<h4 style="margin: 4px; font-size: 11px; border-top: 1px solid #444; padding-top: 5px; text-transform: uppercase; color: #888;">🦙 Local Models</h4>' + localHTML;
-        
+
         modelListDiv.innerHTML = fullHTML;
       } else {
         modelListDiv.innerHTML = 'No models detected.';
@@ -526,7 +545,7 @@ if (typeof document !== 'undefined') {
     if(cancelSettingsBtn) cancelSettingsBtn.addEventListener('click', () => { settingsModal.classList.remove('show'); });
     if(saveSettingsBtn) saveSettingsBtn.addEventListener('click', () => {
        const checked = Array.from(modelListDiv.querySelectorAll('input:checked')).map(cb => cb.value);
-       
+
        if(checked.length === 0) { alert('Please select at least 1 model.'); return; }
        selectedModels = checked;
        settingsModal.classList.remove('show');
@@ -565,7 +584,7 @@ if (typeof document !== 'undefined') {
   searchInput.addEventListener('input', () => renderHistory(conversations, historyList, searchInput, activeId));
 
   console.log('Dashboard: Event listeners attached');
-  
+
   // Load conversations from server on page load
   loadConversationsFromServer().then(() => {
     renderHistory(conversations, historyList, searchInput, activeId);

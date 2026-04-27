@@ -787,9 +787,9 @@ h1 {
 .settings-modal {
   background: #fff;
   border-radius: var(--radius-medium);
-  padding: 30px;
-  width: 400px;
-  max-width: 90vw;
+  padding: 34px;              /* slightly more padding */
+  width: 520px;               /* wider */
+  max-width: 95vw;            /* better on smaller screens */
   box-shadow: var(--shadow-main);
 }
 .settings-modal h2 { margin-top: 0; color: var(--rutgers-red); }
@@ -812,8 +812,11 @@ h1 {
 }
 .settings-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--panel-line);
 }
 
 /* Multi-Column Layout */
@@ -862,4 +865,85 @@ h1 {
     padding: 2px 8px;
     border-radius: 12px;
     font-size: 0.75rem;
+}
+
+/* Model Level Selection */
+.level-selection {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--panel-line);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.level-selection h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--rutgers-red);
+}
+
+.level-selection p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-soft);
+}
+
+.level-selection label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.settings-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-col h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--rutgers-red);
+}
+
+.settings-sub {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-soft);
+}
+
+.model-list {
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+@media (max-width: 600px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.settings-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(247, 249, 252, 0.6);
+  border-radius: 12px;
+  border: 1px solid var(--panel-line);
+}
+
+.settings-col:first-child {
+  border-right: 1px solid rgba(203, 210, 217, 0.5);
 }
