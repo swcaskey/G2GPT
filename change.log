@@ -9,3 +9,7 @@ Feature 4: Resume conversations from conversation history. "Updated UI". https:/
 Feature 5: Use any LLM model. "Works with ANY Ollama model". https://github.com/swcaskey/G2GPT/commit/89affef5269da5c8a68e77db310d47ac3f18498d
 
 Feature 6: Chat history saves to account. "Account History". https://github.com/swcaskey/G2GPT/commit/7675b7963f3df770b2eccac99fa02a139b53c0b4
+
+Feature 7: Special Feature. "Configure Response Level". https://github.com/swcaskey/G2GPT/commit/a60b6961cc368bf01d23ca72bfb6bc17633811d9
+
+Feature 8: Special Feature. "Chat Utility Buttons". https://github.com/swcaskey/G2GPT/commit/d52cfc8435d7e7fd8a76351f1fac24e0f02a6c8f
