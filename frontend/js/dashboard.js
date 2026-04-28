@@ -576,7 +576,29 @@ if (typeof document !== 'undefined') {
     fetch('/api/models').then(r => r.json()).then(data => {
       const models = (data.models || []).map(m => m.name || m);
       if(models.length > 0) {
-        selectedModels = models.slice(0, 3);
+        // Separate local and cloud models
+        const localModels = models.filter(m => !m.includes(':') || (!m.startsWith('openai:') && !m.startsWith('gemini:') && !m.startsWith('claude:')));
+        const cloudModels = models.filter(m => m.includes(':') && (m.startsWith('openai:') || m.startsWith('gemini:') || m.startsWith('claude:')));
+        
+        // Load saved model selection or auto-select local models
+        const savedModels = localStorage.getItem('selectedModels');
+        if (savedModels) {
+          try {
+            selectedModels = JSON.parse(savedModels);
+          } catch (e) {
+            selectedModels = [];
+          }
+        }
+        
+        // Auto-select: prefer local models if available, otherwise the first cloud models
+        if (selectedModels.length === 0) {
+          if (localModels.length > 0) {
+            selectedModels = localModels;
+          } else if (cloudModels.length > 0) {
+            selectedModels = cloudModels.slice(0, 3);
+          }
+        }
+        
         let cloudHTML = '';
         let localHTML = '';
         models.forEach(modelName => {
@@ -603,6 +625,8 @@ if (typeof document !== 'undefined') {
 
        if(checked.length === 0) { alert('Please select at least 1 model.'); return; }
        selectedModels = checked;
+       // Save model selection to localStorage for persistence
+       localStorage.setItem('selectedModels', JSON.stringify(selectedModels));
        settingsModal.classList.remove('show');
     });
 
