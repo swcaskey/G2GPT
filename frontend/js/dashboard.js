@@ -3,7 +3,7 @@ function getConv(conversations, id) {
   return conversations.find((conversation) => conversation.id === id);
 }
 
-function genId() {
+function genId() { // Simple ID generator using current timestamp and random number
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
 
@@ -12,13 +12,13 @@ function autoTitle(text) {
   return trimmed.slice(0, 42) + (trimmed.length > 42 ? '.' : '');
 }
 
-function groupConvs(list) {
+function groupConvs(list) { // Group conversations by updatedAt date: Today, Yesterday, Older
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const yesterday = today - 86400000;
   const groups = { Today: [], Yesterday: [], Older: [] };
 
-  list.forEach((conversation) => {
+  list.forEach((conversation) => { // Ensure updatedAt is a timestamp
     if (conversation.updatedAt >= today) {
       groups.Today.push(conversation);
     } else if (conversation.updatedAt >= yesterday) {
@@ -31,7 +31,7 @@ function groupConvs(list) {
   return groups;
 }
 
-function escapeHtml(str) {
+function escapeHtml(str) { // Basic HTML escaping to prevent XSS
   return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -43,7 +43,7 @@ function formatMessage(str) {
   return escapeHtml(str).replace(/\n/g, '<br>');
 }
 
-function setEmptyState(messagesContainer) {
+function setEmptyState(messagesContainer) { // Set empty state message when there are no conversations or messages
   const container = messagesContainer || messages;
   container.innerHTML = `
     <div id="empty-state" class="empty-state">
@@ -87,7 +87,7 @@ function appendBubble(role, content, animate = true, messagesContainer) {
   return row;
 }
 
-function renderMessages(messageList, messagesContainer) {
+function renderMessages(messageList, messagesContainer) { // Render messages in the chat area, or show empty state if no messages
   const container = messagesContainer || messages;
   container.innerHTML = '';
 
@@ -109,7 +109,7 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
   const query = (searchElement && searchElement.value) ? searchElement.value.trim().toLowerCase() : '';
   historyContainer.innerHTML = '';
 
-  if (!conversations) {
+  if (!conversations) { // If conversations is null or undefined, set it to an empty array to avoid errors
     conversations = [];
   }
 
@@ -124,11 +124,11 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
 
   const groups = groupConvs(filtered);
 
-  ['Today', 'Yesterday', 'Older'].forEach((label) => {
+  ['Today', 'Yesterday', 'Older'].forEach((label) => { // Render each group with a label, and list conversations under it
     if (!groups[label].length) {
       return;
     }
-
+    // Create and append section label for the group
     const sectionLabel = document.createElement ? document.createElement('div') : {};
     sectionLabel.className = 'section-label';
     sectionLabel.textContent = label;
@@ -137,7 +137,7 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
       historyContainer.appendChild(sectionLabel);
     }
 
-    groups[label].forEach((conversation) => {
+    groups[label].forEach((conversation) => { // Create a history item for each conversation, with click handlers for loading and deleting
       const item = document.createElement ? document.createElement('div') : {};
       // Use passed activeId parameter or try to access global activeId if in browser
       const activeIdToCheck = currentActiveId !== undefined ? currentActiveId : (typeof activeId !== 'undefined' ? activeId : null);
@@ -175,7 +175,7 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
   });
 }
 
-function getSelectedModels() {
+function getSelectedModels() { // Get list of selected models from the model picker checkboxes
   const checked = document.querySelectorAll('#model-picker input[type="checkbox"]:checked');
   return Array.from(checked).map((input) => input.value);
 }
@@ -272,7 +272,7 @@ async function loadConversationsFromServer() {
 }
 
 // Load messages for a specific conversation
-async function loadMessagesFromServer(conversationId) {
+async function loadMessagesFromServer(conversationId) { 
   try {
     console.log('Dashboard: Loading messages for conversation:', conversationId);
     const response = await fetch(`/api/conversations/${conversationId}/messages`);
@@ -280,7 +280,7 @@ async function loadMessagesFromServer(conversationId) {
     if (response.ok) {
       const data = await response.json();
       const conversation = getConv(conversations, conversationId);
-      if (conversation) {
+      if (conversation) { // Ensure conversation exists before trying to set messages
         conversation.messages = data.messages.map(msg => ({
           role: msg.role,
           content: msg.content,
@@ -288,16 +288,16 @@ async function loadMessagesFromServer(conversationId) {
         }));
         console.log('Dashboard: Loaded messages:', conversation.messages.length);
       }
-    } else {
+    } else { // If response is not ok, log the error message from server
       console.error('Dashboard: Failed to load messages:', response.status);
     }
-  } catch (error) {
+  } catch (error) { // Log any errors that occur during fetch
     console.error('Dashboard: Error loading messages:', error);
   }
 }
 
 // Save conversation to server
-async function saveConversationToServer(conversation) {
+async function saveConversationToServer(conversation) { // Only save if conversation has an ID (i.e. it has been created on server)
   try {
     console.log('Dashboard: Saving conversation to server:', conversation.id, conversation.title);
     const response = await fetch('/api/conversations', {
@@ -315,7 +315,7 @@ async function saveConversationToServer(conversation) {
     const responseData = await response.json();
     console.log('Dashboard: Save conversation response:', responseData);
     
-    if (!response.ok) {
+    if (!response.ok) { // If the response is not ok, log the error message from server
       console.error('Dashboard: Failed to save conversation:', responseData);
     } else {
       console.log('Dashboard: Conversation saved successfully');
@@ -546,7 +546,7 @@ if (typeof document !== 'undefined') {
     this.style.height = `${Math.min(this.scrollHeight, 120)}px`;
   });
 
-  textarea.addEventListener('keydown', (event) => {
+  textarea.addEventListener('keydown', (event) => { // Send message on Enter key, but allow Shift+Enter for new lines
     if (event.key === 'Enter' && !event.shiftKey) {
       console.log('Dashboard: Enter key pressed');
       event.preventDefault();

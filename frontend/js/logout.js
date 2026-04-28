@@ -7,11 +7,11 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  confirmLogoutButton.addEventListener('click', async () => {
+  confirmLogoutButton.addEventListener('click', async () => { // Handle logout confirmation
     logoutMessage.textContent = '';
     logoutMessage.className = 'message';
 
-    try {
+    try { // Send logout request to server
       const response = await fetch('/logout', {
         method: 'POST',
         headers: {
@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = await response.json();
 
-      if (!response.ok) {
+      if (!response.ok) { // If logout failed, show error message from server
         logoutMessage.textContent = data.message || 'Unable to log out.';
         logoutMessage.classList.add('error');
         return;
@@ -30,16 +30,16 @@ document.addEventListener('DOMContentLoaded', () => {
       logoutMessage.textContent = data.message || 'Logged out successfully. Redirecting...';
       logoutMessage.classList.add('success');
 
-      setTimeout(() => {
+      setTimeout(() => { // Redirect to home page after successful logout
         window.location.href = '/';
       }, 900);
-    } catch (error) {
+    } catch (error) { // Handle network errors
       logoutMessage.textContent = 'A network error occurred. Please try again.';
       logoutMessage.classList.add('error');
     }
   });
 
-  cancelLogoutButton.addEventListener('click', () => {
+  cancelLogoutButton.addEventListener('click', () => { // Handle logout cancellation
     window.location.href = '/dashboard';
   });
 });

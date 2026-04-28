@@ -53,17 +53,17 @@ function buildFallbackReply(model, prompt) { // can customize responses based on
     else if (operator === "*" || operator === "x") result = a * b; // multiplication
     else if (operator === "/") result = b === 0 ? "undefined because division by zero is not allowed" : a / b; // division with zero check
 
-  if (model === "llama3.2") {
+  if (model === "llama3.2") { // different response styles based on model for testing purposes
     console.log("MATH HIT llama3.2:", result);
     return `The answer is ${result}.`;
   }
 
-  if (model === "qwen2.5:0.5b") {
+  if (model === "qwen2.5:0.5b") { // Qwen2.5:0.5b provides a step-by-step explanation along with the final answer for math questions
     console.log("MATH HIT qwen:", result);
     return `Let's calculate it step by step: ${a} ${operator} ${b} = ${result}.`;
   }
 
-  if (model === "phi3") {
+  if (model === "phi3") { // Phi3 gives a concise answer with a brief explanation of the operation performed for math questions
     console.log("MATH HIT phi3:", result);
     return `Answer: ${result}.`;
   }
@@ -71,7 +71,7 @@ function buildFallbackReply(model, prompt) { // can customize responses based on
     return `${result}`;
   }
 
-  const styles = {
+  const styles = { // different response styles based on model for testing purposes
     "llama3.2": "Direct answer",
     "qwen2.5:0.5b": "Detailed explanation",
     "phi3": "Short practical answer"
@@ -113,7 +113,7 @@ function buildFallbackReply(model, prompt) { // can customize responses based on
   }
 
   // Explanation prompts
-  if (lower.includes("explain")) {
+  if (lower.includes("explain")) { 
     if (model === "llama3.2") {
       return `${style}: I can explain "${prompt}" by focusing on the main idea first.`;
     }
@@ -186,7 +186,7 @@ app.post("/signup", (req, res) => {
 
   // Basic email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
+  if (!emailRegex.test(email)) { // Check if email format is valid
     return res.status(400).json({
       success: false,
       message: "Please enter a valid email address."
@@ -207,11 +207,11 @@ app.post("/signup", (req, res) => {
     const insertStmt = db.prepare("INSERT INTO users (email, password) VALUES (?, ?)");
     insertStmt.run(email, password);
 
-    return res.status(201).json({
+    return res.status(201).json({ // 201 Created status code for successful resource creation
       success: true,
       message: "Account created successfully!"
     });
-  } catch (error) {
+  } catch (error) { // Log database errors and return a generic error message to the client
     console.error("Signup error:", error);
     return res.status(500).json({
       success: false,
@@ -235,7 +235,7 @@ app.post("/login", (req, res) => {
     const stmt = db.prepare("SELECT * FROM users WHERE email = ? AND password = ?");
     const user = stmt.get(email, password);
 
-    if (!user) {
+    if (!user) { // Log failed login attempt with email and success = 0 for analytics and security monitoring
       const insertStmt = db.prepare("INSERT INTO login_attempts (email, success) VALUES (?, ?)");
       insertStmt.run(email, 0);
 
@@ -262,7 +262,7 @@ app.post("/login", (req, res) => {
         email: user.email
       }
     });
-  } catch (error) {
+  } catch (error) { // Log database errors and return a generic error message to the client
     console.error("Login error:", error);
     return res.status(500).json({
       success: false,
@@ -302,7 +302,7 @@ app.get("/logins", (req, res) => {
       success: true,
       logins: rows
     });
-  } catch (error) {
+  } catch (error) { // Log database errors and return a generic error message to the client
     console.error("Error fetching login history:", error);
     res.status(500).json({
       success: false,
@@ -324,7 +324,7 @@ app.get("/api/models", async (req, res) => {
   try {
     const ollamaResponse = await fetch("http://127.0.0.1:11434/api/tags");
     
-    if (!ollamaResponse.ok) {
+    if (!ollamaResponse.ok) { // If Ollama is not running or returns an error, log the issue and return a 503 Service Unavailable status with a clear message
       return res.status(503).json({
         success: false,
         message: "Unable to connect to Ollama. Is it running?"
@@ -334,7 +334,7 @@ app.get("/api/models", async (req, res) => {
     const ollamaData = await ollamaResponse.json();
     const models = ollamaData.models || [];
     
-    if (models.length === 0) {
+    if (models.length === 0) { // If Ollama returns successfully but no models are found, log the issue and return a 503 Service Unavailable status with a clear message
       return res.status(503).json({
         success: false,
         message: "No models found in Ollama."
@@ -345,7 +345,7 @@ app.get("/api/models", async (req, res) => {
       success: true,
       models: models
     });
-  } catch (error) {
+  } catch (error) { // Log network errors or other issues when connecting to Ollama and return a 503 Service Unavailable status with a clear message
     console.error("Models API error:", error.message);
     return res.status(503).json({
       success: false,
@@ -489,7 +489,7 @@ app.get("/api/conversations", (req, res) => {
     });
   }
 
-  try {
+  try { // Fetch conversations for the logged-in user with message count
     const stmt = db.prepare(`
       SELECT c.id, c.title, c.created_at, c.updated_at,
              COUNT(m.id) as message_count
@@ -507,7 +507,7 @@ app.get("/api/conversations", (req, res) => {
       success: true,
       conversations: conversations
     });
-  } catch (error) {
+  } catch (error) { // Log database errors and return a generic error message to the client
     console.error("Error fetching conversations:", error);
     res.status(500).json({
       success: false,
@@ -533,7 +533,7 @@ app.post("/api/conversations", (req, res) => {
 
   const { id, title } = req.body;
   
-  if (!id || !title) {
+  if (!id || !title) { // Basic validation for required fields with logging for debugging
     console.log("API: Missing id or title");
     return res.status(400).json({
       success: false,
@@ -585,7 +585,7 @@ app.get("/api/conversations/:id/messages", (req, res) => {
     `);
     const conversation = conversationStmt.get(conversationId, req.session.userId);
 
-    if (!conversation) {
+    if (!conversation) { // Only return 404 if conversation doesn't exist or doesn't belong to user - prevents information leakage about conversation existence
       return res.status(404).json({
         success: false,
         message: "Conversation not found."
@@ -604,7 +604,7 @@ app.get("/api/conversations/:id/messages", (req, res) => {
       success: true,
       messages: messages
     });
-  } catch (error) {
+  } catch (error) { // Log database errors and return a generic error message to the client
     console.error("Error fetching messages:", error);
     res.status(500).json({
       success: false,
@@ -625,7 +625,7 @@ app.post("/api/conversations/:id/messages", (req, res) => {
   const conversationId = req.params.id;
   const { role, content } = req.body;
 
-  if (!role || !content) {
+  if (!role || !content) { // Basic validation for required fields
     return res.status(400).json({
       success: false,
       message: "Role and content are required."
@@ -646,7 +646,7 @@ app.post("/api/conversations/:id/messages", (req, res) => {
     `);
     const conversation = conversationStmt.get(conversationId, req.session.userId);
 
-    if (!conversation) {
+    if (!conversation) { // Only return 404 if conversation doesn't exist or doesn't belong to user - prevents information leakage about conversation existence
       return res.status(404).json({
         success: false,
         message: "Conversation not found."
@@ -668,7 +668,7 @@ app.post("/api/conversations/:id/messages", (req, res) => {
     `);
     updateStmt.run(new Date().toISOString(), conversationId);
 
-    res.json({
+    res.json({ 
       success: true,
       message: {
         id: result.lastInsertRowid,
@@ -678,7 +678,7 @@ app.post("/api/conversations/:id/messages", (req, res) => {
         created_at: new Date().toISOString()
       }
     });
-  } catch (error) {
+  } catch (error) { // Log database errors and return a generic error message to the client
     console.error("Error adding message:", error);
     res.status(500).json({
       success: false,
@@ -705,7 +705,7 @@ app.delete("/api/conversations/:id", (req, res) => {
     `);
     const conversation = conversationStmt.get(conversationId, req.session.userId);
 
-    if (!conversation) {
+    if (!conversation) { // Only return 404 if conversation doesn't exist or doesn't belong to user - prevents information leakage about conversation existence
       return res.status(404).json({
         success: false,
         message: "Conversation not found."
@@ -720,7 +720,7 @@ app.delete("/api/conversations/:id", (req, res) => {
       success: true,
       message: "Conversation deleted successfully."
     });
-  } catch (error) {
+  } catch (error) { // Log database errors and return a generic error message to the client
     console.error("Error deleting conversation:", error);
     res.status(500).json({
       success: false,

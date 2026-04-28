@@ -12,15 +12,15 @@ let sharedPassword = 'password123';
 
 // ==================== Scenario: Landing Page Access ====================
 
-Given('I am not logged in', async function () {
+Given('I am not logged in', async function () { // Ensure we start from a non-authenticated state by visiting the landing page
   await this.page.goto(baseUrl);
 });
 
-When('I visit the application home page', async function () {
+When('I visit the application home page', async function () { // Navigate to the landing page and verify it loads correctly
   await this.page.goto(baseUrl);
 });
 
-Then('I should see the landing page with options to create an account or log in', async function () {
+Then('I should see the landing page with options to create an account or log in', async function () { // Verify the landing page title and presence of sign-up/login links
   const title = await this.page.title();
   assert.strictEqual(title, 'G2GPT - Landing Page');
   
@@ -41,11 +41,11 @@ Then('I should see the landing page with options to create an account or log in'
 
 // ==================== Scenario: Account Registration ====================
 
-Given('I am on the sign-up page', async function () {
+Given('I am on the sign-up page', async function () { // Navigate to the sign-up page to prepare for account creation
   await this.page.goto(`${baseUrl}/signup`);
 });
 
-When('I enter valid account information and submit the form', async function () {
+When('I enter valid account information and submit the form', async function () { // Fill out the sign-up form with unique credentials and submit, then wait for success message or redirect
   const timestamp = Date.now();
   sharedEmail = `testuser${timestamp}@example.com`;
   
@@ -76,18 +76,18 @@ When('I enter valid account information and submit the form', async function () 
   await this.page.waitForNavigation({ timeout: 10000 });
 });
 
-Then('my account should be created and I should be able to log in', async function () {
+Then('my account should be created and I should be able to log in', async function () { // Verify we're on the login page after sign-up and that the title is correct, indicating account creation was successful
   const title = await this.page.title();
   assert.strictEqual(title, 'G2GPT - Log In');
 });
 
 // ==================== Scenario: Local Log In and Log Out ====================
 
-Given('I already have an account', async function () {
+Given('I already have an account', async function () { // Ensure we have an account to log in with by creating one if it doesn't exist, then navigate to the login page
   await this.page.goto(`${baseUrl}/login`);
 });
 
-When('I enter valid Log In credentials', async function () {
+When('I enter valid Log In credentials', async function () { // Fill out the login form with the shared credentials and submit, then wait for success message or redirect to dashboard
   await this.page.waitForSelector('#loginEmail');
   await this.page.type('#loginEmail', sharedEmail, { delay: 3 });
   await this.page.type('#loginPassword', sharedPassword, { delay: 3 });
@@ -114,7 +114,7 @@ When('I enter valid Log In credentials', async function () {
   await this.page.waitForNavigation({ timeout: 10000 });
 });
 
-Then('I should be signed in to the application', async function () {
+Then('I should be signed in to the application', async function () { // Verify we're on the dashboard page after login and that the title and heading are correct, indicating successful authentication
   const title = await this.page.title();
   assert.strictEqual(title, 'G2GPT - Dashboard');
   
@@ -123,6 +123,7 @@ Then('I should be signed in to the application', async function () {
 });
 
 Then('when I click log out and confirm, I should return to a non-authenticated state', async function () {
+  // Highlight logout link
   await this.page.waitForSelector('#logout-link', { timeout: 10000 });
 
   await this.page.evaluate(() => {
@@ -139,7 +140,7 @@ Then('when I click log out and confirm, I should return to a non-authenticated s
   let title = await this.page.title();
   assert.strictEqual(title, 'G2GPT - Log Out');
 
-  await this.page.evaluate(() => {
+  await this.page.evaluate(() => { // Highlight confirm logout button for visual demonstration before clicking
     const btn = document.getElementById('confirm-logout-btn');
     if (btn) btn.style.outline = '3px solid #ffc107';
   });
@@ -186,7 +187,8 @@ Given('I am logged in and on the dashboard', async function () {
   assert.strictEqual(title, 'G2GPT - Dashboard');
 });
 
-When('I enter a prompt in the chat box and click {string}', async function (buttonText) {
+When('I enter a prompt in the chat box and click {string}', async function (buttonText) { 
+  // Wait for input to be ready
   await this.page.waitForSelector('#user-input');
   
   // Highlight input field
@@ -259,6 +261,7 @@ Given('I have completed a chat session', async function () {
     timeout: 30000
   });
 
+  // Wait for sign-up form and fill it out
   await this.page.waitForSelector('#signupEmail', { timeout: 15000 });
   await this.page.type('#signupEmail', testEmail, { delay: 3 });
   await this.page.type('#signupPassword', 'password123', { delay: 3 });
@@ -298,7 +301,7 @@ Given('I have completed a chat session', async function () {
   await new Promise((r) => setTimeout(r, 1000));
 });
 
-When('I refresh the dashboard or log in again', async function () {
+When('I refresh the dashboard or log in again', async function () { 
   // Refresh the page
   await this.page.reload({ waitUntil: 'domcontentloaded', timeout: 30000 });
   await this.page.waitForSelector('#history-list', { timeout: 10000 });
@@ -306,6 +309,7 @@ When('I refresh the dashboard or log in again', async function () {
 });
 
 Then('I should see my previous session listed in the history sidebar', async function () {
+  // Wait for history items to load - give it more time
   await this.page.waitForFunction(
     () => {
       const sidebarText = document.body.innerText;
@@ -522,6 +526,7 @@ Then('the conversation should be loaded into the chat window', async function ()
   await new Promise(r => setTimeout(r, 2000));
 });
 Given('I have selected multiple models', async function () {
+  // Wait for model picker to be available
   await this.page.waitForSelector('#model-picker');
 });
 
@@ -536,12 +541,12 @@ Then('I should see a response from each selected model', async function () {
       .map((el) => el.textContent)
   );
 
-  assert.ok(
+  assert.ok( // Check for llama3.2 response - adjust if model name is different in the UI
     assistantTexts.some((text) => text.includes('llama3.2')),
     'Missing llama3.2 response'
   );
 
-  assert.ok(
+  assert.ok( // Check for qwen2.5:0.5b response - adjust if model name is different in the UI
     assistantTexts.some((text) => text.includes('qwen2.5:0.5b')),
     'Missing qwen2.5:0.5b response'
   );
@@ -555,6 +560,7 @@ Then('I should see a response from each selected model', async function () {
 // ==================== ITERATION 3: Partial Model Selection ====================
 
 Given('I have selected only llama3.2 and qwen2.5:0.5b', async function () {
+  // Wait for model picker to be available
   await this.page.waitForSelector('#model-picker');
 
   await this.page.evaluate(() => {
@@ -576,6 +582,7 @@ Given('I have selected only llama3.2 and qwen2.5:0.5b', async function () {
 });
 
 Then('I should see responses only from llama3.2 and qwen2.5:0.5b', async function () {
+  // Wait for responses to appear - give it more time
   await this.page.waitForFunction(
     () => {
       const text = document.body.innerText;
@@ -596,9 +603,10 @@ Then('I should see responses only from llama3.2 and qwen2.5:0.5b', async functio
 });
 
 When('I send multiple prompts in the chat', async function () {
+  // Wait for input to be ready
   await this.page.waitForSelector('#user-input');
 
-  const prompts = [
+  const prompts = [ // Define multiple prompts to test responses from selected models
     'Hello, how are you?',
     'What caused the fall of Rome?',
     'Can you explain this simply?'
@@ -617,6 +625,7 @@ When('I send multiple prompts in the chat', async function () {
 });
 
 Then('each prompt should receive responses from each selected model', async function () {
+  // Wait for all responses to appear - give it more time
   await this.page.waitForFunction(
     () => document.querySelectorAll('.msg-row.assistant').length >= 9,
     { timeout: 15000 }

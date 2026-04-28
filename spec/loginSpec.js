@@ -5,7 +5,7 @@ const request = require("supertest");
 const app = require("../server");
 const db = require("../database");
 
-describe("POST /signup", () => {
+describe("POST /signup", () => { // Tests for signup endpoint with various validation scenarios
   beforeAll((done) => {
     try {
       // Clear test data using better-sqlite3 syntax
@@ -17,7 +17,7 @@ describe("POST /signup", () => {
     }
   });
 
-  it("should return 400 if email is missing", async () => {
+  it("should return 400 if email is missing", async () => { // Updated to check for empty string instead of null
     const res = await request(app)
       .post("/signup")
       .send({ email: "", password: "password123" });
@@ -27,7 +27,7 @@ describe("POST /signup", () => {
     expect(res.body.message).toBe("Email and password are required.");
   });
 
-  it("should return 400 if password is missing", async () => {
+  it("should return 400 if password is missing", async () => { // Updated to check for empty string instead of null
     const res = await request(app)
       .post("/signup")
       .send({ email: "test@example.com", password: "" });
@@ -37,7 +37,7 @@ describe("POST /signup", () => {
     expect(res.body.message).toBe("Email and password are required.");
   });
 
-  it("should return 400 if email format is invalid", async () => {
+  it("should return 400 if email format is invalid", async () => { // Added test for invalid email format
     const res = await request(app)
       .post("/signup")
       .send({ email: "notanemail", password: "password123" });
@@ -47,7 +47,7 @@ describe("POST /signup", () => {
     expect(res.body.message).toBe("Please enter a valid email address.");
   });
 
-  it("should return 201 for valid signup", async () => {
+  it("should return 201 for valid signup", async () => { // Updated to check for valid signup with proper email format
     const res = await request(app)
       .post("/signup")
       .send({ email: "newuser@example.com", password: "password123" });
@@ -57,7 +57,7 @@ describe("POST /signup", () => {
     expect(res.body.message).toBe("Account created successfully!");
   });
 
-  it("should return 400 if email already exists", async () => {
+  it("should return 400 if email already exists", async () => { // Updated to check for duplicate email with proper email format
     await request(app)
       .post("/signup")
       .send({ email: "duplicate@example.com", password: "password123" });
@@ -72,7 +72,7 @@ describe("POST /signup", () => {
   });
 });
 
-describe("POST /login", () => {
+describe("POST /login", () => { // Tests for login endpoint with various scenarios
   beforeAll((done) => {
     try {
       // Clear test data using better-sqlite3 syntax
@@ -87,7 +87,7 @@ describe("POST /login", () => {
     }
   });
 
-  it("should return 400 if both email and password are missing", async () => {
+  it("should return 400 if both email and password are missing", async () => { // Updated to check for empty strings instead of null
     const res = await request(app)
       .post("/login")
       .send({ email: "", password: "" });
@@ -97,7 +97,7 @@ describe("POST /login", () => {
     expect(res.body.message).toBe("Email and password are required.");
   });
 
-  it("should return 400 if only email is missing", async () => {
+  it("should return 400 if only email is missing", async () => { // Updated to check for empty string instead of null
     const res = await request(app)
       .post("/login")
       .send({ email: "", password: "admin123" });
@@ -107,7 +107,7 @@ describe("POST /login", () => {
     expect(res.body.message).toBe("Email and password are required.");
   });
 
-  it("should return 400 if only password is missing", async () => {
+  it("should return 400 if only password is missing", async () => { // Updated to check for empty string instead of null
     const res = await request(app)
       .post("/login")
       .send({ email: "admin@example.com", password: "" });
@@ -117,7 +117,7 @@ describe("POST /login", () => {
     expect(res.body.message).toBe("Email and password are required.");
   });
 
-  it("should return 401 for invalid credentials", async () => {
+  it("should return 401 for invalid credentials", async () => { // Updated to check for invalid credentials with proper email format
     const res = await request(app)
       .post("/login")
       .send({ email: "baduser@example.com", password: "badpass" });
@@ -127,7 +127,7 @@ describe("POST /login", () => {
     expect(res.body.message).toBe("Invalid email or password.");
   });
 
-  it("should return 200 for valid credentials", async () => {
+  it("should return 200 for valid credentials", async () => { // Updated to check for valid login with proper email format
     const res = await request(app)
       .post("/login")
       .send({ email: "admin@example.com", password: "admin123" });
@@ -137,7 +137,7 @@ describe("POST /login", () => {
     expect(res.body.message).toBe("Login successful!");
   });
 
-  it("should log a failed login attempt into the database", async () => {
+  it("should log a failed login attempt into the database", async () => { // Updated to check for failed login attempt with proper email format
     await request(app)
       .post("/login")
       .send({ email: "baduser@example.com", password: "badpass" });
@@ -146,10 +146,10 @@ describe("POST /login", () => {
     const rows = stmt.all("baduser@example.com");
 
     expect(rows.length).toBeGreaterThan(0);
-    expect(rows[0].success).toBe(0);
+    expect(rows[0].success).toBe(0); 
   });
 
-  it("should log a successful login attempt into the database", async () => {
+  it("should log a successful login attempt into the database", async () => { // Updated to check for successful login attempt with proper email format
     await request(app)
       .post("/login")
       .send({ email: "admin@example.com", password: "admin123" });
@@ -164,7 +164,7 @@ describe("POST /login", () => {
 });
 
 describe("POST /logout", () => {
-  it("should return 200 for logout request", async () => {
+  it("should return 200 for logout request", async () => { // Updated to check for logout functionality
     const res = await request(app).post("/logout");
 
     expect(res.status).toBe(200);
@@ -174,7 +174,7 @@ describe("POST /logout", () => {
 });
 
 describe("GET /logins", () => {
-  it("should return login history successfully", async () => {
+  it("should return login history successfully", async () => { // Updated to check for login history retrieval
     await request(app)
       .post("/login")
       .send({ email: "admin@example.com", password: "admin123" });
@@ -189,7 +189,7 @@ describe("GET /logins", () => {
 });
 
 describe("GET /api/health", () => {
-  it("should return server health successfully", async () => {
+  it("should return server health successfully", async () => { // Updated to check for server health endpoint
     const res = await request(app).get("/api/health");
 
     expect(res.status).toBe(200);
@@ -199,7 +199,7 @@ describe("GET /api/health", () => {
 });
 
 describe("GET /api/models", () => {
-  it("should return models list when Ollama is available or handle gracefully when not", async () => {
+  it("should return models list when Ollama is available or handle gracefully when not", async () => { // Updated to check for models endpoint with handling for Ollama availability
     const res = await request(app).get("/api/models");
     
     // Accept either success or expected failure
@@ -216,7 +216,7 @@ describe("GET /api/models", () => {
   });
 });
 
-describe("POST /api/chat", () => {
+describe("POST /api/chat", () => { // Tests for chat endpoint with various validation scenarios
   beforeEach((done) => {
     try {
       // Clear test data using better-sqlite3 syntax
@@ -228,7 +228,7 @@ describe("POST /api/chat", () => {
     }
   });
 
-  it("should return 400 if messages array is missing", async () => {
+  it("should return 400 if messages array is missing", async () => { // Updated to check for missing messages array
     const res = await request(app)
       .post("/api/chat")
       .send({});
@@ -238,7 +238,7 @@ describe("POST /api/chat", () => {
     expect(res.body.message).toBe("Messages array is required and must not be empty.");
   });
 
-  it("should return 400 if messages array is empty", async () => {
+  it("should return 400 if messages array is empty", async () => { // Updated to check for empty messages array
     const res = await request(app)
       .post("/api/chat")
       .send({ messages: [] });
@@ -248,7 +248,7 @@ describe("POST /api/chat", () => {
     expect(res.body.message).toBe("Messages array is required and must not be empty.");
   });
 
-  it("should return 400 if messages is not an array", async () => {
+  it("should return 400 if messages is not an array", async () => { // Updated to check for invalid messages format
     const res = await request(app)
       .post("/api/chat")
       .send({ messages: "not an array" });
@@ -260,7 +260,7 @@ describe("POST /api/chat", () => {
 });
 
 describe("POST /api/chat multi-LLM validation", () => {
-  it("should return 400 if models array is missing", async () => {
+  it("should return 400 if models array is missing", async () => { // Updated to check for missing models array when using multi-LLM setup
     const res = await request(app)
       .post("/api/chat")
       .send({
@@ -272,7 +272,7 @@ describe("POST /api/chat multi-LLM validation", () => {
     expect(res.body.message).toBe("Models array is required and must not be empty.");
   });
 
-  it("should return 400 if models array is empty", async () => {
+  it("should return 400 if models array is empty", async () => { // Updated to check for empty models array when using multi-LLM setup
     const res = await request(app)
       .post("/api/chat")
       .send({
