@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const cancelLogoutButton = document.getElementById('cancel-logout-btn');
   const logoutMessage = document.getElementById('logoutMessage');
 
-  if (!confirmLogoutButton || !cancelLogoutButton || !logoutMessage) {
+  if (!confirmLogoutButton || !cancelLogoutButton || !logoutMessage) { // Check if the elements exist before adding event listeners
     return;
   }
 
@@ -15,20 +15,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const response = await fetch('/logout', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json' // Set content type to JSON for the request body
         }
       });
 
       const data = await response.json();
 
       if (!response.ok) { // If logout failed, show error message from server
-        logoutMessage.textContent = data.message || 'Unable to log out.';
-        logoutMessage.classList.add('error');
+        logoutMessage.textContent = data.message || 'Unable to log out.'; 
+        logoutMessage.classList.add('error'); // Show error message if server returns an error response
         return;
       }
 
       logoutMessage.textContent = data.message || 'Logged out successfully. Redirecting...';
-      logoutMessage.classList.add('success');
+      logoutMessage.classList.add('success'); // Show success message on successful logout
 
       setTimeout(() => { // Redirect to home page after successful logout
         window.location.href = '/';

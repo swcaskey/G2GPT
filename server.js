@@ -18,11 +18,11 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(session({
+app.use(session({ // Configure session management with secure cookie settings and a secret key (note: in production, use a secure, environment variable for the secret)
   secret: "g2gpt-secret-key-change-in-production",
   resave: false,
   saveUninitialized: false,
-  cookie: { 
+  cookie: { // In production, set secure: true and ensure your site is served over HTTPS to protect session cookies. For local testing, secure can be false.
     secure: false, // Set to true with HTTPS
     httpOnly: true,
     maxAge: 1000 * 60 * 60 * 24 // 24 hours
@@ -91,11 +91,11 @@ function buildFallbackReply(model, prompt) { // can customize responses based on
   }
 
   // Rome / factual example
-  if (lower.includes("rome")) {
+  if (lower.includes("rome")) { // If the prompt is about the fall of Rome, return a direct and concise historical explanation based on the model's style
     if (model === "llama3.2") {
       return `${style}: The fall of Rome was mainly caused by political instability, economic problems, military weakness, and invasions.`;
     }
-    if (model === "qwen2.5:0.5b") {
+    if (model === "qwen2.5:0.5b") { // For a historical question about the fall of Rome, Qwen2.5:0.5b provides a more detailed explanation that covers multiple factors and their interplay, reflecting its style of being more conversational and detailed in its interactions
       return `${style}: Rome fell because several pressures built up over time, including unstable leadership, economic strain, military issues, administrative division, and repeated invasions.`;
     }
     return `${style}: Rome declined because its government, economy, army, and borders weakened over time.`;
@@ -103,17 +103,17 @@ function buildFallbackReply(model, prompt) { // can customize responses based on
 
   // Greeting
   if (lower.includes("hello") || lower.includes("hi") || lower.includes("how are you")) {
-    if (model === "llama3.2") {
+    if (model === "llama3.2") { // Llama3.2 gives a direct and clear response that acknowledges the user's greeting and indicates readiness to assist, reflecting its style of being straightforward and helpful
       return `${style}: Hello! I am ready to help with your question.`;
     }
-    if (model === "qwen2.5:0.5b") {
+    if (model === "qwen2.5:0.5b") { // Qwen2.5:0.5b responds to greetings with a friendly and engaging tone, reflecting its style of being more conversational and detailed in its interactions
       return `${style}: Hi! I can help you work through your question step by step.`;
     }
     return `${style}: Hey! Send me what you want help with.`;
   }
 
   // Explanation prompts
-  if (lower.includes("explain")) { 
+  if (lower.includes("explain")) { // If the prompt is asking for an explanation, return a response that reflects the model's style of explaining concepts, whether it's direct, detailed, or concise
     if (model === "llama3.2") {
       return `${style}: I can explain "${prompt}" by focusing on the main idea first.`;
     }
@@ -124,7 +124,7 @@ function buildFallbackReply(model, prompt) { // can customize responses based on
   }
 
   // General question
-  if (prompt.trim().endsWith("?")) {
+  if (prompt.trim().endsWith("?")) { // If the prompt is a question, return an answer that reflects the model's style of responding to questions, whether it's direct, detailed, or concise
     if (model === "llama3.2") {
       return `${style}: My answer to "${prompt}" would focus on the main facts first.`;
     }
@@ -135,7 +135,7 @@ function buildFallbackReply(model, prompt) { // can customize responses based on
   }
 
   // General statement
-  if (model === "llama3.2") {
+  if (model === "llama3.2") { // Llama3.2 gives a direct and clear response that acknowledges the user's statement and indicates readiness to assist, reflecting its style of being straightforward and helpful
     return `${style}: I understand your statement: "${prompt}".`;
   }
   if (model === "qwen2.5:0.5b") {
@@ -167,7 +167,7 @@ app.get("/dashboard", (req, res) => {
 });
 
 // Logout confirmation page
-app.get("/logout", (req, res) => {
+app.get("/logout", (req, res) => { 
   res.sendFile(path.join(__dirname, "./frontend/logout.html"));
 });
 
@@ -178,7 +178,7 @@ app.post("/signup", (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(400).json({
+    return res.status(400).json({ // 400 Bad Request status code for missing required fields
       success: false,
       message: "Email and password are required."
     });
@@ -187,7 +187,7 @@ app.post("/signup", (req, res) => {
   // Basic email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) { // Check if email format is valid
-    return res.status(400).json({
+    return res.status(400).json({ // 400 Bad Request status code for invalid input
       success: false,
       message: "Please enter a valid email address."
     });
@@ -215,7 +215,7 @@ app.post("/signup", (req, res) => {
     console.error("Signup error:", error);
     return res.status(500).json({
       success: false,
-      message: "Database error during registration."
+      message: "Database error during registration." // Generic error message to avoid exposing sensitive details
     });
   }
 });
@@ -239,7 +239,7 @@ app.post("/login", (req, res) => {
       const insertStmt = db.prepare("INSERT INTO login_attempts (email, success) VALUES (?, ?)");
       insertStmt.run(email, 0);
 
-      return res.status(401).json({
+      return res.status(401).json({ // 401 Unauthorized status code for failed authentication
         success: false,
         message: "Invalid email or password."
       });
@@ -254,7 +254,7 @@ app.post("/login", (req, res) => {
 
     console.log("Login: Created session for user", user.id, user.email);
 
-    return res.status(200).json({
+    return res.status(200).json({ // 200 OK status code for successful login
       success: true,
       message: "Login successful!",
       user: {
@@ -264,7 +264,7 @@ app.post("/login", (req, res) => {
     });
   } catch (error) { // Log database errors and return a generic error message to the client
     console.error("Login error:", error);
-    return res.status(500).json({
+    return res.status(500).json({ // 500 Internal Server Error status code for unexpected server errors
       success: false,
       message: "Database error."
     });
@@ -275,17 +275,17 @@ app.post("/login", (req, res) => {
 app.post("/logout", (req, res) => {
   console.log("Logout: Destroying session for user", req.session?.userId);
   
-  req.session.destroy((err) => {
+  req.session.destroy((err) => { // Destroy session and handle potential errors during session destruction
     if (err) {
       console.error("Logout: Error destroying session:", err);
-      return res.status(500).json({
+      return res.status(500).json({ // 500 Internal Server Error status code for unexpected server errors during logout
         success: false,
         message: "Error during logout."
       });
     }
     
     res.clearCookie('connect.sid'); // Clear session cookie
-    return res.status(200).json({
+    return res.status(200).json({ // 200 OK status code for successful logout
       success: true,
       message: "Logged out successfully."
     });
@@ -313,7 +313,7 @@ app.get("/logins", (req, res) => {
 
 // GET /api/health - Health check endpoint
 app.get("/api/health", (req, res) => {
-  res.json({
+  res.json({ // 200 OK status code for successful health check
     success: true,
     message: "Server is running."
   });
@@ -402,7 +402,7 @@ app.post("/api/chat", async (req, res) => {
         })
       });
 
-      if (!ollamaResponse.ok) {
+      if (!ollamaResponse.ok) { // If Ollama returns an error for this chat request, log the issue and return a fallback response based on the model's style to ensure the API remains functional even if Ollama has issues
         return {
           model,
           content: buildFallbackReply(model, prompt)
@@ -416,7 +416,7 @@ app.post("/api/chat", async (req, res) => {
         content: data.message?.content || buildFallbackReply(model, prompt)
       };
 
-    } catch (error) {
+    } catch (error) { // Log network errors or other issues when connecting to Ollama for this chat request and return a fallback response based on the model's style to ensure the API remains functional even if Ollama has issues
       return {
         model,
         content: buildFallbackReply(model, prompt)
@@ -466,7 +466,7 @@ app.post("/api/chat", async (req, res) => {
 });
   } catch (error) {
     console.error("Chat API error:", error.message);
-    return res.status(500).json({
+    return res.status(500).json({ // 500 Internal Server Error status code for unexpected server errors during chat processing
       success: false,
       message: "Server error while calling AI service."
     });
@@ -476,12 +476,12 @@ app.post("/api/chat", async (req, res) => {
 // ==================== Conversation Management API ====================
 
 // GET /api/conversations - Get user's conversations
-app.get("/api/conversations", (req, res) => {
+app.get("/api/conversations", (req, res) => { 
   console.log("API: GET /api/conversations called");
   console.log("API: Session:", req.session);
   console.log("API: User ID:", req.session?.userId);
   
-  if (!req.session || !req.session.userId) {
+  if (!req.session || !req.session.userId) { // Log missing session or userId for debugging authentication issues
     console.log("API: Authentication required - no session or userId");
     return res.status(401).json({
       success: false,
@@ -503,7 +503,7 @@ app.get("/api/conversations", (req, res) => {
 
     console.log("API: Found conversations:", conversations.length, conversations);
 
-    res.json({
+    res.json({ // Return conversations with message count to the client
       success: true,
       conversations: conversations
     });
@@ -523,7 +523,7 @@ app.post("/api/conversations", (req, res) => {
   console.log("API: User ID:", req.session?.userId);
   console.log("API: Request body:", req.body);
   
-  if (!req.session || !req.session.userId) {
+  if (!req.session || !req.session.userId) { // Log missing session or userId for debugging authentication issues
     console.log("API: Authentication required - no session or userId");
     return res.status(401).json({
       success: false,
@@ -546,7 +546,7 @@ app.post("/api/conversations", (req, res) => {
     
     console.log("API: Saving conversation:", { id, userId: req.session.userId, title });
     
-    const stmt = db.prepare(`
+    const stmt = db.prepare(` // Insert new conversation into the database with the provided ID, user ID from session, title, and timestamps
       INSERT INTO conversations (id, user_id, title, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?)
     `);
@@ -554,13 +554,13 @@ app.post("/api/conversations", (req, res) => {
 
     console.log("API: Conversation saved successfully");
 
-    res.json({
+    res.json({ // Return success response with conversation details to the client
       success: true,
       conversation: { id, title, created_at: now, updated_at: now }
     });
   } catch (error) {
     console.error("Error creating conversation:", error);
-    res.status(500).json({
+    res.status(500).json({ // Log database errors and return a generic error message to the client
       success: false,
       message: "Error creating conversation."
     });
@@ -592,7 +592,7 @@ app.get("/api/conversations/:id/messages", (req, res) => {
       });
     }
 
-    const messagesStmt = db.prepare(`
+    const messagesStmt = db.prepare(` // Fetch messages for the conversation ordered by creation time
       SELECT id, role, content, created_at
       FROM messages
       WHERE conversation_id = ?
@@ -632,8 +632,8 @@ app.post("/api/conversations/:id/messages", (req, res) => {
     });
   }
 
-  if (!['user', 'assistant'].includes(role)) {
-    return res.status(400).json({
+  if (!['user', 'assistant'].includes(role)) { // Validate role value to prevent invalid data and potential issues with frontend rendering
+    return res.status(400).json({  
       success: false,
       message: "Role must be 'user' or 'assistant'."
     });
@@ -641,7 +641,7 @@ app.post("/api/conversations/:id/messages", (req, res) => {
 
   try {
     // Verify conversation belongs to user
-    const conversationStmt = db.prepare(`
+    const conversationStmt = db.prepare(` // Check if the conversation with the given ID exists and belongs to the logged-in user to prevent unauthorized access and information leakage about conversation existence
       SELECT id FROM conversations WHERE id = ? AND user_id = ?
     `);
     const conversation = conversationStmt.get(conversationId, req.session.userId);
@@ -654,7 +654,7 @@ app.post("/api/conversations/:id/messages", (req, res) => {
     }
 
     // Add message
-    const insertStmt = db.prepare(`
+    const insertStmt = db.prepare(` // Insert new message into the database associated with the conversation ID, role, and content
       INSERT INTO messages (conversation_id, role, content)
       VALUES (?, ?, ?)
     `);
@@ -666,7 +666,7 @@ app.post("/api/conversations/:id/messages", (req, res) => {
       SET updated_at = ? 
       WHERE id = ?
     `);
-    updateStmt.run(new Date().toISOString(), conversationId);
+    updateStmt.run(new Date().toISOString(), conversationId); // Update the conversation's updated_at timestamp to reflect the new message
 
     res.json({ 
       success: true,
@@ -690,7 +690,7 @@ app.post("/api/conversations/:id/messages", (req, res) => {
 // DELETE /api/conversations/:id - Delete conversation
 app.delete("/api/conversations/:id", (req, res) => {
   if (!req.session || !req.session.userId) {
-    return res.status(401).json({
+    return res.status(401).json({ // Check for user authentication and return 401 Unauthorized if not authenticated to protect conversation data
       success: false,
       message: "Authentication required."
     });
@@ -706,7 +706,7 @@ app.delete("/api/conversations/:id", (req, res) => {
     const conversation = conversationStmt.get(conversationId, req.session.userId);
 
     if (!conversation) { // Only return 404 if conversation doesn't exist or doesn't belong to user - prevents information leakage about conversation existence
-      return res.status(404).json({
+      return res.status(404).json({ // Return 404 Not Found if the conversation doesn't exist or doesn't belong to the user to prevent information leakage about conversation existence
         success: false,
         message: "Conversation not found."
       });
@@ -716,14 +716,14 @@ app.delete("/api/conversations/:id", (req, res) => {
     const deleteStmt = db.prepare(`DELETE FROM conversations WHERE id = ?`);
     deleteStmt.run(conversationId);
 
-    res.json({
+    res.json({ // Return success response to the client confirming deletion of the conversation
       success: true,
       message: "Conversation deleted successfully."
     });
   } catch (error) { // Log database errors and return a generic error message to the client
     console.error("Error deleting conversation:", error);
-    res.status(500).json({
-      success: false,
+    res.status(500).json({ 
+      success: false, // 500 Internal Server Error status code for unexpected server errors during conversation deletion
       message: "Error deleting conversation."
     });
   }

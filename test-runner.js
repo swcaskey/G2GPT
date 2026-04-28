@@ -6,6 +6,7 @@ jasmine.loadConfig({ // Configure Jasmine to look for spec files in the 'spec' d
   spec_files: [
     '**/*[sS]pec.js'
   ],
+  // Using default helpers directory for any helper files
   helpers: [],
   stopSpecOnExpectationFailure: false,
   random: false
@@ -14,7 +15,7 @@ jasmine.loadConfig({ // Configure Jasmine to look for spec files in the 'spec' d
 // Add error handler
 process.on('unhandledRejection', (reason, promise) => { // Log unhandled promise rejections with details for debugging
   console.error('\n!!! Unhandled Promise Rejection !!!');
-  console.error('Reason:', reason);
+  console.error('Reason:', reason); 
   console.error('Promise:', promise);
 });
 
@@ -23,7 +24,7 @@ process.on('uncaughtException', (error) => { // Log uncaught exceptions with det
   console.error('\n!!! Uncaught Exception !!!');
   console.error('Error:', error.message);
   console.error('Stack:', error.stack);
-  process.exit(1);
+  process.exit(1); // Exit with failure code to indicate an error occurred
 });
 
 // Add a reporter to see what's happening
@@ -35,9 +36,9 @@ jasmine.addReporter({ // Custom reporter to log test progress and results in a r
   specDone: (result) => {
     if (result.status === 'passed') { // Log passed specs with a checkmark for clarity
       console.log(`    ✓ PASSED`);
-    } else if (result.status === 'failed') {
+    } else if (result.status === 'failed') { // Log failed specs with an X and details of each failure for debugging
       console.log(`    ✗ FAILED`);
-      result.failedExpectations.forEach((failure) => {
+      result.failedExpectations.forEach((failure) => { // Log details of each failure for debugging
         console.log(`      ${failure.message}`);
         if (failure.stack) console.log(`      Stack: ${failure.stack.substring(0, 500)}`);
       });
@@ -48,7 +49,7 @@ jasmine.addReporter({ // Custom reporter to log test progress and results in a r
   suiteDone: (result) => { // Log any errors that occurred in the suite after it finishes
     if (result.failedExpectations && result.failedExpectations.length > 0) { // Log details of any suite-level failures that occurred outside of individual specs
       console.log(`\n  Suite "${result.description}" had errors:`);
-      result.failedExpectations.forEach((failure) => {
+      result.failedExpectations.forEach((failure) => { // Log details of each suite-level failure for debugging
         console.log(`    ${failure.message}`);
       });
     }
@@ -60,7 +61,7 @@ jasmine.addReporter({ // Custom reporter to log test progress and results in a r
       console.log('\nTop-level failures:');
       result.failedExpectations.forEach((failure) => { // Log details of each top-level failure for debugging
         console.log(`  ${failure.message}`);
-        console.log(`  ${failure.stack}`);
+        console.log(`  ${failure.stack}`); // Log stack trace for top-level failures to help identify where the error occurred
       });
     }
   }

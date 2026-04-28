@@ -19,11 +19,11 @@ function groupConvs(list) { // Group conversations by updatedAt date: Today, Yes
   const groups = { Today: [], Yesterday: [], Older: [] };
 
   list.forEach((conversation) => { // Ensure updatedAt is a timestamp
-    if (conversation.updatedAt >= today) {
+    if (conversation.updatedAt >= today) { 
       groups.Today.push(conversation);
     } else if (conversation.updatedAt >= yesterday) {
       groups.Yesterday.push(conversation);
-    } else {
+    } else { // For conversations older than yesterday, push to Older group
       groups.Older.push(conversation);
     }
   });
@@ -40,7 +40,7 @@ function escapeHtml(str) { // Basic HTML escaping to prevent XSS
 }
 
 function formatMessage(str) {
-  return escapeHtml(str).replace(/\n/g, '<br>');
+  return escapeHtml(str).replace(/\n/g, '<br>'); // Escape HTML and convert newlines to <br> for proper display in chat bubbles
 }
 
 function setEmptyState(messagesContainer) { // Set empty state message when there are no conversations or messages
@@ -97,7 +97,7 @@ function renderMessages(messageList, messagesContainer) { // Render messages in 
   }
 
   messageList.forEach((message) => appendBubble(message.role, message.content, false, container));
-  if (container.scrollTop !== undefined) {
+  if (container.scrollTop !== undefined) { // Scroll to bottom after rendering messages, if scrollTop property exists
     container.scrollTop = container.scrollHeight;
   }
 }
@@ -117,7 +117,7 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
     .filter((conversation) => !query || conversation.title.toLowerCase().includes(query))
     .sort((a, b) => b.updatedAt - a.updatedAt);
 
-  if (filtered.length === 0) {
+  if (filtered.length === 0) { // If no conversations match the search query, show a message indicating no results found
     historyContainer.innerHTML = '<div class="empty-history">No conversations yet.</div>';
     return;
   }
@@ -125,7 +125,7 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
   const groups = groupConvs(filtered);
 
   ['Today', 'Yesterday', 'Older'].forEach((label) => { // Render each group with a label, and list conversations under it
-    if (!groups[label].length) {
+    if (!groups[label].length) { // If there are no conversations in this group, skip rendering it to avoid empty sections
       return;
     }
     // Create and append section label for the group
@@ -133,7 +133,7 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
     sectionLabel.className = 'section-label';
     sectionLabel.textContent = label;
     
-    if (historyContainer.appendChild) {
+    if (historyContainer.appendChild) { // Append the section label to the history container if appendChild method exists
       historyContainer.appendChild(sectionLabel);
     }
 
@@ -148,7 +148,7 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
       `;
 
       // Add click handler for conversation selection
-      if (item.addEventListener) {
+      if (item.addEventListener) { // Only add event listeners if addEventListener method exists (i.e. we're in a browser environment)
         item.addEventListener('click', (event) => {
           // Don't trigger if delete button was clicked
           if (event.target.classList.contains('hi-delete')) {
@@ -168,7 +168,7 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
         }
       }
 
-      if (historyContainer.appendChild) {
+      if (historyContainer.appendChild) { // Append the history item to the history container if appendChild method exists
         historyContainer.appendChild(item);
       }
     });
@@ -183,14 +183,14 @@ function getSelectedModels() { // Get list of selected models from the model pic
 async function callLLM(messageList, selectedModels = []) {
   console.log('Dashboard: callLLM called with messages:', messageList, 'models:', selectedModels);
 
-  try {
+  try { // Make API call to server to get LLM response, passing selected models as part of the request body
     console.log('Dashboard: Making fetch request to /api/chat');
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
+      body: JSON.stringify({ // Pass the list of messages and selected models to the server for processing, so the server can route to the appropriate LLMs based on the request
         messages: messageList,
         models: selectedModels
       })
@@ -200,7 +200,7 @@ async function callLLM(messageList, selectedModels = []) {
     const data = await response.json();
     console.log('Dashboard: Fetch response data:', data);
 
-    if (!response.ok) {
+    if (!response.ok) { // If the response is not ok, log the error message from server and throw an error to be caught in the calling function, which will then show a user-friendly error message in the chat
       console.error('Dashboard: Response not ok:', data.message);
       throw new Error(data.message || 'Unable to reach the AI service.');
     }
@@ -211,7 +211,7 @@ async function callLLM(messageList, selectedModels = []) {
 
     const singleReply = data.reply || data.response || 'No response was returned.';
     return [{ model: 'default', content: singleReply }];
-  } catch (error) {
+  } catch (error) { // Log any errors that occur during the fetch call, which could be network errors or server errors, and rethrow the error to be handled in the calling function
     console.error('Dashboard: callLLM error:', error);
     throw error;
   }
@@ -248,9 +248,9 @@ async function loadConversationsFromServer() {
     
     console.log('Dashboard: Load conversations response status:', response.status);
     
-    if (response.ok) {
+    if (response.ok) { // If the response is ok, parse the conversations and convert date strings to timestamps for easier handling on the client side, and log the loaded conversations for debugging
       const data = await response.json();
-      console.log('Dashboard: Load conversations response:', data);
+      console.log('Dashboard: Load conversations response:', data); // Log the raw response data from the server for debugging purposes
       conversations = data.conversations.map(conv => ({
         id: conv.id,
         title: conv.title,
@@ -262,7 +262,7 @@ async function loadConversationsFromServer() {
       console.log('Dashboard: Loaded conversations:', conversations);
     } else {
       const errorData = await response.json();
-      console.log('Dashboard: Failed to load conversations:', response.status, errorData);
+      console.log('Dashboard: Failed to load conversations:', response.status, errorData); // Log the error response from the server for debugging purposes
       conversations = [];
     }
   } catch (error) {
@@ -278,7 +278,7 @@ async function loadMessagesFromServer(conversationId) {
     const response = await fetch(`/api/conversations/${conversationId}/messages`);
     
     if (response.ok) {
-      const data = await response.json();
+      const data = await response.json(); // Log the raw response data from the server for debugging purposes
       const conversation = getConv(conversations, conversationId);
       if (conversation) { // Ensure conversation exists before trying to set messages
         conversation.messages = data.messages.map(msg => ({
@@ -286,7 +286,7 @@ async function loadMessagesFromServer(conversationId) {
           content: msg.content,
           timestamp: new Date(msg.created_at).getTime()
         }));
-        console.log('Dashboard: Loaded messages:', conversation.messages.length);
+        console.log('Dashboard: Loaded messages:', conversation.messages.length); // Log the number of messages loaded for the conversation for debugging purposes
       }
     } else { // If response is not ok, log the error message from server
       console.error('Dashboard: Failed to load messages:', response.status);
@@ -310,17 +310,17 @@ async function saveConversationToServer(conversation) { // Only save if conversa
         title: conversation.title
       })
     });
-    
+    // Log the response status and data for debugging purposes, and check if the response is ok to determine if the conversation was saved successfully or if there was an error
     console.log('Dashboard: Save conversation response status:', response.status);
     const responseData = await response.json();
     console.log('Dashboard: Save conversation response:', responseData);
     
     if (!response.ok) { // If the response is not ok, log the error message from server
       console.error('Dashboard: Failed to save conversation:', responseData);
-    } else {
+    } else { // If the conversation was saved successfully, log a success message for debugging purposes
       console.log('Dashboard: Conversation saved successfully');
     }
-  } catch (error) {
+  } catch (error) { // Log any errors that occur during fetch
     console.error('Dashboard: Error saving conversation:', error);
   }
 }
@@ -341,7 +341,7 @@ async function saveMessageToServer(conversationId, role, content, modelName = nu
 })
     });
     
-    if (!response.ok) {
+    if (!response.ok) { // If the response is not ok, log the error message from server
       console.error('Dashboard: Failed to save message:', response.status);
     }
   } catch (error) {
@@ -366,7 +366,7 @@ async function deleteConversationFromServer(conversationId) {
 }
 
 // Global function to send message
-async function sendMessage() {
+async function sendMessage() { 
   console.log('Dashboard: sendMessage called');
   if (!textarea) {
     console.log('Dashboard: textarea not initialized yet');
@@ -384,13 +384,13 @@ async function sendMessage() {
   textarea.value = '';
   textarea.style.height = 'auto';
 
-  if (!activeId) {
+  if (!activeId) { // If no active conversation, create a new one
     console.log('Dashboard: No active chat, creating new chat');
     newChat();
   }
 
   const conversation = getConv(conversations, activeId);
-  if (!conversation) {
+  if (!conversation) { // This should not happen, but just in case
     console.log('Dashboard: No conversation found for activeId', activeId);
     return;
   }
@@ -419,21 +419,21 @@ async function sendMessage() {
 
  let replies = [];
 
-try {
+try { // Get selected models from the model picker, and call the LLM with the conversation messages and selected models, logging the messages and models being sent to the LLM for debugging purposes, and then log the replies received from the LLM for debugging purposes. If there is an error during the LLM call, log the error and set a user-friendly error message in the replies array to be displayed in the chat.
   const selectedModels = getSelectedModels();
   console.log('Dashboard: Calling LLM with messages', conversation.messages, 'and models', selectedModels);
   replies = await callLLM(conversation.messages, selectedModels);
   console.log('Dashboard: LLM replies received', replies);
 } catch (error) {
   console.error('Dashboard: LLM call failed', error);
-  replies = [
+  replies = [ // Show a user-friendly error message in the chat if the LLM call fails, instead of just logging the error
     {
       model: 'system',
       content: 'Unable to reach the AI right now. Please check the API configuration and try again.'
     }
   ];
 }
-
+// After receiving the replies from the LLM (or an error message if the call failed), hide the typing indicator and append the replies to the conversation, saving each assistant message to the server, and then re-render the conversation history to update the timestamps and order based on the latest activity.
 console.log('Dashboard: Hiding typing indicator');
 typingIndicator.classList.remove('show');
 typingIndicator.setAttribute('aria-hidden', 'true');
@@ -548,7 +548,7 @@ if (typeof document !== 'undefined') {
 
   textarea.addEventListener('keydown', (event) => { // Send message on Enter key, but allow Shift+Enter for new lines
     if (event.key === 'Enter' && !event.shiftKey) {
-      console.log('Dashboard: Enter key pressed');
+      console.log('Dashboard: Enter key pressed'); // Log when Enter key is pressed for debugging purposes
       event.preventDefault();
       sendMessage();
     }

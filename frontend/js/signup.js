@@ -19,13 +19,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!email || !password || !confirmPassword) { // Basic client-side validation
       signupMessage.textContent = 'Please complete all fields.';
-      signupMessage.classList.add('error');
+      signupMessage.classList.add('error'); // Show error message if any field is empty
       return;
     }
 
     if (password !== confirmPassword) { // Check if passwords match
       signupMessage.textContent = 'Passwords do not match.';
-      signupMessage.classList.add('error');
+      signupMessage.classList.add('error'); // Show error message if passwords do not match
       return;
     }
 
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const response = await fetch('/signup', { // Send signup request to server
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json' // Set content type to JSON for the request body
         },
         body: JSON.stringify({
           email,
@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!response.ok) { // If signup failed, show error message from server
         signupMessage.textContent = data.message || 'Unable to create account.';
-        signupMessage.classList.add('error');
+        signupMessage.classList.add('error'); // Show error message if server returns an error response
         return;
       }
       // If signup successful, show success message and redirect to login page
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => { // Redirect to login page after successful signup
         window.location.href = '/login';
       }, 1200);
-    } catch (error) {
+    } catch (error) { // Handle network errors
       signupMessage.textContent = 'A network error occurred. Please try again.';
       signupMessage.classList.add('error');
     }
