@@ -22,7 +22,7 @@ app.use(session({
   secret: "g2gpt-secret-key-change-in-production",
   resave: false,
   saveUninitialized: false,
-  cookie: { 
+  cookie: {
     secure: false, // Set to true with HTTPS
     httpOnly: true,
     maxAge: 1000 * 60 * 60 * 24 // 24 hours
@@ -166,7 +166,7 @@ app.post("/login", (req, res) => {
 // POST /logout - End user session
 app.post("/logout", (req, res) => {
   console.log("Logout: Destroying session for user", req.session?.userId);
-  
+
   req.session.destroy((err) => {
     if (err) {
       console.error("Logout: Error destroying session:", err);
@@ -175,7 +175,7 @@ app.post("/logout", (req, res) => {
         message: "Error during logout."
       });
     }
-    
+
     res.clearCookie('connect.sid'); // Clear session cookie
     return res.status(200).json({
       success: true,
@@ -211,149 +211,105 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// GET /api/models - Get available models from Ollama
+// GET /api/models - Get available models from Ollama and Cloud Mock
 app.get("/api/models", async (req, res) => {
+  let modelNames = [
+    "openai:gpt-4o",
+    "openai:gpt-4o-mini",
+    "gemini:gemini-1.5-pro",
+    "gemini:gemini-1.5-flash",
+    "claude:claude-3.5-sonnet"
+  ];
+
   try {
     const ollamaResponse = await fetch("http://127.0.0.1:11434/api/tags");
-    
-    if (!ollamaResponse.ok) {
-      return res.status(503).json({
-        success: false,
-        message: "Unable to connect to Ollama. Is it running?"
-      });
+    if (ollamaResponse.ok) {
+      const ollamaData = await ollamaResponse.json();
+      const models = ollamaData.models || [];
+      const localNames = models
+        .map((model) => (typeof model === "string" ? model : model.name))
+        .filter(Boolean);
+      modelNames = [...modelNames, ...localNames];
     }
-    
-    const ollamaData = await ollamaResponse.json();
-    const models = ollamaData.models || [];
-    
-    if (models.length === 0) {
-      return res.status(503).json({
-        success: false,
-        message: "No models found in Ollama."
-      });
-    }
-    
-    res.json({
-      success: true,
-      models: models
-    });
   } catch (error) {
-    console.error("Models API error:", error.message);
-    return res.status(503).json({
-      success: false,
-      message: "Could not connect to Ollama."
-    });
+    console.warn("Ollama is offline or unreachable. Returning cloud models only.");
   }
+
+  res.json({
+    success: true,
+    models: modelNames
+  });
 });
 
 // ==================== LLM Chat Endpoint ====================
 
-// POST /api/chat - Send prompt to Ollama and save conversation
-app.post("/api/chat", async (req, res) => {
-  const { messages } = req.body;
+//system for level
+function buildLeveledPrompt(message, level) {
+  if (!level) return message;
+  if (level < 0) level = 0;
+
+  //0 - normal, 1 - child, 2 - beginner, 3 - expert
+  const styles = [
+    "",
+    "Explain this in very simple terms, like you're talking to a 5-year-old. Use analogies.",
+    "Explain this clearly for a beginner with simple examples.",
+    "Explain this in a detailed, technical way assuming deep knowledge."
+  ];
+
+  if (level > styles.length - 1) level = styles.length;
+
+  return `${styles[level]} ${message}`;
+}
+
+
+// POST /api/chat/multi - Send prompt to multiple Ollama and Cloud Mock models simultaneously
+app.post("/api/chat/multi", async (req, res) => {
+  let { messages, modelNames, level } = req.body;
 
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
-    return res.status(400).json({
-      success: false,
-      message: "Messages array is required and must not be empty."
-    });
+    return res.status(400).json({ success: false, message: "Messages array is required and must not be empty." });
   }
 
+  if (!modelNames || !Array.isArray(modelNames) || modelNames.length === 0) {
+     return res.status(400).json({ success: false, message: "At least one model name is required." });
+  }
+
+  if (!level) level = 0;
+
+  //parse the latest message and inject the custom header into the prompt
+  if (messages.length > 0) messages[messages.length - 1].content = buildLeveledPrompt(messages[messages.length - 1].content, level);
+
   try {
-    // First, get available models to ensure we have at least one
-    const modelsResponse = await fetch("http://127.0.0.1:11434/api/tags");
-    
-    if (!modelsResponse.ok) {
-      return res.status(503).json({
-        success: false,
-        message: "Unable to connect to Ollama. Is it running?"
-      });
-    }
-    
-    const modelsData = await modelsResponse.json();
-    const models = modelsData.models || [];
-    
-    if (models.length === 0) {
-      return res.status(503).json({
-        success: false,
-        message: "No models found in Ollama."
-      });
-    }
-    
-    // Randomly select a model from available models
-    const randomModel = models[Math.floor(Math.random() * models.length)].name;
-    
-    // Call Ollama chat endpoint with selected model
-    const ollamaResponse = await fetch(`http://127.0.0.1:11434/api/chat`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: randomModel,
-        messages: messages,
-        stream: false
-      })
-    });
+    const fetchPromises = modelNames.map(async (modelName) => {
+      const isCloud = modelName.startsWith("openai:") || modelName.startsWith("gemini:") || modelName.startsWith("claude:");
+      const lastMsg = (messages[messages.length - 1].content || "");
 
-    if (!ollamaResponse.ok) {
-      const errorData = await ollamaResponse.json().catch(() => ({}));
-      console.error("Ollama error:", errorData);
-      return res.status(502).json({
-        success: false,
-        message: errorData.error || "Unable to reach the AI service."
-      });
-    }
+      if (isCloud) {
+          return { model: modelName, content: `[MOCK ${modelName}] You said: "${lastMsg}". This is a mocked cloud AI response.`, error: false };
+      } else {
+          try {
+            const ollamaResponse = await fetch(`http://127.0.0.1:11434/api/chat`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ model: modelName, messages: messages, stream: false })
+            });
 
-    const ollamaData = await ollamaResponse.json();
-    const reply = ollamaData.message?.content || "";
-
-    if (!reply) {
-      return res.status(502).json({
-        success: false,
-        message: "Ollama returned an empty response."
-      });
-    }
-
-    // Save conversation to database (simplified: one conversation per session)
-    // In production, you'd associate conversations with user_id and use activeId from frontend
-    const conversationId = generateUUID();
-    const now = new Date().toISOString();
-
-    try {
-      // Get the first available user ID or use NULL for anonymous conversations
-      const firstUser = db.prepare("SELECT id FROM users ORDER BY id LIMIT 1").get();
-      const userId = firstUser ? firstUser.id : null;
-      
-      if (userId) {
-        // Create new conversation (better-sqlite3 is synchronous)
-        const insertConversation = db.prepare(`INSERT INTO conversations (id, user_id, title, created_at, updated_at)
-                                               VALUES (?, ?, ?, ?, ?)`);
-        insertConversation.run(conversationId, userId, "New Chat", now, now);
-
-        // Save user message
-        const insertMessage = db.prepare(`INSERT INTO messages (conversation_id, role, content, created_at)
-                                          VALUES (?, ?, ?, ?)`);
-        insertMessage.run(conversationId, 'user', messages[messages.length - 1].content, now);
-
-        // Save assistant message
-        insertMessage.run(conversationId, 'assistant', reply, now);
+            if (!ollamaResponse.ok) {
+              const errData = await ollamaResponse.json().catch(() => ({}));
+              return { model: modelName, content: errData.error || "AI service error", error: true };
+            }
+            const data = await ollamaResponse.json();
+            return { model: modelName, content: data.message?.content || "", error: false };
+          } catch (err) {
+            return { model: modelName, content: err.message, error: true };
+          }
       }
-    } catch (dbError) {
-      console.warn("Database error while saving conversation:", dbError.message);
-      // Continue anyway - don't fail the API call just because we couldn't save to DB
-    }
+    });
 
-    return res.status(200).json({
-      success: true,
-      reply: reply
-    });
+    const results = await Promise.all(fetchPromises);
+    return res.status(200).json({ success: true, replies: results });
   } catch (error) {
-    console.error("Chat API error:", error.message);
-    return res.status(500).json({
-      success: false,
-      message: "Server error while calling AI service."
-    });
+    return res.status(500).json({ success: false, message: "Server error while calling AI service." });
   }
 });
 
@@ -364,7 +320,7 @@ app.get("/api/conversations", (req, res) => {
   console.log("API: GET /api/conversations called");
   console.log("API: Session:", req.session);
   console.log("API: User ID:", req.session?.userId);
-  
+
   if (!req.session || !req.session.userId) {
     console.log("API: Authentication required - no session or userId");
     return res.status(401).json({
@@ -406,7 +362,7 @@ app.post("/api/conversations", (req, res) => {
   console.log("API: Session:", req.session);
   console.log("API: User ID:", req.session?.userId);
   console.log("API: Request body:", req.body);
-  
+
   if (!req.session || !req.session.userId) {
     console.log("API: Authentication required - no session or userId");
     return res.status(401).json({
@@ -416,7 +372,7 @@ app.post("/api/conversations", (req, res) => {
   }
 
   const { id, title } = req.body;
-  
+
   if (!id || !title) {
     console.log("API: Missing id or title");
     return res.status(400).json({
@@ -427,9 +383,9 @@ app.post("/api/conversations", (req, res) => {
 
   try {
     const now = new Date().toISOString();
-    
+
     console.log("API: Saving conversation:", { id, userId: req.session.userId, title });
-    
+
     const stmt = db.prepare(`
       INSERT INTO conversations (id, user_id, title, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?)
@@ -507,7 +463,7 @@ app.post("/api/conversations/:id/messages", (req, res) => {
   }
 
   const conversationId = req.params.id;
-  const { role, content } = req.body;
+  const { role, content, model_name } = req.body;
 
   if (!role || !content) {
     return res.status(400).json({
@@ -539,15 +495,15 @@ app.post("/api/conversations/:id/messages", (req, res) => {
 
     // Add message
     const insertStmt = db.prepare(`
-      INSERT INTO messages (conversation_id, role, content)
-      VALUES (?, ?, ?)
+      INSERT INTO messages (conversation_id, role, content, model_name)
+      VALUES (?, ?, ?, ?)
     `);
-    const result = insertStmt.run(conversationId, role, content);
+    const result = insertStmt.run(conversationId, role, content, model_name || null);
 
     // Update conversation timestamp
     const updateStmt = db.prepare(`
-      UPDATE conversations 
-      SET updated_at = ? 
+      UPDATE conversations
+      SET updated_at = ?
       WHERE id = ?
     `);
     updateStmt.run(new Date().toISOString(), conversationId);
@@ -559,6 +515,7 @@ app.post("/api/conversations/:id/messages", (req, res) => {
         conversation_id: conversationId,
         role: role,
         content: content,
+        model_name: model_name || null,
         created_at: new Date().toISOString()
       }
     });

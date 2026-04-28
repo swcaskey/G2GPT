@@ -1,9 +1,10 @@
 # Node modules
 node_modules/
 
-# Database files
+# Database files (except test data we keep)
 *.db
 *.db-journal
+login.db
 
 # Environment variables
 .env
@@ -22,7 +23,6 @@ Thumbs.db
 
 # Log files
 *.log
-!change.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -52,10 +52,15 @@ cucumber-report.html
 # AI tools
 .aider*
 
+# Legacy/extracted documentation
+notes/*_extracted.txt
+
 # Keep these essential team files:
-# - change.log (project changelog)
-# - install_requirements.txt (setup instructions)  
-# - run_app_and_tests.txt (run instructions)
-# - package.json & package-lock.json (dependencies)
-# - All source code in frontend/, spec/, features/
-# - Main server files (server.js, database.js, etc.)
+# ✓ change.log (project changelog)
+# ✓ install_requirements.txt (setup instructions)
+# ✓ run_app_and_tests.txt (run instructions)
+# ✓ package.json & package-lock.json (dependencies)
+# ✓ run-tests.js (test runner)
+# ✓ cucumber.js (Cucumber config)
+# ✓ All source code: frontend/, spec/, features/
+# ✓ Main server files: server.js, database.js, eslint.config.mjs

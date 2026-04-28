@@ -36,17 +36,19 @@ API Endpoints:
 # ====================
 # Running Tests
 # ====================
-Complete Test Suite (46 tests):
+Complete Test Suite (71 tests):
   npm test                              # Runs all Jasmine unit tests
+  npm run test:all                      # Complete test suite (Jasmine + Cucumber/Puppeteer)
 
 Individual Test Files:
   npx jasmine spec/loginSpec.js         # Iteration 1 unit tests (19 specs)
   npx jasmine spec/dashboardSpec.js     # Iteration 2 unit tests (27 specs)
 
 Cucumber.js (Acceptance Tests):
-  npm run test:cucumber                 # All features (7 scenarios total)
+  npm run test:cucumber                 # All features (12 scenarios total)
   npx cucumber-js features/authentication.feature  # Iteration 1 (3 scenarios)
   npx cucumber-js features/chat.feature            # Iteration 2 (4 scenarios)
+  npx cucumber-js features/iteration-3.feature     # Iteration 3 (5 scenarios)
 
 Puppeteer (Browser Automation):
   # Puppeteer is integrated with Cucumber.js
@@ -69,6 +71,14 @@ Test Breakdown by Iteration:
       2. Conversation history is saved
       3. Search conversation history
       4. Resume a conversation from history
+
+  Iteration 3 (Multi-Model Backend and Chat Utilities):
+    - Cucumber: 5 scenarios in features/iteration-3.feature
+      1. Select a backend LLM and send a prompt
+      2. Select a local small model and receive a response
+      3. Copy response to clipboard
+      4. Resend a user prompt
+      5. Select response level and receive appropriately formatted answer
 
 
 

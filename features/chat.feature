@@ -5,7 +5,9 @@ Feature: Chat with LLM
 
   Scenario: Send a prompt and receive a response
     Given I am logged in and on the dashboard
-    When I enter a prompt in the chat box and click "Send"
+    When I click the Models dropdown
+    And I select a backend LLM from the available options
+    And I enter a prompt in the chat box and click "Send"
     Then I should see my prompt and the LLM's response in the chat window
 
   Scenario: Conversation history is saved

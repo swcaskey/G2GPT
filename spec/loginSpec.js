@@ -230,7 +230,7 @@ describe("POST /api/chat", () => {
 
   it("should return 400 if messages array is missing", async () => {
     const res = await request(app)
-      .post("/api/chat")
+      .post("/api/chat/multi")
       .send({});
 
     expect(res.status).toBe(400);
@@ -240,7 +240,7 @@ describe("POST /api/chat", () => {
 
   it("should return 400 if messages array is empty", async () => {
     const res = await request(app)
-      .post("/api/chat")
+      .post("/api/chat/multi")
       .send({ messages: [] });
 
     expect(res.status).toBe(400);
@@ -250,7 +250,7 @@ describe("POST /api/chat", () => {
 
   it("should return 400 if messages is not an array", async () => {
     const res = await request(app)
-      .post("/api/chat")
+      .post("/api/chat/multi")
       .send({ messages: "not an array" });
 
     expect(res.status).toBe(400);
