@@ -88,8 +88,8 @@ if (typeof resource === 'string' && resource.includes('/api/chat')) {
     requestBody = {};
   }
 
-  const selectedModels = requestBody.models || ['llama3.2', 'misqwen2.5:0.5btral', 'phi3'];
-  const messages = requestBody.messages || []; 
+const selectedModels = requestBody.models || ['llama3.2', 'qwen2.5:0.5b', 'phi3']; 
+const messages = requestBody.messages || []; 
   const lastUserMessage =
     messages.length > 0
       ? messages[messages.length - 1].content.trim()

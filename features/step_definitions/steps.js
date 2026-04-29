@@ -309,23 +309,20 @@ When('I refresh the dashboard or log in again', async function () {
 });
 
 Then('I should see my previous session listed in the history sidebar', async function () {
-  // Wait for history items to load - give it more time
+  await this.page.waitForSelector('#history-list', { timeout: 20000 });
+
   await this.page.waitForFunction(
     () => {
-      const sidebarText = document.body.innerText;
-      return sidebarText.includes('Hello, how are you?') ||
-             sidebarText.includes('TODAY') ||
-             document.querySelectorAll('.conversation-item, .history-item, #history-list .history-item').length > 0;
+      const items = document.querySelectorAll('#history-list .history-item');
+      return items.length > 0;
     },
-    { timeout: 10000 }
+    { timeout: 20000 }
   );
 
-  const sidebarText = await this.page.evaluate(() => document.body.innerText);
+  const sidebarText = await this.page.evaluate(() => document.querySelector('#history-list').innerText);
 
   assert.ok(
-    sidebarText.includes('Hello, how are you?') ||
-    sidebarText.includes('TODAY') ||
-    sidebarText.length > 0,
+    sidebarText.includes('Test message for history') || sidebarText.includes('TODAY') || sidebarText.length > 0,
     'No conversations found in history sidebar'
   );
 });
@@ -402,35 +399,26 @@ When('I enter a keyword into the history search bar', async function () {
 });
 
 Then('only the relevant matching sessions should be displayed in the sidebar', async function () {
-  await new Promise(r => setTimeout(r, 1000));
-  
-  // Get visible conversation items - using .history-item selector
+  await this.page.waitForSelector('#history-list', { timeout: 20000 });
+
+  await this.page.waitForFunction(
+    () => {
+      const items = Array.from(document.querySelectorAll('#history-list .history-item'));
+      return items.some(item => item.textContent.toLowerCase().includes('weather'));
+    },
+    { timeout: 20000 }
+  );
+
   const visibleItems = await this.page.evaluate(() => {
-    const items = document.querySelectorAll('#history-list .history-item');
-    const visible = [];
-    items.forEach(item => {
-      const style = window.getComputedStyle(item);
-      if (style.display !== 'none') {
-        visible.push(item.textContent.toLowerCase());
-      }
-    });
-    return visible;
+    return Array.from(document.querySelectorAll('#history-list .history-item'))
+      .filter(item => window.getComputedStyle(item).display !== 'none')
+      .map(item => item.textContent.toLowerCase());
   });
-  
-  // At least one item should be visible (matching search)
-  assert.ok(visibleItems.length > 0, 'No matching conversations found');
-  
-  // Highlight matching items
-  await this.page.evaluate(() => {
-    const items = document.querySelectorAll('#history-list .history-item');
-    items.forEach(item => {
-      const style = window.getComputedStyle(item);
-      if (style.display !== 'none') {
-        item.style.outline = '3px solid #4caf50';
-      }
-    });
-  });
-  await new Promise(r => setTimeout(r, 2000));
+
+  assert.ok(
+    visibleItems.some(text => text.includes('weather')),
+    'No matching weather conversation found'
+  );
 });
 
 // Scenario: Resume a conversation from history

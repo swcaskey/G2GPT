@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
       });
 
-      const data = await response.json();
+      const data = await response.json(); // Parse the JSON response from the server
 
       if (!response.ok) { // If login failed, show error message from server
         loginMessage.textContent = data.message || 'Invalid login credentials.';

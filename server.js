@@ -77,7 +77,7 @@ function buildFallbackReply(model, prompt) { // can customize responses based on
     "phi3": "Short practical answer"
   };
 
-  const style = styles[model] || "Response";
+  const style = styles[model] || "Response"; // Default style if model is unrecognized
 
   // Weather questions
   if (lower.includes("weather") || lower.includes("temperature") || lower.includes("forecast")) {
@@ -193,7 +193,7 @@ app.post("/signup", (req, res) => {
     });
   }
 
-  try {
+  try { // Check if email already exists in the database to prevent duplicate accounts, and return an appropriate error message if it does. If the email is unique, insert the new user into the database and return a success message.
     const checkStmt = db.prepare("SELECT * FROM users WHERE email = ?");
     const existingUser = checkStmt.get(email);
 
@@ -231,7 +231,7 @@ app.post("/login", (req, res) => {
     });
   }
 
-  try {
+  try { // Check if the provided email and password match a user in the database. If authentication fails, log the failed attempt for security monitoring and return an appropriate error message. If authentication is successful, create a session for the user and return a success message along with user information.
     const stmt = db.prepare("SELECT * FROM users WHERE email = ? AND password = ?");
     const user = stmt.get(email, password);
 
@@ -488,8 +488,9 @@ app.get("/api/conversations", (req, res) => {
       message: "Authentication required."
     });
   }
-
-  try { // Fetch conversations for the logged-in user with message count
+  
+   // Fetch conversations for the logged-in user with message count
+  try {
     const stmt = db.prepare(`
       SELECT c.id, c.title, c.created_at, c.updated_at,
              COUNT(m.id) as message_count
@@ -517,7 +518,7 @@ app.get("/api/conversations", (req, res) => {
 });
 
 // POST /api/conversations - Create new conversation
-app.post("/api/conversations", (req, res) => {
+app.post("/api/conversations", (req, res) => { 
   console.log("API: POST /api/conversations called");
   console.log("API: Session:", req.session);
   console.log("API: User ID:", req.session?.userId);
@@ -546,7 +547,8 @@ app.post("/api/conversations", (req, res) => {
     
     console.log("API: Saving conversation:", { id, userId: req.session.userId, title });
     
-    const stmt = db.prepare(` // Insert new conversation into the database with the provided ID, user ID from session, title, and timestamps
+    // Insert new conversation into the database with the provided ID, user ID from session, title, and timestamps
+    const stmt = db.prepare(` 
       INSERT INTO conversations (id, user_id, title, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?)
     `);
@@ -576,7 +578,7 @@ app.get("/api/conversations/:id/messages", (req, res) => {
     });
   }
 
-  const conversationId = req.params.id;
+  const conversationId = req.params.id; // Get conversation ID from URL parameters
 
   try {
     // Verify conversation belongs to user
@@ -640,8 +642,8 @@ app.post("/api/conversations/:id/messages", (req, res) => {
   }
 
   try {
-    // Verify conversation belongs to user
-    const conversationStmt = db.prepare(` // Check if the conversation with the given ID exists and belongs to the logged-in user to prevent unauthorized access and information leakage about conversation existence
+    // Verify that the conversation belongs to user by checking if the conversation with the given ID exists and belongs to the logged-in user to prevent unauthorized access and information leakage about conversation existence
+    const conversationStmt = db.prepare(` 
       SELECT id FROM conversations WHERE id = ? AND user_id = ?
     `);
     const conversation = conversationStmt.get(conversationId, req.session.userId);
@@ -653,8 +655,8 @@ app.post("/api/conversations/:id/messages", (req, res) => {
       });
     }
 
-    // Add message
-    const insertStmt = db.prepare(` // Insert new message into the database associated with the conversation ID, role, and content
+    // Add new message into the database
+    const insertStmt = db.prepare(` 
       INSERT INTO messages (conversation_id, role, content)
       VALUES (?, ?, ?)
     `);
@@ -731,10 +733,10 @@ app.delete("/api/conversations/:id", (req, res) => {
 
 // ==================== Server Initialization ====================
 
-if (process.env.NODE_ENV === "test") {
-  module.exports = app; // used by tests (Jasmine/Cucumber)
-} else {
+if (require.main === module) { // Only start the server if this file is run directly, not when imported for testing
   app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
   });
 }
+
+module.exports = app;

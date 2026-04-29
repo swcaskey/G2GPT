@@ -7,7 +7,7 @@ function genId() { // Simple ID generator using current timestamp and random num
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
 
-function autoTitle(text) {
+function autoTitle(text) { // Generate a title for the conversation based on the first user message, trimming it to 42 characters for display purposes
   const trimmed = text.trim();
   return trimmed.slice(0, 42) + (trimmed.length > 42 ? '.' : '');
 }
@@ -54,7 +54,7 @@ function setEmptyState(messagesContainer) { // Set empty state message when ther
   `;
 }
 
-function appendBubble(role, content, animate = true, messagesContainer) {
+function appendBubble(role, content, animate = true, messagesContainer) { // Append a chat bubble to the messages container with the specified role (user or assistant), content, and optional animation, and ensure the messages container scrolls to the bottom after appending the new bubble
   const container = messagesContainer || messages;
   const emptyState = container.querySelector ? container.querySelector('#empty-state') : 
                      (container.getElementById ? container.getElementById('empty-state') : null);
@@ -71,7 +71,7 @@ function appendBubble(role, content, animate = true, messagesContainer) {
   
   row.className = `msg-row ${role}`;
 
-  if (!animate) {
+  if (!animate) { // If animation is disabled, set animation style to 'none' to prevent any CSS animations from playing when the bubble is appended
     row.style.animation = 'none';
   }
 
@@ -80,7 +80,7 @@ function appendBubble(role, content, animate = true, messagesContainer) {
     <div class="bubble">${formatMessage(content)}</div>
   `;
 
-  if (container.appendChild) {
+  if (container.appendChild) { // Append the new chat bubble to the messages container if appendChild method exists (i.e. we're in a browser environment), and then scroll to the bottom of the container to ensure the new message is visible
     container.appendChild(row);
     container.scrollTop = container.scrollHeight;
   }
@@ -91,7 +91,7 @@ function renderMessages(messageList, messagesContainer) { // Render messages in 
   const container = messagesContainer || messages;
   container.innerHTML = '';
 
-  if (!messageList || messageList.length === 0) {
+  if (!messageList || messageList.length === 0) { // If messageList is null, undefined, or an empty array, set the empty state in the messages container to prompt the user to start a conversation
     setEmptyState(container);
     return;
   }
@@ -180,7 +180,7 @@ function getSelectedModels() { // Get list of selected models from the model pic
   return Array.from(checked).map((input) => input.value);
 }
 
-async function callLLM(messageList, selectedModels = []) {
+async function callLLM(messageList, selectedModels = []) { // Call the LLM API with the conversation messages and selected models, and return the LLM's response, while logging the messages and models being sent to the LLM for debugging purposes, and then log the replies received from the LLM for debugging purposes. If there is an error during the LLM call, log the error and set a user-friendly error message in the replies array to be displayed in the chat.
   console.log('Dashboard: callLLM called with messages:', messageList, 'models:', selectedModels);
 
   try { // Make API call to server to get LLM response, passing selected models as part of the request body
@@ -195,7 +195,8 @@ async function callLLM(messageList, selectedModels = []) {
         models: selectedModels
       })
     });
-
+    
+    // Log the response status and data for debugging purposes, and check if the response is ok to determine if the LLM call was successful or if there was an error
     console.log('Dashboard: Fetch response status:', response.status, response.ok);
     const data = await response.json();
     console.log('Dashboard: Fetch response data:', data);
@@ -205,7 +206,7 @@ async function callLLM(messageList, selectedModels = []) {
       throw new Error(data.message || 'Unable to reach the AI service.');
     }
 
-    if (Array.isArray(data.responses)) {
+    if (Array.isArray(data.responses)) { // If the server returns an array of responses (e.g. from multiple models), return that array directly to be processed and displayed in the chat, and log the replies received from the LLM for debugging purposes
       return data.responses;
     }
 
@@ -554,7 +555,7 @@ if (typeof document !== 'undefined') {
     }
   });
 
-  sendButton.addEventListener('click', () => {
+  sendButton.addEventListener('click', () => { // Log when send button is clicked for debugging purposes, and then call the sendMessage function to handle sending the user's message to the LLM and updating the chat interface accordingly
     console.log('Dashboard: Send button clicked');
     sendMessage();
   });

@@ -85,7 +85,7 @@ describe("POST /login", () => { // Tests for login endpoint with various scenari
       // Insert test user
       db.prepare("INSERT INTO users (email, password) VALUES (?, ?)").run("admin@example.com", "admin123");
       done();
-    } catch (err) {
+    } catch (err) { // Handle any errors that occur during test setup to ensure that the tests do not run with an improperly configured database, which could lead to false positives or negatives in the test results.
       done.fail(err);
     }
   });
@@ -192,7 +192,7 @@ describe("GET /logins", () => { // Tests for login history endpoint to ensure it
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(Array.isArray(res.body.logins)).toBe(true);
+    expect(Array.isArray(res.body.logins)).toBe(true); // Check that the logins field in the response is an array to ensure that the login history data is returned in the expected format.
     expect(res.body.logins.length).toBeGreaterThan(0);
   });
 });
@@ -232,7 +232,7 @@ describe("POST /api/chat", () => { // Tests for chat endpoint with various valid
       db.prepare("DELETE FROM conversations").run();
       db.prepare("DELETE FROM messages").run();
       done();
-    } catch (err) {
+    } catch (err) { // Handle any errors that occur during test setup to ensure that the tests do not run with an improperly configured database, which could lead to false positives or negatives in the test results.
       done.fail(err);
     }
   });
@@ -288,7 +288,8 @@ describe("POST /api/chat multi-LLM validation", () => {
         messages: [{ role: "user", content: "Hello" }], // Note: The messages array is provided here to ensure I am specifically testing for the empty models array case in a multi-LLM setup, and not triggering the messages validation error which would occur if messages was also missing or empty.
         models: []
       });
-
+    
+      // Note: The models array is provided but empty here to ensure I am specifically testing for the empty models array case in a multi-LLM setup, and not triggering the messages validation error which would occur if messages was also missing or empty.
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
     expect(res.body.message).toBe("Models array is required and must not be empty.");

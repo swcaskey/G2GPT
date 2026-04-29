@@ -40,7 +40,7 @@ describe("Dashboard Conversation Management", () => { // Tests for conversation 
       expect(dashboard.getConv(conversations, 'abc123')).toBe(conv);
     });
 
-    it("should return undefined for non-existent ID", () => {
+    it("should return undefined for non-existent ID", () => { // Test that getConv returns undefined when a conversation with the specified ID does not exist in the conversations array, ensuring that the function correctly handles cases where the requested conversation is not found
       expect(dashboard.getConv(conversations, 'nonexistent')).toBeUndefined();
     });
   });
@@ -55,7 +55,7 @@ describe("Dashboard Conversation Management", () => { // Tests for conversation 
       expect(typeof id1).toBe('string');
     });
 
-    it("should generate IDs with expected format", () => {
+    it("should generate IDs with expected format", () => { // Test that genId generates IDs that are of a reasonable length and format (e.g., a combination of timestamp and random string in base36) to ensure that the generated IDs are unique and suitable for identifying conversations in the dashboard
       const id = dashboard.genId();
       
       // Should be a combination of timestamp and random string in base36
@@ -136,7 +136,7 @@ describe("Dashboard Conversation Management", () => { // Tests for conversation 
       expect(dashboard.escapeHtml('A "B" C')).toBe('A &quot;B&quot; C'); // Test that double quotes are correctly escaped to &quot; to prevent HTML injection
     });
 
-    it("should handle multiple special characters", () => {
+    it("should handle multiple special characters", () => { // Test that a string containing multiple special characters is correctly escaped to ensure that all potential HTML injection vectors are handled properly
       const result = dashboard.escapeHtml('<div class="test">A & B</div>');
       expect(result).toBe('&lt;div class=&quot;test&quot;&gt;A &amp; B&lt;/div&gt;');
     });
@@ -245,7 +245,7 @@ describe("Dashboard Conversation Management", () => { // Tests for conversation 
     let historyList;
     let searchInput;
 
-    beforeEach(() => {
+    beforeEach(() => { // Set up a mock history list element and search input for testing the renderHistory function, including a spy on the appendChild method to verify that conversation entries are rendered correctly based on the provided conversations array and search input value
       historyList = { 
         innerHTML: '', 
         appendChild: jasmine.createSpy('appendChild').and.callFake((element) => {
@@ -342,11 +342,12 @@ describe("Dashboard Conversation Management", () => { // Tests for conversation 
     })
   });
 
+  // Provide a valid messages array to avoid triggering validation errors and ensure we are specifically testing the inclusion of selected models in the API request payload
   const messages = [{ role: "user", content: "Hello" }];
   const models = ["llama3.2", "qwen2.5:0.5b"];
 
   const result = await dashboard.callLLM(messages, models);
-
+  // The function should send the selected models in the request body and return the mocked responses, ensuring that the chat interface can utilize the model selection feature when communicating with the LLM API
   const [, options] = global.fetch.calls.argsFor(0);
   const body = JSON.parse(options.body);
 
