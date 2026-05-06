@@ -9,3 +9,15 @@ Feature 4: Resume conversations from conversation history. "Updated UI". https:/
 Feature 5: Use any LLM model. "Works with ANY Ollama model". https://github.com/swcaskey/G2GPT/commit/89affef5269da5c8a68e77db310d47ac3f18498d
 
 Feature 6: Chat history saves to account. "Account History". https://github.com/swcaskey/G2GPT/commit/7675b7963f3df770b2eccac99fa02a139b53c0b4
+
+Iteration 3 Change Log
+
+User Story 1: Select a Backend LLM → PR Iteration 3 #18: https://github.com/swcsakey/G2GPT/pull/18
+
+User Story 2: Use Small Local Models → PR Iteration 3 #18: https://github.com/swcsakey/G2GPT/pull/18
+
+User Story 3: Use Public Models (GPT, Gemini, Claude) →  PR Iteration 3 #18: https://github.com/swcsakey/G2GPT/pull/18
+
+User Story 4: Chat Utility Buttons (Copy and Resend) → PR Iteration 3 #18: https://github.com/swcsakey/G2GPT/pull/18
+
+User Story 5: Configure Response Level → PR Iteration 3 #18: https://github.com/swcsakey/G2GPT/pull/18
