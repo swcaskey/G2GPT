@@ -3,27 +3,27 @@ function getConv(conversations, id) {
   return conversations.find((conversation) => conversation.id === id);
 }
 
-function genId() {
+function genId() { // Simple ID generator using current timestamp and random number
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
 
-function autoTitle(text) {
+function autoTitle(text) { // Generate a title for the conversation based on the first user message, trimming it to 42 characters for display purposes
   const trimmed = text.trim();
   return trimmed.slice(0, 42) + (trimmed.length > 42 ? '.' : '');
 }
 
-function groupConvs(list) {
+function groupConvs(list) { // Group conversations by updatedAt date: Today, Yesterday, Older
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const yesterday = today - 86400000;
   const groups = { Today: [], Yesterday: [], Older: [] };
 
-  list.forEach((conversation) => {
-    if (conversation.updatedAt >= today) {
+  list.forEach((conversation) => { // Ensure updatedAt is a timestamp
+    if (conversation.updatedAt >= today) { 
       groups.Today.push(conversation);
     } else if (conversation.updatedAt >= yesterday) {
       groups.Yesterday.push(conversation);
-    } else {
+    } else { // For conversations older than yesterday, push to Older group
       groups.Older.push(conversation);
     }
   });
@@ -31,7 +31,7 @@ function groupConvs(list) {
   return groups;
 }
 
-function escapeHtml(str) {
+function escapeHtml(str) { // Basic HTML escaping to prevent XSS
   return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -40,10 +40,10 @@ function escapeHtml(str) {
 }
 
 function formatMessage(str) {
-  return escapeHtml(str).replace(/\n/g, '<br>');
+  return escapeHtml(str).replace(/\n/g, '<br>'); // Escape HTML and convert newlines to <br> for proper display in chat bubbles
 }
 
-function setEmptyState(messagesContainer) {
+function setEmptyState(messagesContainer) { // Set empty state message when there are no conversations or messages
   const container = messagesContainer || messages;
   container.innerHTML = `
     <div id="empty-state" class="empty-state">
@@ -54,7 +54,7 @@ function setEmptyState(messagesContainer) {
   `;
 }
 
-function appendBubble(role, content, animate = true, messagesContainer) {
+function appendBubble(role, content, animate = true, messagesContainer) { // Append a chat bubble to the messages container with the specified role (user or assistant), content, and optional animation, and ensure the messages container scrolls to the bottom after appending the new bubble
   const container = messagesContainer || messages;
   const emptyState = container.querySelector ? container.querySelector('#empty-state') : 
                      (container.getElementById ? container.getElementById('empty-state') : null);
@@ -71,7 +71,7 @@ function appendBubble(role, content, animate = true, messagesContainer) {
   
   row.className = `msg-row ${role}`;
 
-  if (!animate) {
+  if (!animate) { // If animation is disabled, set animation style to 'none' to prevent any CSS animations from playing when the bubble is appended
     row.style.animation = 'none';
   }
 
@@ -80,24 +80,24 @@ function appendBubble(role, content, animate = true, messagesContainer) {
     <div class="bubble">${formatMessage(content)}</div>
   `;
 
-  if (container.appendChild) {
+  if (container.appendChild) { // Append the new chat bubble to the messages container if appendChild method exists (i.e. we're in a browser environment), and then scroll to the bottom of the container to ensure the new message is visible
     container.appendChild(row);
     container.scrollTop = container.scrollHeight;
   }
   return row;
 }
 
-function renderMessages(messageList, messagesContainer) {
+function renderMessages(messageList, messagesContainer) { // Render messages in the chat area, or show empty state if no messages
   const container = messagesContainer || messages;
   container.innerHTML = '';
 
-  if (!messageList || messageList.length === 0) {
+  if (!messageList || messageList.length === 0) { // If messageList is null, undefined, or an empty array, set the empty state in the messages container to prompt the user to start a conversation
     setEmptyState(container);
     return;
   }
 
   messageList.forEach((message) => appendBubble(message.role, message.content, false, container));
-  if (container.scrollTop !== undefined) {
+  if (container.scrollTop !== undefined) { // Scroll to bottom after rendering messages, if scrollTop property exists
     container.scrollTop = container.scrollHeight;
   }
 }
@@ -109,7 +109,7 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
   const query = (searchElement && searchElement.value) ? searchElement.value.trim().toLowerCase() : '';
   historyContainer.innerHTML = '';
 
-  if (!conversations) {
+  if (!conversations) { // If conversations is null or undefined, set it to an empty array to avoid errors
     conversations = [];
   }
 
@@ -117,27 +117,27 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
     .filter((conversation) => !query || conversation.title.toLowerCase().includes(query))
     .sort((a, b) => b.updatedAt - a.updatedAt);
 
-  if (filtered.length === 0) {
+  if (filtered.length === 0) { // If no conversations match the search query, show a message indicating no results found
     historyContainer.innerHTML = '<div class="empty-history">No conversations yet.</div>';
     return;
   }
 
   const groups = groupConvs(filtered);
 
-  ['Today', 'Yesterday', 'Older'].forEach((label) => {
-    if (!groups[label].length) {
+  ['Today', 'Yesterday', 'Older'].forEach((label) => { // Render each group with a label, and list conversations under it
+    if (!groups[label].length) { // If there are no conversations in this group, skip rendering it to avoid empty sections
       return;
     }
-
+    // Create and append section label for the group
     const sectionLabel = document.createElement ? document.createElement('div') : {};
     sectionLabel.className = 'section-label';
     sectionLabel.textContent = label;
     
-    if (historyContainer.appendChild) {
+    if (historyContainer.appendChild) { // Append the section label to the history container if appendChild method exists
       historyContainer.appendChild(sectionLabel);
     }
 
-    groups[label].forEach((conversation) => {
+    groups[label].forEach((conversation) => { // Create a history item for each conversation, with click handlers for loading and deleting
       const item = document.createElement ? document.createElement('div') : {};
       // Use passed activeId parameter or try to access global activeId if in browser
       const activeIdToCheck = currentActiveId !== undefined ? currentActiveId : (typeof activeId !== 'undefined' ? activeId : null);
@@ -148,7 +148,7 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
       `;
 
       // Add click handler for conversation selection
-      if (item.addEventListener) {
+      if (item.addEventListener) { // Only add event listeners if addEventListener method exists (i.e. we're in a browser environment)
         item.addEventListener('click', (event) => {
           // Don't trigger if delete button was clicked
           if (event.target.classList.contains('hi-delete')) {
@@ -168,39 +168,51 @@ function renderHistory(conversations, historyListContainer, searchInputElement, 
         }
       }
 
-      if (historyContainer.appendChild) {
+      if (historyContainer.appendChild) { // Append the history item to the history container if appendChild method exists
         historyContainer.appendChild(item);
       }
     });
   });
 }
 
-async function callLLM(messageList) {
-  console.log('Dashboard: callLLM called with messages:', messageList);
-  
-  try {
+function getSelectedModels() { // Get list of selected models from the model picker checkboxes
+  const checked = document.querySelectorAll('#model-picker input[type="checkbox"]:checked');
+  return Array.from(checked).map((input) => input.value);
+}
+
+async function callLLM(messageList, selectedModels = []) { // Call the LLM API with the conversation messages and selected models, and return the LLM's response, while logging the messages and models being sent to the LLM for debugging purposes, and then log the replies received from the LLM for debugging purposes. If there is an error during the LLM call, log the error and set a user-friendly error message in the replies array to be displayed in the chat.
+  console.log('Dashboard: callLLM called with messages:', messageList, 'models:', selectedModels);
+
+  try { // Make API call to server to get LLM response, passing selected models as part of the request body
     console.log('Dashboard: Making fetch request to /api/chat');
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ messages: messageList })
+      body: JSON.stringify({ // Pass the list of messages and selected models to the server for processing, so the server can route to the appropriate LLMs based on the request
+        messages: messageList,
+        models: selectedModels
+      })
     });
-
+    
+    // Log the response status and data for debugging purposes, and check if the response is ok to determine if the LLM call was successful or if there was an error
     console.log('Dashboard: Fetch response status:', response.status, response.ok);
     const data = await response.json();
     console.log('Dashboard: Fetch response data:', data);
 
-    if (!response.ok) {
+    if (!response.ok) { // If the response is not ok, log the error message from server and throw an error to be caught in the calling function, which will then show a user-friendly error message in the chat
       console.error('Dashboard: Response not ok:', data.message);
       throw new Error(data.message || 'Unable to reach the AI service.');
     }
 
-    const reply = data.reply || data.response || 'No response was returned.';
-    console.log('Dashboard: Returning reply:', reply);
-    return reply;
-  } catch (error) {
+    if (Array.isArray(data.responses)) { // If the server returns an array of responses (e.g. from multiple models), return that array directly to be processed and displayed in the chat, and log the replies received from the LLM for debugging purposes
+      return data.responses;
+    }
+
+    const singleReply = data.reply || data.response || 'No response was returned.';
+    return [{ model: 'default', content: singleReply }];
+  } catch (error) { // Log any errors that occur during the fetch call, which could be network errors or server errors, and rethrow the error to be handled in the calling function
     console.error('Dashboard: callLLM error:', error);
     throw error;
   }
@@ -209,18 +221,19 @@ async function callLLM(messageList) {
 // Export functions for testing (Node.js environment)
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
-    getConv,
-    genId,
-    autoTitle,
-    groupConvs,
-    escapeHtml,
-    formatMessage,
-    setEmptyState,
-    appendBubble,
-    renderMessages,
-    renderHistory,
-    callLLM
-  };
+  getConv,
+  genId,
+  autoTitle,
+  groupConvs,
+  escapeHtml,
+  formatMessage,
+  setEmptyState,
+  appendBubble,
+  renderMessages,
+  renderHistory,
+  callLLM,
+  getSelectedModels
+};
 }
 
 // Global variables for the dashboard
@@ -236,9 +249,9 @@ async function loadConversationsFromServer() {
     
     console.log('Dashboard: Load conversations response status:', response.status);
     
-    if (response.ok) {
+    if (response.ok) { // If the response is ok, parse the conversations and convert date strings to timestamps for easier handling on the client side, and log the loaded conversations for debugging
       const data = await response.json();
-      console.log('Dashboard: Load conversations response:', data);
+      console.log('Dashboard: Load conversations response:', data); // Log the raw response data from the server for debugging purposes
       conversations = data.conversations.map(conv => ({
         id: conv.id,
         title: conv.title,
@@ -250,7 +263,7 @@ async function loadConversationsFromServer() {
       console.log('Dashboard: Loaded conversations:', conversations);
     } else {
       const errorData = await response.json();
-      console.log('Dashboard: Failed to load conversations:', response.status, errorData);
+      console.log('Dashboard: Failed to load conversations:', response.status, errorData); // Log the error response from the server for debugging purposes
       conversations = [];
     }
   } catch (error) {
@@ -260,32 +273,32 @@ async function loadConversationsFromServer() {
 }
 
 // Load messages for a specific conversation
-async function loadMessagesFromServer(conversationId) {
+async function loadMessagesFromServer(conversationId) { 
   try {
     console.log('Dashboard: Loading messages for conversation:', conversationId);
     const response = await fetch(`/api/conversations/${conversationId}/messages`);
     
     if (response.ok) {
-      const data = await response.json();
+      const data = await response.json(); // Log the raw response data from the server for debugging purposes
       const conversation = getConv(conversations, conversationId);
-      if (conversation) {
+      if (conversation) { // Ensure conversation exists before trying to set messages
         conversation.messages = data.messages.map(msg => ({
           role: msg.role,
           content: msg.content,
           timestamp: new Date(msg.created_at).getTime()
         }));
-        console.log('Dashboard: Loaded messages:', conversation.messages.length);
+        console.log('Dashboard: Loaded messages:', conversation.messages.length); // Log the number of messages loaded for the conversation for debugging purposes
       }
-    } else {
+    } else { // If response is not ok, log the error message from server
       console.error('Dashboard: Failed to load messages:', response.status);
     }
-  } catch (error) {
+  } catch (error) { // Log any errors that occur during fetch
     console.error('Dashboard: Error loading messages:', error);
   }
 }
 
 // Save conversation to server
-async function saveConversationToServer(conversation) {
+async function saveConversationToServer(conversation) { // Only save if conversation has an ID (i.e. it has been created on server)
   try {
     console.log('Dashboard: Saving conversation to server:', conversation.id, conversation.title);
     const response = await fetch('/api/conversations', {
@@ -298,23 +311,23 @@ async function saveConversationToServer(conversation) {
         title: conversation.title
       })
     });
-    
+    // Log the response status and data for debugging purposes, and check if the response is ok to determine if the conversation was saved successfully or if there was an error
     console.log('Dashboard: Save conversation response status:', response.status);
     const responseData = await response.json();
     console.log('Dashboard: Save conversation response:', responseData);
     
-    if (!response.ok) {
+    if (!response.ok) { // If the response is not ok, log the error message from server
       console.error('Dashboard: Failed to save conversation:', responseData);
-    } else {
+    } else { // If the conversation was saved successfully, log a success message for debugging purposes
       console.log('Dashboard: Conversation saved successfully');
     }
-  } catch (error) {
+  } catch (error) { // Log any errors that occur during fetch
     console.error('Dashboard: Error saving conversation:', error);
   }
 }
 
 // Save message to server
-async function saveMessageToServer(conversationId, role, content) {
+async function saveMessageToServer(conversationId, role, content, modelName = null) {
   try {
     console.log('Dashboard: Saving message to server:', conversationId, role);
     const response = await fetch(`/api/conversations/${conversationId}/messages`, {
@@ -323,12 +336,13 @@ async function saveMessageToServer(conversationId, role, content) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        role: role,
-        content: content
-      })
+  role: role,
+  content: content,
+  model_name: modelName
+})
     });
     
-    if (!response.ok) {
+    if (!response.ok) { // If the response is not ok, log the error message from server
       console.error('Dashboard: Failed to save message:', response.status);
     }
   } catch (error) {
@@ -353,7 +367,7 @@ async function deleteConversationFromServer(conversationId) {
 }
 
 // Global function to send message
-async function sendMessage() {
+async function sendMessage() { 
   console.log('Dashboard: sendMessage called');
   if (!textarea) {
     console.log('Dashboard: textarea not initialized yet');
@@ -371,13 +385,13 @@ async function sendMessage() {
   textarea.value = '';
   textarea.style.height = 'auto';
 
-  if (!activeId) {
+  if (!activeId) { // If no active conversation, create a new one
     console.log('Dashboard: No active chat, creating new chat');
     newChat();
   }
 
   const conversation = getConv(conversations, activeId);
-  if (!conversation) {
+  if (!conversation) { // This should not happen, but just in case
     console.log('Dashboard: No conversation found for activeId', activeId);
     return;
   }
@@ -404,28 +418,38 @@ async function sendMessage() {
   typingIndicator.setAttribute('aria-hidden', 'false');
   messages.scrollTop = messages.scrollHeight;
 
-  let reply = '';
+ let replies = [];
 
-  try {
-    console.log('Dashboard: Calling LLM with messages', conversation.messages);
-    reply = await callLLM(conversation.messages);
-    console.log('Dashboard: LLM reply received', reply);
-  } catch (error) {
-    console.error('Dashboard: LLM call failed', error);
-    reply = 'Unable to reach the AI right now. Please check the API configuration and try again.';
-  }
+try { // Get selected models from the model picker, and call the LLM with the conversation messages and selected models, logging the messages and models being sent to the LLM for debugging purposes, and then log the replies received from the LLM for debugging purposes. If there is an error during the LLM call, log the error and set a user-friendly error message in the replies array to be displayed in the chat.
+  const selectedModels = getSelectedModels();
+  console.log('Dashboard: Calling LLM with messages', conversation.messages, 'and models', selectedModels);
+  replies = await callLLM(conversation.messages, selectedModels);
+  console.log('Dashboard: LLM replies received', replies);
+} catch (error) {
+  console.error('Dashboard: LLM call failed', error);
+  replies = [ // Show a user-friendly error message in the chat if the LLM call fails, instead of just logging the error
+    {
+      model: 'system',
+      content: 'Unable to reach the AI right now. Please check the API configuration and try again.'
+    }
+  ];
+}
+// After receiving the replies from the LLM (or an error message if the call failed), hide the typing indicator and append the replies to the conversation, saving each assistant message to the server, and then re-render the conversation history to update the timestamps and order based on the latest activity.
+console.log('Dashboard: Hiding typing indicator');
+typingIndicator.classList.remove('show');
+typingIndicator.setAttribute('aria-hidden', 'true');
 
-  console.log('Dashboard: Hiding typing indicator');
-  typingIndicator.classList.remove('show');
-  typingIndicator.setAttribute('aria-hidden', 'true');
-
-  conversation.messages.push({ role: 'assistant', content: reply });
+for (const replyObj of replies) {
+  const labeledReply = `[${replyObj.model}] ${replyObj.content}`;
+  conversation.messages.push({ role: 'assistant', content: labeledReply });
   conversation.updatedAt = Date.now();
-  appendBubble('assistant', reply, true, messages);
-  renderHistory(conversations, historyList, searchInput, activeId);
-  
+  appendBubble('assistant', labeledReply, true, messages);
+
   // Save assistant message to server
-  await saveMessageToServer(activeId, 'assistant', reply);
+  await saveMessageToServer(activeId, 'assistant', labeledReply, replyObj.model);
+}
+
+renderHistory(conversations, historyList, searchInput, activeId);
   
   console.log('Dashboard: Message exchange complete');
 }
@@ -523,15 +547,15 @@ if (typeof document !== 'undefined') {
     this.style.height = `${Math.min(this.scrollHeight, 120)}px`;
   });
 
-  textarea.addEventListener('keydown', (event) => {
+  textarea.addEventListener('keydown', (event) => { // Send message on Enter key, but allow Shift+Enter for new lines
     if (event.key === 'Enter' && !event.shiftKey) {
-      console.log('Dashboard: Enter key pressed');
+      console.log('Dashboard: Enter key pressed'); // Log when Enter key is pressed for debugging purposes
       event.preventDefault();
       sendMessage();
     }
   });
 
-  sendButton.addEventListener('click', () => {
+  sendButton.addEventListener('click', () => { // Log when send button is clicked for debugging purposes, and then call the sendMessage function to handle sending the user's message to the LLM and updating the chat interface accordingly
     console.log('Dashboard: Send button clicked');
     sendMessage();
   });
