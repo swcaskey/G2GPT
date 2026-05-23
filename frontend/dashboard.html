@@ -49,13 +49,40 @@
                 <h2 id="chat-title" class="chat-title">New Conversation</h2>
               </div>
 
+              <div class="models-toolbar">
+                <h3>Select up to 3 models</h3>
+                <div id="models-container" class="models-container">
+                  <p>Loading models...</p>
+                </div>
+              </div>
+
               <div id="messages" class="messages">
                 <div id="empty-state" class="empty-state">
                   <div class="empty-badge">AI</div>
                   <h3 class="empty-title">Welcome to G2GPT</h3>
                   <p class="empty-sub">
-                    Start a new conversation or select one from the sidebar.
+                    Enter one prompt and compare responses from multiple AI models.
                   </p>
+                </div>
+              </div>
+
+              <!-- MOVED OUTSIDE #messages -->
+              <div id="multi-response-area" class="multi-response-area" style="display: none;">
+                <div class="multi-response-grid">
+                  <div class="multi-response-box">
+                    <h3 id="model-name-1">Model 1</h3>
+                    <div id="response-1" class="multi-response-text">No response yet.</div>
+                  </div>
+
+                  <div class="multi-response-box">
+                    <h3 id="model-name-2">Model 2</h3>
+                    <div id="response-2" class="multi-response-text">No response yet.</div>
+                  </div>
+
+                  <div class="multi-response-box">
+                    <h3 id="model-name-3">Model 3</h3>
+                    <div id="response-3" class="multi-response-text">No response yet.</div>
+                  </div>
                 </div>
               </div>
 
@@ -109,6 +136,8 @@
                 <p class="input-hint">
                   Press Enter to send · Shift+Enter for a new line
                 </p>
+
+                <p id="status-message" class="input-hint"></p>
               </div>
             </section>
           </div>

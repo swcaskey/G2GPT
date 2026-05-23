@@ -6,35 +6,31 @@ const puppeteer = require('puppeteer');
 const { spawn } = require('child_process');
 
 // Set timeout to 120 seconds for Iteration 2 tests
-// With pre-seeded users + LLM mocking, tests typically complete in 40-60 seconds
 setDefaultTimeout(120000);
 
 let browser;
 let serverProcess;
 
-// Enable LLM mocking for faster tests (set to 'false' for real integration tests)
+// Enable LLM mocking for faster tests
 const MOCK_LLM = process.env.MOCK_LLM !== 'false';
 
 // Launch server and browser once before all scenarios
 BeforeAll(async function () {
-  // Start the Express server
   serverProcess = spawn('node', ['server.js'], {
     stdio: 'ignore',
     detached: false
   });
 
-  // Wait for server to be ready
   await new Promise(resolve => setTimeout(resolve, 2000));
 
   browser = await puppeteer.launch({
     headless: false,
-    slowMo: 25  // Reduced from 50ms for faster test execution
+    slowMo: 25
   });
 });
 
 // Close browser and server after all scenarios
 AfterAll(async function () {
-  // Close all pages first
   if (browser) {
     const pages = await browser.pages();
     for (const page of pages) {
@@ -43,19 +39,17 @@ AfterAll(async function () {
           await page.close();
         }
       } catch (err) {
-        // Silently ignore errors during cleanup
+        // ignore cleanup errors
       }
     }
-    
-    // Close browser
+
     try {
       await browser.close();
     } catch (err) {
-      // Silently ignore errors during cleanup
+      // ignore cleanup errors
     }
   }
 
-  // Stop the server
   if (serverProcess) {
     serverProcess.kill();
   }
@@ -65,32 +59,86 @@ AfterAll(async function () {
 Before(async function () {
   this.browser = browser;
   this.page = await browser.newPage();
-  
-  // Set viewport for consistent testing
+
   await this.page.setViewport({ width: 1280, height: 800 });
-  
-  // Setup LLM mocking if enabled
+
   if (MOCK_LLM) {
-    // Override fetch to intercept /api/chat calls with instant mocks
     await this.page.evaluateOnNewDocument(() => {
-      const originalFetch = window.fetch;
+      const originalFetch = window.fetch.bind(window);
+
       window.fetch = function(...args) {
         const [resource] = args;
-        
-        // Mock the /api/chat endpoint for faster tests
-        if (typeof resource === 'string' && resource.includes('/api/chat')) {
+        const url = typeof resource === 'string' ? resource : resource?.url || '';
+
+        // Mock multi-model endpoint
+        if (url.includes('/api/chat-multi')) {
           return Promise.resolve(
             new Response(
               JSON.stringify({
-                response: 'Mocked AI response for testing. Real LLM would respond here.'
+                success: true,
+                responses: [
+                  {
+                    model: 'mock-model-1',
+                    success: true,
+                    reply: 'Mocked response from model 1.'
+                  },
+                  {
+                    model: 'mock-model-2',
+                    success: true,
+                    reply: 'Mocked response from model 2.'
+                  },
+                  {
+                    model: 'mock-model-3',
+                    success: true,
+                    reply: 'Mocked response from model 3.'
+                  }
+                ]
               }),
-              { status: 200, headers: { 'Content-Type': 'application/json' } }
+              {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+              }
             )
           );
         }
-        
-        // Use real fetch for all other endpoints
-        return originalFetch.apply(this, args);
+
+        // Mock single-model endpoint too
+        if (url.includes('/api/chat')) {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                success: true,
+                reply: 'Mocked AI response for testing. Real LLM would respond here.'
+              }),
+              {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+              }
+            )
+          );
+        }
+
+        // Mock models list so checkbox UI always loads in tests
+        if (url.includes('/api/models')) {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                success: true,
+                models: [
+                  { name: 'mock-model-1' },
+                  { name: 'mock-model-2' },
+                  { name: 'mock-model-3' }
+                ]
+              }),
+              {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+              }
+            )
+          );
+        }
+
+        return originalFetch(...args);
       };
     });
   }
@@ -98,12 +146,11 @@ Before(async function () {
 
 // Close page after each scenario
 After(async function () {
-  // Close the page to prevent tab accumulation
   if (this.page && !this.page.isClosed()) {
     try {
       await this.page.close();
     } catch (err) {
-      // Silently ignore errors during cleanup (page may already be closed)
+      // ignore cleanup errors
     }
   }
 });
